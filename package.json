@@ -7,7 +7,7 @@
     "dev": "slidev --open",
     "export": "slidev export"
   },
-  "devDependencies": {
+  "dependencies": {
     "@slidev/cli": "^52.16.0",
     "@types/qrcode": "^1.5.6",
     "@vue/compiler-sfc": "^3.5.38",
