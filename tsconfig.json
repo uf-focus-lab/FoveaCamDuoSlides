@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "types": [],
+    "paths": {
+      "pages/*": ["./pages/*"],
+      "assets/*": ["./assets/*"],
+      "components/*": ["./components/*"]
+    }
+  },
+  "include": [
+    "components/**/*.ts",
+    "components/**/*.vue",
+    "scripts/**/*.ts",
+    "pages/**/*.ts",
+    "pages/**/*.vue",
+    "styles/**/*.ts",
+    "env.d.ts"
+  ]
+}

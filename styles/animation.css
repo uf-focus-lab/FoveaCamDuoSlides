@@ -1,0 +1,18 @@
+/* Navigation transition tuning. The deck uses the `slide-up` transition
+   (headmatter), which auto-reverses to `slide-down` on backward nav. */
+
+:root {
+  /* Total length of every slide transition. Slidev defaults this to 0.5s in
+     its vars.css; re-declared here so it's tunable in one place. */
+  --slidev-transition-duration: 0.4s;
+}
+
+/* Snappy-out curve with a slightly eased (less abrupt) start. Slidev hardcodes
+   `ease` in its built-in transitions.css, so only the curve is overridden;
+   duration stays on --slidev-transition-duration above. */
+.slide-up-enter-active,
+.slide-up-leave-active,
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition-timing-function: cubic-bezier(0.2, 0.4, 0.2, 1);
+}

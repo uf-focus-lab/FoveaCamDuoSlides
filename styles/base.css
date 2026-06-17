@@ -1,0 +1,108 @@
+/* Hand-rolled base styling for the theme-less deck.
+   `--slidev-theme-primary` is defined here per scheme (not headmatter
+   `themeConfig`, which would inline it on <body> and shadow the dark rule). */
+
+:root {
+  /* Light scheme (default). Dark overrides live under `html.dark` below. */
+  --fc-bg: #ffffff;
+  --fc-fg: hsl(220, 20%, 10%);
+  --fc-muted: #5b6573;
+  --fc-border: rgba(120, 130, 145, 0.28);
+  --slidev-code-radius: 6px;
+  --slidev-theme-primary: var(--fc-fg);
+  --slidev-code-background: #f5f6f8;
+  --slidev-code-foreground: #1a1f2b;
+  --slidev-code-font-family:
+    ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Brand wordmark gradient: cyan (top-left) → grass green (bottom-right). */
+  --brand-from: hsl(200, 80%, 50%);
+  --brand-to: hsl(100, 40%, 50%);
+  --brand-gradient: linear-gradient(
+    to bottom right,
+    var(--brand-from),
+    var(--brand-to)
+  );
+}
+
+/* Dark scheme — Slidev core toggles `.dark` on <html> (colorSchema: auto|dark).
+   Everything reads the --fc-* / --slidev-code-* vars, so re-pointing them here
+   makes the whole deck follow the toggle / system preference. */
+html.dark {
+  --fc-bg: hsl(220, 20%, 5%);
+  --fc-fg: hsl(220, 20%, 90%);
+  --fc-muted: hsl(220, 20%, 60%);
+  --fc-border: hsla(220, 14%, 64%, 0.28);
+  --slidev-theme-primary: var(--fc-fg);
+  --slidev-code-background: #161a21;
+  --slidev-code-foreground: #e7ebf0;
+}
+
+#slideshow {
+  background: var(--fc-bg);
+}
+
+/* Gradient-filled brand wordmark — usable in any slide/component (global). */
+.brand-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Every slide is a .slidev-layout — set the canvas, text, and fonts here. */
+.slidev-layout {
+  background: var(--fc-bg);
+  color: var(--fc-fg);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.slidev-layout h1,
+.slidev-layout h2,
+.slidev-layout h3 {
+  font-weight: 600;
+  color: var(--fc-fg);
+  letter-spacing: -0.01em;
+}
+
+/* Accent the top-level slide title with the theme primary. */
+.slidev-layout h1 {
+  color: var(--slidev-theme-primary);
+}
+
+.slidev-layout a {
+  color: var(--slidev-theme-primary);
+  text-underline-offset: 2px;
+}
+
+.slidev-layout strong {
+  color: var(--fc-fg);
+  font-weight: 650;
+}
+
+.slidev-layout blockquote {
+  border-left: 3px solid var(--slidev-theme-primary);
+  color: var(--fc-muted);
+}
+
+/* Tables — give the theme-less deck a clean default. */
+.slidev-layout table {
+  font-size: 0.92em;
+}
+.slidev-layout th {
+  color: var(--slidev-theme-primary);
+}
+.slidev-layout td,
+.slidev-layout th {
+  border-color: var(--fc-border);
+}

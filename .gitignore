@@ -1,0 +1,16 @@
+node_modules
+.DS_Store
+dist
+*.local
+.vite-inspect
+.remote-assets
+components.d.ts
+pnpm-lock.yaml
+
+# Master images
+*.psd
+*.png
+*.jpg
+
+# Symlinks to references
+*.ref
