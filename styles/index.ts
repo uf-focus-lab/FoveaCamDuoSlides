@@ -3,4 +3,5 @@
 // base layout CSS (.slidev-layout padding, heading scale) and then our own.
 import "@slidev/client/styles/layouts-base.css";
 import "./base.css";
+import "./layout.css";
 import "./animation.css";

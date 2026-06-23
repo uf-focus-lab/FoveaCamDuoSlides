@@ -17,9 +17,6 @@ import Cover from "pages/01-cover.vue";
 </script>
 
 <Cover />
-<!--
-One-line hook: dense depth at standoff ranges by *redistributing* resolution — a wide context camera plus two MEMS-steered telephoto foveae.
--->
 
 ---
 
@@ -27,27 +24,92 @@ One-line hook: dense depth at standoff ranges by *redistributing* resolution —
 
 <script setup lang="ts">
 import kismet from "assets/inspiration/kismet.webp";
+
+const items = [
+  { caption: "Kismet — expressive robotic head, MIT (1998)" },
+  { caption: "Kismet — expressive robotic head, MIT (1998)" },
+  { caption: "Kismet — expressive robotic head, MIT (1998)" },
+  { caption: "Kismet — expressive robotic head, MIT (1998)" },
+  { caption: "Kismet — expressive robotic head, MIT (1998)" },
+];
 </script>
 
-<div class="examples">
-<img :src="kismet" alt="Kismet" />
+<div class="flex-1 min-h-0">
+  <Gallery :items="items" loop />
 </div>
 
-<style scoped lang="scss">
-.examples {
-  height: 300px;
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  align-items: center;
-  & > * {
-    height: 100%;
-    object-fit: contain;
-    border-radius: 40px;
-    outline: 2px solid var(--fc-fg);
-    &:hover {
-      outline-color: #08f;
-    }
-  }
-}
-</style>
+---
+
+# System Design - Overview
+
+<script setup lang="ts">
+import Overview from "assets/design-overview.svg";
+</script>
+
+<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+  <Overview style="overflow: hidden" />
+</div>
+
+---
+
+# System Design - Technical Details
+
++ Section view of the camera
+
+---
+
+# Calibration - Setup
+
++ Design of the calibration platform
++ Marker arrangement
++ `TeleCanavs` subproject (contrast enhancement)
+
+---
+
+# Calibration - Extrinsic
+
++ How we mapped the voltages to pointing angles.
+
+---
+
+# Calibration - Extrinsic
+
++ How we used the corners of a marker to findout rectification matrices.
+
+---
+
+# Drift Problem & Correction
+
++ Translational drift from voltage instability, field correctable with tri-marker board.
++ Rotational drift from lack of structural rigidity, impacts both extrinsic and intrinsic calibration, mitigatable with metal structural components.
+
+---
+
+# <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking
+
+---
+
+# Data Collection
+
++ Samples of the data collected by raster scan
++ Visualization of the data projected to the wide context view
+
+---
+
+# Convergent Stereo
+
++ Architectural Overview (animated flowchart)
+
+---
+
+# Depth Perception Results
+
++ Huge figure + animation
+
+---
+
+# <span style="color: red">New Results</span>: 3D/4D Scene Upgrade
+
+---
+
+# Thank You

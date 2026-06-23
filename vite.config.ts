@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import path from "node:path";
-import svgLoader from "./scripts/svg-loader";
+import svgLoader from "@zhangyx1998/svg-loader";
 
 // Slidev reads and merges this config. We register the SVG-as-Vue-component
 // loader and alias `assets` → ./assets so figures import as
