@@ -14,7 +14,8 @@
     "paths": {
       "pages/*": ["./pages/*"],
       "assets/*": ["./assets/*"],
-      "components/*": ["./components/*"]
+      "components/*": ["./components/*"],
+      "stores/*": ["./stores/*"]
     }
   },
   "include": [
@@ -23,6 +24,7 @@
     "scripts/**/*.ts",
     "pages/**/*.ts",
     "pages/**/*.vue",
+    "stores/**/*.ts",
     "styles/**/*.ts",
     "env.d.ts"
   ]

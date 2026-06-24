@@ -12,6 +12,7 @@ export default defineConfig({
       pages: path.resolve(__dirname, "pages"),
       assets: path.resolve(__dirname, "assets"),
       components: path.resolve(__dirname, "components"),
+      stores: path.resolve(__dirname, "stores"),
     },
   },
 });
