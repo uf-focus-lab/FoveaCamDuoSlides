@@ -28,8 +28,8 @@ import Cover from "pages/01-cover.vue";
 > Results up front
 
 ---
-
-## layout: two-cols
+layout: two-cols
+---
 
 <script setup lang="ts">
 import Overview from "assets/design-overview.svg";
@@ -96,8 +96,8 @@ $$
 </div>
 
 ---
-
-## layout: none
+layout: none
+---
 
 <script setup lang="ts">
 import CameraTurntable from "components/CameraTurntable.vue";
