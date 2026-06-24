@@ -28,6 +28,54 @@ import Cover from "pages/01-cover.vue";
 > Results up front
 
 ---
+
+# Traditional Stereo
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: start; margin-top: 1.25rem;">
+  <div>
+    <div style="width: 75%; height: 120px; margin: 0 auto; overflow: hidden; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);">
+      <img
+        src="/assets/traditional_stereo/disparity_explanation.webp"
+        alt="Disparity-to-depth explanation"
+        style="width: 115%; height: 115%; object-fit: cover; object-position: 80% 160%;"
+      />
+    </div>
+  </div>
+  <div>
+    <p style="margin-top: 0;">
+      Traditional stereo uses static camera poses with approximately parallel viewing directions.
+    </p>
+    <p>
+      With calibrated geometry, disparity can be mapped to depth reliably, which makes robust depth models easier to build.
+    </p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10rem; margin-top: 6rem;">
+  <div style="aspect-ratio: 1 / 1; border: 2px solid #d6d9df; border-radius: 14px; padding: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafbfc;">
+    <img
+      src="/assets/traditional_stereo/nvidia.webp"
+      alt="NVIDIA logo"
+      style="max-width: 80%; max-height: 58%; object-fit: contain;"
+    />
+    <p style="margin: 0.7rem 0 0; font-size: 0.95rem; font-weight: 600; text-align: center;  color: #6b7280">Foundation Stereo</p>
+  </div>
+  <div style="aspect-ratio: 1 / 1; border: 2px dashed #d6d9df; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-weight: 600; background: #fafbfc;">
+    Box 2
+  </div>
+  <div style="aspect-ratio: 1 / 1; border: 2px dashed #d6d9df; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-weight: 600; background: #fafbfc;">
+    Box 3
+  </div>
+</div>
+
+
+<!--
+Traditional Stereo has static camera poses, and cameras facing parallel.
+
+Makes it extremely easy to convert disparity into depth, it's easier to create robust models when these are known.
+-->
+
+---
 layout: two-cols
 ---
 
@@ -39,6 +87,7 @@ import { useStage } from "stores/stage";
 // ΔZ / d arrows (added later).
 const stage = useStage(2);
 </script>
+
 
 # The Foundamental Tradeoff
 
@@ -94,6 +143,14 @@ $$
 <div style="width: 100%; height: 100%; position: relative;">
   <Overview style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: auto;" />
 </div>
+
+<!--
+With the creation of foundation models for traditional stereo, getting depth from a wide range of applications has become easy. 
+
+However, despite these models, there's still a fundamental weakness of triangulation when the objects of interest get further away. 
+
+If the object is far enough that it doesn't have any disparity, the information isn't there for a foundation model to recover.
+-->
 
 ---
 layout: none
@@ -151,9 +208,15 @@ import CameraTurntable from "components/CameraTurntable.vue";
 
 ---
 
+<script setup lang="ts">
+import ConvergentStereoAnimation from "components/ConvergentStereoAnimation.vue";
+</script>
+
 # Convergent Stereo
 
-- Architectural Overview (animated flowchart)
+<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+  <ConvergentStereoAnimation :delay="500" />
+</div>
 
 ---
 
