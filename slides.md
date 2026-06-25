@@ -35,7 +35,7 @@ import Cover from "pages/01-cover.vue";
   <div>
     <div style="width: 75%; height: 120px; margin: 0 auto; overflow: hidden; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);">
       <img
-        src="/assets/traditional_stereo/disparity_explanation.webp"
+        src="/assets/traditional-stereo/disparity_explanation.webp"
         alt="Disparity-to-depth explanation"
         style="width: 115%; height: 115%; object-fit: cover; object-position: 80% 160%;"
       />
@@ -54,7 +54,7 @@ import Cover from "pages/01-cover.vue";
 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10rem; margin-top: 6rem;">
   <div style="aspect-ratio: 1 / 1; border: 2px solid #d6d9df; border-radius: 14px; padding: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafbfc;">
     <img
-      src="/assets/traditional_stereo/nvidia.webp"
+      src="/assets/traditional-stereo/nvidia.webp"
       alt="NVIDIA logo"
       style="max-width: 80%; max-height: 58%; object-fit: contain;"
     />
@@ -203,8 +203,16 @@ import CameraTurntable from "components/CameraTurntable.vue";
 
 # Data Collection
 
-- Samples of the data collected by raster scan
-- Visualization of the data projected to the wide context view
+<!-- - Samples of the data collected by raster scan
+- Visualization of the data projected to the wide context view -->
+
+<script setup lang="ts">
+import DataCollection from "components/DataCollection.vue";
+</script>
+
+<div style="margin-top: 1.25rem; width: 100%;">
+  <DataCollection />
+</div>
 
 ---
 
