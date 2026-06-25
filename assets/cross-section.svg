@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  version="1.1"
+  viewBox="0 0 2520 1440"
+>
+  <defs>
+    <style>
+      .st0,
+      .st1,
+      .st2,
+      .st3,
+      .st4,
+      .st5,
+      .st6,
+      .st7,
+      .st8,
+      .st9,
+      .st10,
+      .st11,
+      .st12,
+      .st13,
+      .st14 {
+        fill: none;
+      }
+
+      .st1,
+      .st2,
+      .st3,
+      .st4,
+      .st5,
+      .st6,
+      .st7,
+      .st8,
+      .st9,
+      .st10,
+      .st11,
+      .st13 {
+        stroke-linejoin: round;
+        stroke-width: 3.7px;
+      }
+
+      .st1,
+      .st6,
+      .st8,
+      .st11 {
+        stroke-linecap: round;
+      }
+
+      .st1,
+      .st6,
+      .st11,
+      .st12,
+      .st14 {
+        stroke: currentColor;
+      }
+
+      .st2 {
+        stroke-dasharray: 14.5 14.5;
+      }
+
+      .st2,
+      .st3,
+      .st4,
+      .st5,
+      .st7,
+      .st9,
+      .st10,
+      .st13 {
+        stroke: #a00;
+      }
+
+      .st15 {
+        font-family: "Times New Roman", Times, serif;
+        font-weight: 700;
+      }
+
+      .st15,
+      .st16 {
+        font-size: 80px;
+      }
+
+      .st3 {
+        stroke-dasharray: 15 15;
+      }
+
+      .st4 {
+        stroke-dasharray: 13.4 13.4;
+      }
+
+      .st6 {
+        stroke-dasharray: 14.7 14.7;
+      }
+
+      .st17,
+      .st18 {
+        opacity: 0.2;
+      }
+
+      .st17,
+      .st19 {
+        fill: red;
+      }
+
+      .st16 {
+        font-family: "Times New Roman", Times, serif;
+      }
+
+      .st7 {
+        stroke-dasharray: 14.8 14.8;
+      }
+
+      .st18 {
+        fill: #088;
+      }
+
+      html.dark .st18 {
+        fill: #0ff8;
+      }
+
+      .st8 {
+        stroke: #fff;
+      }
+
+      .st20 {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 53.3px;
+        font-style: italic;
+      }
+
+      .st9 {
+        stroke-dasharray: 14.7 14.7;
+      }
+
+      .st10 {
+        stroke-dasharray: 14.6 14.6;
+      }
+
+      .st11 {
+        stroke-dasharray: 14.8 14.8;
+      }
+
+      .st21 {
+        letter-spacing: 0em;
+      }
+
+      .st12 {
+        stroke-width: 8px;
+      }
+
+      .st13 {
+        stroke-dasharray: 14.7 14.7;
+      }
+
+      .st14 {
+        stroke-width: 6px;
+      }
+
+      tspan,
+      polygon,
+      circle {
+        fill: currentColor;
+      }
+
+      html.dark image {
+        filter: brightness(0.8);
+      }
+    </style>
+  </defs>
+  <image
+    width="2177"
+    height="1061"
+    transform="translate(15.7 219.7) scale(.92)"
+    xlink:href="cross-section.webp"
+  />
+  <polyline
+    class="st18"
+    points="2627.7 987.7 1663.9 532.6 1688.6 491.1 2627.7 38.4"
+  />
+  <line class="st11" x1="2607.7" y1="978.2" x2="1677.3" y2="538.9" />
+  <polyline class="st1" points="1670.6 535.7 1663.9 532.6 1667.7 526.2" />
+  <polyline class="st6" points="1675.2 513.6 1688.6 491.1 2614.4 44.8" />
+  <polygon
+    class="st17"
+    points="411.9 961.3 1710.6 920.9 411.9 879.6 411.9 961.3"
+  />
+  <polygon
+    class="st17"
+    points="2627.7 462.8 1688.6 491.8 1663.9 533.3 1899.6 915 1710.6 920.9 1907.1 927.1 1916 914.5 1711.8 535.1 2627.7 568.3 2627.7 462.8"
+  />
+  <line class="st5" x1="1916" y1="913.7" x2="1908.6" y2="914" />
+  <line class="st7" x1="1893.9" y1="914.4" x2="426.7" y2="960.1" />
+  <polyline class="st5" points="419.3 960.4 411.9 960.6 411.9 953.2" />
+  <line class="st4" x1="411.9" y1="939.8" x2="411.9" y2="892.9" />
+  <polyline class="st5" points="411.9 886.2 411.9 878.9 419.3 879.1" />
+  <line class="st9" x1="433.9" y1="879.6" x2="1892.4" y2="925.9" />
+  <line class="st5" x1="1899.7" y1="926.1" x2="1907.1" y2="926.4" />
+  <line class="st5" x1="1916" y1="913.7" x2="1912.5" y2="907.3" />
+  <line class="st3" x1="1905.4" y1="894" x2="1695.6" y2="504.2" />
+  <line class="st5" x1="1692" y1="497.6" x2="1688.6" y2="491.1" />
+  <line class="st5" x1="1663.9" y1="532.6" x2="1667.8" y2="538.8" />
+  <line class="st2" x1="1675.4" y1="551.1" x2="1899.4" y2="914" />
+  <line class="st5" x1="1903.2" y1="920.1" x2="1907.1" y2="926.4" />
+  <line class="st5" x1="1688.6" y1="491.1" x2="1695.9" y2="490.9" />
+  <line class="st13" x1="1710.6" y1="490.4" x2="2613" y2="462.5" />
+  <line class="st10" x1="2605.7" y1="566.8" x2="1678.6" y2="533.1" />
+  <line class="st5" x1="1671.3" y1="532.8" x2="1663.9" y2="532.6" />
+  <path
+    class="st19"
+    d="M1719.5,921.6c0,4.7-3.8,8.4-8.4,8.4s-8.4-3.8-8.4-8.4,3.8-8.4,8.4-8.4,8.4,3.8,8.4,8.4"
+  />
+  <circle
+    class="st8"
+    cx="1711"
+    cy="921.6"
+    r="8.4"
+    transform="translate(670.5 2563) rotate(-85.9)"
+  />
+  <text class="st16" transform="translate(414.7 347.8)">
+    <tspan>Image Sensor</tspan>
+  </text>
+  <text class="st16" transform="translate(1555.1 133.8)">
+    <tspan>Front Lens</tspan>
+  </text>
+  <text class="st16" transform="translate(1904 133.8)"><tspan></tspan></text>
+  <text class="st15" transform="translate(1920 133.8)">
+    <tspan class="st21">/</tspan>
+  </text>
+  <text class="st16" transform="translate(1954.2 133.8)">
+    <tspan>Cover</tspan>
+  </text>
+  <text class="st16" transform="translate(762.7 1301)">
+    <tspan>Backend Lens</tspan>
+  </text>
+  <text class="st16" transform="translate(784.8 1402.9)">
+    <tspan>(100mm FL)</tspan>
+  </text>
+  <text class="st16" transform="translate(1841.5 1347.6)">
+    <tspan>Static Mirror</tspan>
+  </text>
+  <text class="st16" transform="translate(1003.2 347.8)">
+    <tspan>MEMS Mirror</tspan>
+  </text>
+  <polyline
+    class="st12"
+    points="1406 369.8 1406 447.7 1528.2 447.7 1532.2 447.7"
+  />
+  <circle cx="1541.2" cy="447.7" r="13" />
+  <polyline
+    class="st12"
+    points="2104.7 152.5 2104.7 376.3 2050 376.3 2046 376.3"
+  />
+  <circle cx="2037" cy="376.3" r="13" />
+  <polyline
+    class="st12"
+    points="391.5 321.3 291 321.3 291 918.7 352 918.7 356 918.7"
+  />
+  <circle cx="365" cy="918.7" r="13" />
+  <path class="st12" d="M2054.1,1254.2c3.5-122.4-20.8-212-73-268.8l-2.9-2.8" />
+  <path
+    fill="currentColor"
+    d="M1962.7,985.8c-5.2-5-5.4-13.2-.4-18.4,5-5.2,13.2-5.4,18.4-.4,5.2,5,5.4,13.2.4,18.4-5,5.2-13.2,5.4-18.4.4Z"
+  />
+  <polyline class="st12" points="685.7 1287.6 501.6 1287.6 501.6 1204.2" />
+  <polyline class="st12" points="1295 1287.6 1479.1 1287.6 1479.1 1204.2" />
+  <path
+    class="st14"
+    d="M2399.2,546.5l.6-2.9c2.7-18.7,2.8-37.1.1-55.1l-.6-2.9"
+  />
+  <polygon
+    points="2412.8 492 2396.4 470.8 2389.3 496.6 2399.9 488.4 2412.8 492"
+  />
+  <polygon
+    points="2389.1 535.4 2396.4 561.2 2412.7 539.9 2399.8 543.5 2389.1 535.4"
+  />
+  <path
+    fill="currentColor"
+    d="M2432.6,542.8c-7.1,0-12.4-5.4-12.4-17.8,0-21.9,11.2-40.7,24.2-40.7s11.1,7.8,11.1,19.4c0,24.3-10.5,39-23,39ZM2450.9,514.6h-26c-.2,2-.4,5-.4,7,0,11.3,5.4,14.2,9.7,14.2,7.7,0,14.6-6.1,16.7-21.2ZM2425.7,510.4h25.8c0-1.5.2-3.3.2-4.7,0-7.5-2.6-14.4-8.8-14.4s-14.3,7.1-17.1,19.1Z"
+  />
+  <text class="st20" transform="translate(2456.9 547.4)"><tspan>T</tspan></text>
+  <path
+    class="st14"
+    d="M2206.5,758.5l1.3-2.7c78.1-167,78.2-329.3.4-486.9l-1.4-2.7"
+  />
+  <polygon
+    points="2221.6 268.8 2200 252.9 2200.2 279.7 2208.2 268.9 2221.6 268.8"
+  />
+  <polygon
+    points="2199.6 745.2 2200 772 2221.2 755.6 2207.8 755.8 2199.6 745.2"
+  />
+  <path
+    fill="currentColor"
+    d="M2262.3,728.1c-7.1,0-12.4-5.4-12.4-17.8,0-21.9,11.2-40.7,24.2-40.7s11.1,7.8,11.1,19.4c0,24.3-10.5,39-23,39ZM2280.6,700h-26c-.2,2-.4,5-.4,7,0,11.3,5.4,14.2,9.7,14.2,7.7,0,14.6-6.1,16.7-21.2ZM2255.4,695.7h25.8c0-1.5.2-3.3.2-4.7,0-7.5-2.6-14.4-8.8-14.4s-14.3,7.1-17.1,19.1Z"
+  />
+  <text class="st20" transform="translate(2286.6 732.8)"><tspan>W</tspan></text>
+  <rect fill="black" x="399.2" y="870.6" width="14.5" height="98.2" />
+</svg>

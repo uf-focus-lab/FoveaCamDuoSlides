@@ -1,8 +1,12 @@
+div.slidev-page {
+  overflow: hidden;
+}
+
 div.slidev-layout {
   height: 100%;
   padding-left: 40px;
   padding-right: 40px;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding-top: 32px;
+  padding-bottom: 32px;
   font-size: 24px;
 }

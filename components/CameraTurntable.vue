@@ -32,9 +32,7 @@ let stopFrame: number | undefined;
 let cleanupTimer: number | undefined;
 let segmentToken = 0;
 
-const stage = useStage(exitStage, {
-  resetOnEnter: true,
-});
+const stage = useStage(exitStage);
 
 function startTime(segment: Segment) {
   return (segment.startFrame - 1) / fps;

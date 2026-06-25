@@ -33,14 +33,13 @@ layout: two-cols
 
 <script setup lang="ts">
 import Overview from "assets/design-overview.svg";
+import Eagle from "assets/eagle.svg";
+import TradeOffChart from "pages/TradeOffChart.vue";
 import { useStage } from "stores/stage";
-
-// Intra-slide stage, advanced with Left/Right arrows. Stage 2 reveals the
-// ΔZ / d arrows (added later).
-const stage = useStage(2);
+const stage = useStage(4);
 </script>
 
-# The Foundamental Tradeoff
+# The Fundamental Tradeoff
 
 <style scoped lang="scss">
 section.math {
@@ -82,7 +81,7 @@ $$
 
 <svg class="arrows">
   <SVGArrow :start="[122, 20]" :end="[122, 45]" color="#ef4444" :visible="stage > 1" />
-  <SVGArrow :start="[344, 65]" :end="[344, 40]" color="#22c55e" :visible="stage > 1" />
+  <SVGArrow :start="[274, 70]" :end="[274, 45]" color="#22c55e" :visible="stage > 1" />
 </svg>
 
 </div>
@@ -91,13 +90,11 @@ $$
 
 ::right::
 
-<div style="width: 100%; height: 100%; position: relative;">
-  <Overview style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: auto;" />
-</div>
+<TradeOffChart :stage="stage" />
 
 ---
-layout: none
----
+
+## layout: none
 
 <script setup lang="ts">
 import CameraTurntable from "components/CameraTurntable.vue";
@@ -109,7 +106,98 @@ import CameraTurntable from "components/CameraTurntable.vue";
 
 # System Design - Technical Details
 
-- Section view of the camera
+<script setup lang="ts">
+import CrossSection from "assets/cross-section.svg";
+</script>
+
+<div class="tech-details">
+  <CrossSection class="section-view" />
+
+  <section class="key-parameters">
+    <h2>Key Parameters</h2>
+    <dl>
+      <div>
+        <dt>Left / right fovea</dt>
+        <dd>100 mm focal length</dd>
+      </div>
+      <div>
+        <dt>Fovea separation</dt>
+        <dd>100 mm</dd>
+      </div>
+      <div>
+        <dt>Center wide camera</dt>
+        <dd>Approx. 12 mm focal length</dd>
+      </div>
+      <div>
+        <dt>Steering</dt>
+        <dd>MEMS mirror with frame sync</dd>
+      </div>
+      <div>
+        <dt>Optical path</dt>
+        <dd>Front lens / cover, static mirror, backend lens, image sensor</dd>
+      </div>
+    </dl>
+  </section>
+</div>
+
+<style scoped lang="scss">
+.tech-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 36px;
+  align-items: center;
+  height: calc(100% - 90px);
+  margin-top: 12px;
+}
+
+.section-view {
+  width: 100%;
+  max-height: 100%;
+  color: currentColor;
+}
+
+.key-parameters {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.key-parameters h2 {
+  margin: 0 0 18px;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.key-parameters dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.key-parameters div {
+  padding: 14px 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.key-parameters div:last-child {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.key-parameters dt {
+  margin-bottom: 4px;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+
+.key-parameters dd {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+</style>
 
 ---
 
@@ -127,7 +215,7 @@ import CameraTurntable from "components/CameraTurntable.vue";
 
 ---
 
-# Calibration - Extrinsic
+# Calibration - Intrinsic
 
 - How we used the corners of a marker to findout rectification matrices.
 

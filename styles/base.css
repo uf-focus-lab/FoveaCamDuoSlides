@@ -8,6 +8,10 @@
   --fc-fg: hsl(220, 20%, 10%);
   --fc-muted: #5b6573;
   --fc-border: rgba(120, 130, 145, 0.28);
+  /* High-contrast mix target (toward the foreground extreme). */
+  --fc-contrast: black;
+  /* Blend for overlapping translucent fills: linear subtraction on light. */
+  --blend: plus-darker;
   --slidev-code-radius: 6px;
   --slidev-theme-primary: var(--fc-fg);
   --slidev-code-background: #f5f6f8;
@@ -33,6 +37,9 @@ html.dark {
   --fc-fg: hsl(220, 20%, 90%);
   --fc-muted: hsl(220, 20%, 60%);
   --fc-border: hsla(220, 14%, 64%, 0.28);
+  --fc-contrast: white;
+  /* Linear addition so overlapping rays brighten on the dark canvas. */
+  --blend: plus-lighter;
   --slidev-theme-primary: var(--fc-fg);
   --slidev-code-background: #161a21;
   --slidev-code-foreground: #e7ebf0;

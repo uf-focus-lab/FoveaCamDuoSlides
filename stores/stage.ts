@@ -1,20 +1,13 @@
 import { useIsSlideActive } from "@slidev/client";
-import {
-  effectScope,
-  onScopeDispose,
-  readonly,
-  ref,
-  watch,
-  type Ref,
-} from "vue";
+import { effectScope, onScopeDispose, ref, watch, type Ref } from "vue";
 
 interface UseStageOptions {
-  resetOnEnter?: boolean;
+  presist?: boolean;
   onAfterLast?: () => void | Promise<void>;
   onBeforeFirst?: () => void | Promise<void>;
 }
 
-export interface StageRef extends Readonly<Ref<number>> {
+export interface StageRef extends Ref<number> {
   busy: boolean;
 }
 
@@ -40,7 +33,7 @@ export function retreatActiveStage() {
  * `setup/shortcuts.ts`), so Left/Right are free to advance a manual "stage"
  * counter within a single slide instead of navigating between slides.
  *
- * Stage is `0` while the calling slide is inactive unless `presist` is true.
+ * Stage is `0` while the calling slide is inactive unless `presist` is false.
  * Once active, it is 1-indexed and clamped to `[1, n]`: stage `1` is the
  * initial view, stage `2` the first reveal, and so on. Right increments, Left
  * decrements. Set
@@ -54,15 +47,15 @@ export function retreatActiveStage() {
  *
  * @param n Total number of stages (the maximum stage value).
  * @param presist Keep the stage value when navigating away. Defaults to false.
- * @returns A readonly ref holding the current stage.
+ * @returns A ref holding the current stage, with a writable `busy` flag.
  */
 export function useStage(
   n: number,
-  presist: boolean | UseStageOptions = false,
+  presist: boolean | UseStageOptions = true,
   maybeOptions: UseStageOptions = {},
 ): StageRef {
   const options = typeof presist === "boolean" ? maybeOptions : presist;
-  const shouldPresist = typeof presist === "boolean" ? presist : false;
+  const shouldPresist = typeof presist === "boolean" ? presist : true;
   const stage = ref(0);
   const busy = ref(false);
   const isActive = useIsSlideActive();
@@ -115,17 +108,22 @@ export function useStage(
 
   const scope = effectScope();
   scope.run(() => {
-    watch(isActive, (active) => {
-      if (active) {
-        activeStageController = controller;
-        clearSuspendedState();
-        if (options.resetOnEnter || stage.value === 0) stage.value = 1;
-      } else {
-        if (activeStageController === controller) activeStageController = null;
-        clearSuspendedState();
-        if (!shouldPresist) stage.value = 0;
-      }
-    }, { immediate: true });
+    watch(
+      isActive,
+      (active) => {
+        if (active) {
+          activeStageController = controller;
+          clearSuspendedState();
+          if (options.presist === false || stage.value === 0) stage.value = 1;
+        } else {
+          if (activeStageController === controller)
+            activeStageController = null;
+          clearSuspendedState();
+          if (!shouldPresist) stage.value = 0;
+        }
+      },
+      { immediate: true },
+    );
 
     const onKeydown = (event: KeyboardEvent) => {
       if (!isActive.value) return;
@@ -151,7 +149,7 @@ export function useStage(
     });
   });
 
-  const exposed = readonly(stage) as StageRef;
+  const exposed = stage as StageRef;
   Object.defineProperty(exposed, "busy", {
     get: () => busy.value,
     set: (value: boolean) => {
