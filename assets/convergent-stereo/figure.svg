@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="30 -2 1142 302"
+  style="background-color: black; overflow: visible"
+>
+  <defs>
+    <style>
+      :root {
+        stroke: none;
+        stroke-width: 1.5;
+        stroke-linejoin: round;
+      }
+      text {
+        font-family: "Times New Roman";
+        font-size: 14px;
+        fill: #e0e0e0;
+      }
+      .lg {
+        font-size: 16px;
+      }
+      .xl {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .sm {
+        font-size: 14px;
+      }
+      .gray {
+        fill: #aaa;
+      }
+      .teal {
+        fill: #5de4d0;
+      }
+      .arrow {
+        stroke: #ccc;
+        fill: none;
+        marker-end: url(#arrow);
+      }
+      .box .outline {
+        fill: none;
+        stroke: #fff4;
+        outline: none;
+      }
+      .box .top {
+        fill: #fff2;
+        stroke: none;
+      }
+      .box .side {
+        fill: #fff1;
+        stroke: none;
+      }
+      .box .edge {
+        fill: none;
+        stroke: #fff4;
+        stroke-width: 1;
+      }
+      .box text {
+        font-variant: small-caps;
+      }
+      .hex {
+        fill: #2a2a3a;
+        stroke: #7b8ed8;
+      }
+      .hex-edge {
+        fill: none;
+        stroke: #7b8ed8;
+      }
+      .trap.encoder {
+        fill: #1e2a4a;
+        stroke: #7b8ed8;
+      }
+      .trap.decoder {
+        fill: #1a3a35;
+        stroke: #52c4b8;
+      }
+      .depth {
+        fill: #3d1a30;
+        stroke: #cc6699;
+      }
+      path.self-attn {
+        fill: none;
+        stroke: #6bc4a6;
+        stroke-width: 3;
+        marker-end: url(#arrow-self-attn);
+      }
+      text.self-attn {
+        fill: #6bc4a6;
+        font-weight: bold;
+      }
+      .pin {
+        fill: #2a2a3a;
+        stroke: #aaa;
+      }
+      .dot {
+        fill: #aaa;
+        stroke: none;
+      }
+      .lock {
+        fill: #ccc;
+        fill-opacity: 0.7;
+        stroke: none;
+      }
+      .normalize {
+        fill: #333;
+        stroke: #999;
+      }
+      .gated-cross {
+        fill: #f804;
+        stroke: #ffaa44;
+      }
+      text.gated-cross {
+        fill: #ffaa44;
+        stroke: none;
+      }
+      .cross-attn {
+        fill: #1a3a35;
+        stroke: #5de4d0;
+      }
+      .fusion {
+        fill: #3a2a10;
+        stroke: #e8a838;
+      }
+      .mosaic-mask {
+        fill: url(#mosaic-5x5);
+        stroke: none;
+        mix-blend-mode: normal;
+        opacity: 0.18;
+      }
+    </style>
+    <marker
+      id="arrow"
+      viewBox="0 0 100 100"
+      refX="0"
+      refY="50"
+      markerWidth="8"
+      markerHeight="8"
+      orient="auto-start-reverse"
+    >
+      <polygon points="0,0 100,50 0,100" fill="#ccc" />
+    </marker>
+    <marker
+      id="arrow-self-attn"
+      viewBox="0 0 100 100"
+      refX="0"
+      refY="50"
+      markerWidth="4"
+      markerHeight="4"
+      orient="auto-start-reverse"
+    >
+      <polygon points="0,0 100,50 0,100" fill="#6bc4a6" />
+    </marker>
+    <pattern
+      id="mosaic-5x5"
+      patternUnits="objectBoundingBox"
+      width="1"
+      height="1"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <rect x="00" y="00" width="20" height="20" fill="#f80f" stroke="none" />
+      <rect x="20" y="00" width="20" height="20" fill="#0f0f" stroke="none" />
+      <rect x="40" y="00" width="20" height="20" fill="#80ff" stroke="none" />
+      <rect x="60" y="00" width="20" height="20" fill="#f08f" stroke="none" />
+      <rect x="80" y="00" width="20" height="20" fill="#0f8f" stroke="none" />
+
+      <rect x="00" y="20" width="20" height="20" fill="#0f0f" stroke="none" />
+      <rect x="20" y="20" width="20" height="20" fill="#80ff" stroke="none" />
+      <rect x="40" y="20" width="20" height="20" fill="#f08f" stroke="none" />
+      <rect x="60" y="20" width="20" height="20" fill="#0f8f" stroke="none" />
+      <rect x="80" y="20" width="20" height="20" fill="#f80f" stroke="none" />
+
+      <rect x="00" y="40" width="20" height="20" fill="#f08f" stroke="none" />
+      <rect x="20" y="40" width="20" height="20" fill="#0f8f" stroke="none" />
+      <rect x="40" y="40" width="20" height="20" fill="#f80f" stroke="none" />
+      <rect x="60" y="40" width="20" height="20" fill="#0f0f" stroke="none" />
+      <rect x="80" y="40" width="20" height="20" fill="#80ff" stroke="none" />
+
+      <rect x="00" y="60" width="20" height="20" fill="#80ff" stroke="none" />
+      <rect x="20" y="60" width="20" height="20" fill="#f08f" stroke="none" />
+      <rect x="40" y="60" width="20" height="20" fill="#0f8f" stroke="none" />
+      <rect x="60" y="60" width="20" height="20" fill="#f80f" stroke="none" />
+      <rect x="80" y="60" width="20" height="20" fill="#0f0f" stroke="none" />
+
+      <rect x="00" y="80" width="20" height="20" fill="#0f0f" stroke="none" />
+      <rect x="20" y="80" width="20" height="20" fill="#80ff" stroke="none" />
+      <rect x="40" y="80" width="20" height="20" fill="#f08f" stroke="none" />
+      <rect x="60" y="80" width="20" height="20" fill="#0f8f" stroke="none" />
+      <rect x="80" y="80" width="20" height="20" fill="#f80f" stroke="none" />
+    </pattern>
+  </defs>
+
+  <!-- Step 0: Input images -->
+  <g data-step="0">
+    <g class="animate fade from-top">
+      <g class="box" transform="translate(40, 20)">
+        <image
+          href="samples/fovea-left.webp"
+          x="10"
+          y="10"
+          width="90"
+          height="90"
+        />
+        <polygon class="top" points="0,0 90,0 100,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,100 0,90" />
+        <path class="edge" d="M 10 100 L 10 10 L 0 0 M 10 10 L 100 10" />
+        <polygon class="outline" points="0,0 90,0 100,10 100,100 10,100 0,90" />
+        <text x="18" y="-5" class="white">Fovea Left</text>
+      </g>
+    </g>
+    <g class="animate fade from-bottom">
+      <g class="box" transform="translate(40, 180)">
+        <polygon class="top" points="0,0 90,0 100,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,100 0,90" />
+        <image
+          href="samples/fovea-right.webp"
+          x="10"
+          y="10"
+          width="90"
+          height="90"
+        />
+        <path class="edge" d="M 10 100 L 10 10 L 0 0 M 10 10 L 100 10" />
+        <polygon class="outline" points="0,0 90,0 100,10 100,100 10,100 0,90" />
+        <text x="18" y="115" class="white">Fovea Right</text>
+      </g>
+    </g>
+    <polygon
+      class="normalize animate line-draw"
+      points="14,4 14,12 28,0 14,-12 14,-4 -14,-4 -14,-12 -28,0 -14,12 -14,4"
+      transform="translate(90 150) rotate(90)"
+      style="--delay: 2s"
+    />
+    <g class="animate fade from-left" style="--delay: 0.8s">
+      <text class="gray" x="105" y="153">Normalize</text>
+    </g>
+  </g>
+
+  <!-- Step 1: ViT Encoders -->
+  <g data-step="1" style="--arrow-duration: 0.4s">
+    <path class="arrow" d="M 140 70 l 18 0" />
+    <path class="arrow" d="M 140 230 l 18 0" />
+    <g class="animate fade from-left">
+      <path
+        class="trap encoder"
+        d="M 210 110 L 170 110 Q 160 110 162.43 100.3 L 177.57 39.7 Q 180 30 190 30 L 230 30 Q 240 30 242.43 39.7 L 257.57 100.3 Q 260 110 250 110 Z"
+        transform="translate(0.5,0.5) rotate(90,210,70)"
+      />
+      <text x="210" y="65" text-anchor="middle">
+        <tspan class="xl">ViT</tspan>
+        <tspan x="210" dy="20" class="sm">ENCODER</tspan>
+      </text>
+      <path
+        class="trap encoder"
+        d="M 210 270 L 170 270 Q 160 270 162.43 260.3 L 177.57 199.7 Q 180 190 190 190 L 230 190 Q 240 190 242.43 199.7 L 257.57 260.3 Q 260 270 250 270 Z"
+        transform="translate(0.5,0.5) rotate(90,210,230)"
+      />
+      <text x="210" y="225" text-anchor="middle">
+        <tspan class="xl">ViT</tspan>
+        <tspan x="210" dy="20" class="sm">ENCODER</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Step 2: Depth Anything -->
+  <g data-step="2">
+    <path
+      class="arrow"
+      style="--duration: 0.8s"
+      d="M 250 70 L 260 70 Q 270 70 270 80 L 270 140 Q 270 150 275.88 150 l 2 0"
+    />
+    <g class="animate fade from-left" style="--delay: 0.6s">
+      <path
+        class="depth"
+        d="
+        M -40 -30 A 6.5 6.5 0 0 1 -30 -36
+        L 0 -20
+        L 30 -36 A 6.5 6.5 0 0 1 40 -30
+        L 40 30 A 6.5 6.5 0 0 1 30 36
+        L 0 20
+        L -30 36 A 6.5 6.5 0 0
+        1 -40 30
+        Z
+        "
+        transform="translate(330,151)"
+      />
+      <text x="330" y="147" text-anchor="middle">
+        Depth
+        <tspan x="330" dy="14">Anything</tspan>
+      </text>
+      <path
+        class="lock"
+        d="M 305.47 128.86 L 305.47 125.72 C 305.47 123.84 303.83 121.71 301.32 121.71 C 298.79 121.71 297.15 123.83 297.15 125.82 L 297.15 128.86 Z M 295.13 140 C 294.53 140 294 139.48 294 138.88 L 294 129.97 C 294 129.38 294.53 128.86 295.1 128.86 L 295.43 128.86 L 295.43 125.76 C 295.43 122.72 298.06 120 301.23 120 C 304.67 120 307.19 122.69 307.19 125.77 L 307.19 128.86 L 307.5 128.86 C 308.08 128.86 308.62 129.36 308.62 130 L 308.62 138.87 C 308.62 139.49 308.09 140 307.49 140 Z"
+      />
+    </g>
+    <path class="arrow" style="--duration: 2s" d="M 250 70 L 396 70" />
+    <path
+      class="arrow"
+      style="--delay: 1.4s; --duration: 0.6s"
+      d="M 370 150 L 396 150"
+    />
+    <path class="arrow" style="--duration: 2s" d="M 250 230 L 396 230" />
+  </g>
+
+  <!-- Step 3: Positional Encoding -->
+  <g data-step="3">
+    <rect
+      class="line-draw"
+      fill="url(/patterns.svg#latent-mosaic-5x5)"
+      stroke="#ccc"
+      x="390"
+      y="40"
+      width="80"
+      height="220"
+      rx="20"
+      ry="20"
+    />
+    <text class="gray" x="430" y="277" text-anchor="middle">
+      Positional
+      <tspan x="430" dy="14">Encoding</tspan>
+    </text>
+    <path
+      class="hex"
+      d="M 430 55 L 450 64.6 L 450 75.4 L 430 85 L 410 75.4 L 410 64.6 Z"
+    />
+    <path
+      class="hex-edge"
+      d="M 410 64.6 L 430 74.21 L 450 64.6 M 430 74.21 L 430 85"
+    />
+    <path
+      class="hex"
+      d="M 430 135 L 450 144.6 L 450 155.4 L 430 165 L 410 155.4 L 410 144.6 Z"
+    />
+    <path
+      class="hex-edge"
+      d="M 410 144.6 L 430 154.21 L 450 144.6 M 430 154.21 L 430 165"
+    />
+    <path
+      class="hex"
+      d="M 430 215 L 450 224.6 L 450 235.4 L 430 245 L 410 235.4 L 410 224.6 Z"
+    />
+    <path
+      class="hex-edge"
+      d="M 410 224.6 L 430 234.21 L 450 224.6 M 430 234.21 L 430 245"
+    />
+    <path
+      class="pin"
+      d="M 430 35 L 438.66 50 C 439.54 51.52 440 53.24 440 55 C 440 60.52 435.52 65 430 65 C 424.48 65 420 60.52 420 55 C 420 53.24 420.46 51.52 421.34 50 Z"
+      transform="rotate(180,430,50)"
+    />
+    <g class="animate fade from-top">
+      <ellipse class="dot" cx="430" cy="45" rx="5" ry="5" />
+      <path
+        class="pin"
+        d="M 430 115 L 438.66 130 C 439.54 131.52 440 133.24 440 135 C 440 140.52 435.52 145 430 145 C 424.48 145 420 140.52 420 135 C 420 133.24 420.46 131.52 421.34 130 Z"
+        transform="rotate(180,430,130)"
+      />
+      <ellipse class="dot" cx="430" cy="125" rx="5" ry="5" />
+      <path
+        class="pin"
+        d="M 430 195 L 438.66 210 C 439.54 211.52 440 213.24 440 215 C 440 220.52 435.52 225 430 225 C 424.48 225 420 220.52 420 215 C 420 213.24 420.46 211.52 421.34 210 Z"
+        transform="rotate(180,430,210)"
+      />
+      <ellipse class="dot" cx="430" cy="205" rx="5" ry="5" />
+    </g>
+  </g>
+
+  <!-- Step 4: Prior Stream -->
+  <g data-step="4">
+    <path class="arrow" d="M 452 150 l 55 0" style="--duration: 0.4s" />
+    <g class="animate fade from-left" style="--arrow-duration: 0.4s">
+      <g class="box" transform="translate(520, 100)">
+        <polygon class="top" points="0,0 90,0 100,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,100 0,90" />
+        <image
+          href="samples/prior.webp"
+          x="10"
+          y="10"
+          width="90"
+          height="90"
+          filter="saturate(0.5) contrast(0.8)"
+        />
+        <rect x="10" y="10" width="90" height="90" class="mosaic-mask" />
+        <path class="edge" d="M 10 100 L 10 10 L 0 0 M 10 10 L 100 10" />
+        <polygon class="outline" points="0,0 90,0 100,10 100,100 10,100 0,90" />
+        <text x="10" y="115">Prior Stream</text>
+        <path class="self-attn" d="M 5 15 A 15 15 0 1 1 15 -5" />
+        <text class="self-attn" x="22" y="-8">Self Attention</text>
+      </g>
+    </g>
+    <path class="arrow" d="M 452 70 l 225 0" />
+    <path class="arrow" d="M 452 230 l 225 0" />
+    <g class="animate fade from-left">
+      <g class="box" transform="translate(690, 20)">
+        <polygon class="top" points="0,0 90,0 100,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,100 0,90" />
+        <image
+          href="samples/fovea-left.webp"
+          x="10"
+          y="10"
+          width="90"
+          height="90"
+          filter="saturate(0) contrast(0.8)"
+        />
+        <rect x="10" y="10" width="90" height="90" class="mosaic-mask" />
+        <path class="edge" d="M 10 100 L 10 10 L 0 0 M 10 10 L 100 10" />
+        <polygon class="outline" points="0,0 90,0 100,10 100,100 10,100 0,90" />
+        <text x="10" y="-5">Left Stream</text>
+        <path class="self-attn" d="M 90 5 A 15 15 0 1 1 110 20" />
+        <text class="self-attn" x="125" y="0">Self</text>
+        <text class="self-attn" x="125" y="12">Attention</text>
+      </g>
+    </g>
+    <g class="animate fade from-left">
+      <g class="box" transform="translate(690, 180)">
+        <polygon class="top" points="0,0 90,0 100,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,100 0,90" />
+        <image
+          href="samples/fovea-right.webp"
+          x="10"
+          y="10"
+          width="90"
+          height="90"
+          filter="saturate(0) contrast(0.8)"
+        />
+        <rect x="10" y="10" width="90" height="90" class="mosaic-mask" />
+        <path class="edge" d="M 10 100 L 10 10 L 0 0 M 10 10 L 100 10" />
+        <polygon class="outline" points="0,0 90,0 100,10 100,100 10,100 0,90" />
+        <text x="10" y="115">Right Stream</text>
+        <path class="self-attn" d="M 90 100 A 15 15 0 1 0 110 85" />
+        <text class="self-attn" x="125" y="100">Self</text>
+        <text class="self-attn" x="125" y="112">Attention</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Step 7: Fusion -->
+  <g data-step="7">
+    <path class="arrow" d="M 620 150 l 176 0" style="--duration: 1.2s" />
+    <path
+      class="arrow"
+      d="M 790 70 q 30 0 42 30"
+      style="--delay: 0.8s; --duration: 0.6s"
+    />
+    <path
+      class="arrow"
+      d="M 790 230 q 30 0 42 -30"
+      style="--delay: 0.8s; --duration: 0.6s"
+    />
+    <circle
+      class="fusion animate fade line-draw"
+      cx="850"
+      cy="150"
+      r="40"
+      style="--delay: 1.2s; --duration: 1.2s"
+    />
+    <text
+      class="lg"
+      x="850"
+      y="155"
+      text-anchor="middle"
+      style="--delay: 1.2s; --duration: 1.2s"
+    >
+      Fusion
+    </text>
+  </g>
+
+  <!-- Step 5: Left/Right Streams + Cross Attention -->
+  <g data-step="5">
+    <polygon
+      class="normalize animate line-draw"
+      points="14,4 14,12 28,0 14,-12 14,-4 -14,-4 -14,-12 -28,0 -14,12 -14,4"
+      transform="translate(740 150) rotate(90)"
+    />
+    <g class="animate fade from-left" style="--delay: 0.8s">
+      <text class="gray" x="752" y="162">Cross</text>
+      <text class="gray" x="752" y="176">Attention</text>
+    </g>
+  </g>
+
+  <!-- Step 6: Gated Cross Attention -->
+  <g data-step="6">
+    <polygon
+      class="gated-cross animate line-draw"
+      points="22,4 22,12 36,0 22,-12 22,-4 -22,-4 -22,-12 -36,0 -22,12 -22,4"
+      transform="translate(655 125) rotate(-20)"
+    />
+    <polygon
+      class="gated-cross animate line-draw"
+      points="22,4 22,12 36,0 22,-12 22,-4 -22,-4 -22,-12 -36,0 -22,12 -22,4"
+      transform="translate(655 175) rotate(20)"
+    />
+    <text
+      class="gated-cross animate fade from-bottom"
+      style="--travel: 5px; --delay: 0.6s"
+      x="652"
+      y="145"
+    >
+      Gated Cross
+    </text>
+    <text
+      class="gated-cross animate fade from-top"
+      style="--travel: 5px; --delay: 0.6s"
+      x="652"
+      y="163"
+    >
+      Attention
+    </text>
+  </g>
+
+  <!-- Step 8: Upsample -->
+  <g data-step="8" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
+    <path class="arrow" d="M 950 150 l 18 0" />
+    <g class="animate fade from-left" style="--delay: 0.2s">
+      <path
+        class="trap decoder"
+        d="M 1020 190 L 980 190 Q 970 190 972.43 180.3 L 987.57 119.7 Q 990 110 1000 110 L 1040 110 Q 1050 110 1052.43 119.7 L 1067.57 180.3 Q 1070 190 1060 190 Z"
+        transform="translate(0.5,0.5) rotate(270,1020,150)"
+      />
+      <text class="lg" x="1020" y="155" text-anchor="middle">Upsample</text>
+    </g>
+  </g>
+
+  <!-- Step 9: Final Disparity -->
+  <g data-step="9" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
+    <path class="arrow" d="M 1060 150 l 18 0" />
+    <g class="animate fade from-left" style="--delay: 0.2s">
+      <g class="box" transform="translate(1090, 85)">
+        <polygon class="top" points="0,0 120,0 130,10 10,10" />
+        <polygon class="side" points="0,0 10,10 10,130 0,120" />
+        <image
+          href="samples/disparity.webp"
+          x="10"
+          y="10"
+          width="120"
+          height="120"
+        />
+        <path class="edge" d="M 10 130 L 10 10 L 0 0 M 10 10 L 130 10" />
+        <polygon
+          class="outline"
+          points="0,0 120,0 130,10 130,130 10,130 0,120"
+        />
+        <text x="18" y="145">Final Disparity</text>
+      </g>
+    </g>
+  </g>
+</svg>
