@@ -15,6 +15,7 @@ interface FocusBox {
 interface DetailTile {
   src: string;
   alt: string;
+  camera: "left" | "right";
 }
 
 interface AnaglyphTile {
@@ -22,7 +23,7 @@ interface AnaglyphTile {
   alt: string;
 }
 
-const stage = useStage(4, { resetOnEnter: true });
+const stage = useStage(4);
 
 const showWidePair = computed(() => stage.value >= 2);
 const hideRightWide = computed(() => stage.value >= 3);
@@ -62,26 +63,32 @@ const detailTiles: DetailTile[] = [
   {
     src: "/assets/data-collection/left_fovea/22.webp",
     alt: "Left fovea sample 22",
+    camera: "left",
   },
   {
     src: "/assets/data-collection/right_fovea/22.webp",
     alt: "Right fovea sample 22",
+    camera: "right",
   },
   {
     src: "/assets/data-collection/left_fovea/45.webp",
     alt: "Left fovea sample 45",
+    camera: "left",
   },
   {
     src: "/assets/data-collection/right_fovea/45.webp",
     alt: "Right fovea sample 45",
+    camera: "right",
   },
   {
     src: "/assets/data-collection/left_fovea/68.webp",
     alt: "Left fovea sample 68",
+    camera: "left",
   },
   {
     src: "/assets/data-collection/right_fovea/68.webp",
     alt: "Right fovea sample 68",
+    camera: "right",
   },
 ];
 
@@ -114,8 +121,11 @@ function boxStyle(box: FocusBox): CSSProperties {
 function tileStyle(index: number): CSSProperties {
   const row = Math.floor(index / 2) + 2;
   const column = (index % 2) + 1;
+  const camera = detailTiles[index].camera;
 
   return {
+    "--camera-color":
+      camera === "left" ? "var(--camera-left)" : "var(--camera-right)",
     "--tile-delay": `${index * 85}ms`,
     gridColumn: String(column),
     gridRow: String(row),
@@ -187,15 +197,15 @@ function anaglyphStyle(index: number): CSSProperties {
 
         <div class="detail-grid" aria-hidden="true">
           <div class="detail-column-labels">
-            <p class="column-label">Left fovea</p>
-            <p class="column-label">Right fovea</p>
-            <p class="column-label">Anaglyph</p>
+            <p class="column-label column-label-left">Left fovea</p>
+            <p class="column-label column-label-right">Right fovea</p>
+            <p class="column-label column-label-center">Anaglyph</p>
           </div>
 
           <article
             v-for="(tile, index) in detailTiles"
             :key="`${tile.src}-${index}`"
-            class="detail-tile"
+            class="detail-tile detail-tile-fovea"
             :style="tileStyle(index)"
           >
             <img class="detail-image" :src="tile.src" :alt="tile.alt" />
@@ -248,11 +258,15 @@ function anaglyphStyle(index: number): CSSProperties {
   letter-spacing: 0.04em;
   color: #dbeafe;
   background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(59, 130, 246, 0.65);
+  border: 1px solid color-mix(in srgb, var(--camera-center) 72%, transparent);
   border-radius: 999px;
   padding: 0.28rem 0.62rem;
   opacity: 0;
-  transition: transform 480ms ease, left 480ms ease, top 480ms ease, opacity 360ms ease;
+  transition:
+    transform var(--transition-duration) var(--transition-curve),
+    left var(--transition-duration) var(--transition-curve),
+    top var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve);
 }
 
 .baseline-slot {
@@ -267,7 +281,9 @@ function anaglyphStyle(index: number): CSSProperties {
   z-index: 4;
   opacity: 0;
   transform: scale(0.94);
-  transition: opacity 280ms ease, transform 280ms ease;
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
 }
 
 .baseline-text {
@@ -301,7 +317,7 @@ function anaglyphStyle(index: number): CSSProperties {
   margin: 0;
   border-radius: 18px;
   overflow: hidden;
-  border: 2px solid rgba(148, 163, 184, 0.55);
+  border: 2px solid color-mix(in srgb, var(--camera-center) 62%, transparent);
   background: #0f172a;
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.24);
   opacity: 0;
@@ -321,9 +337,9 @@ function anaglyphStyle(index: number): CSSProperties {
   filter: blur(0) saturate(1);
   transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   transition:
-    transform 760ms cubic-bezier(0.18, 0.82, 0.22, 1),
-    opacity 760ms ease,
-    filter 760ms ease;
+    transform var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve),
+    filter var(--transition-duration) var(--transition-curve);
 }
 
 .storyboard.show-wide-pair .wide-angle-label,
@@ -340,9 +356,9 @@ function anaglyphStyle(index: number): CSSProperties {
   transform: translate3d(120px, -24px, 0) scale(0.84);
   filter: blur(8px) saturate(0.65);
   transition:
-    transform 520ms ease,
-    opacity 520ms ease,
-    filter 520ms ease;
+    transform var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve),
+    filter var(--transition-duration) var(--transition-curve);
 }
 
 .storyboard.hide-right-wide .wide-angle-label {
@@ -378,7 +394,7 @@ function anaglyphStyle(index: number): CSSProperties {
 }
 
 .storyboard.show-focus-and-details .focus-box {
-  animation: roi-pop 520ms cubic-bezier(0.2, 0.9, 0.15, 1) both;
+  animation: roi-pop var(--transition-duration) var(--transition-curve) both;
   animation-delay: var(--box-delay);
 }
 
@@ -432,10 +448,13 @@ function anaglyphStyle(index: number): CSSProperties {
 .storyboard.show-focus-and-details .detail-column-labels {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  transition: opacity 320ms ease, transform 320ms ease;
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
 }
 
 .column-label {
+  --camera-label-color: var(--camera-center);
   margin: 0;
   text-align: center;
   font-size: 0.7rem;
@@ -443,9 +462,21 @@ function anaglyphStyle(index: number): CSSProperties {
   letter-spacing: 0.03em;
   color: #e0f2fe;
   background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(56, 189, 248, 0.6);
+  border: 1px solid color-mix(in srgb, var(--camera-label-color) 72%, transparent);
   border-radius: 999px;
   padding: 0.24rem 0.45rem;
+}
+
+.column-label-left {
+  --camera-label-color: var(--camera-left);
+}
+
+.column-label-right {
+  --camera-label-color: var(--camera-right);
+}
+
+.column-label-center {
+  --camera-label-color: var(--camera-center);
 }
 
 .detail-tile {
@@ -461,8 +492,12 @@ function anaglyphStyle(index: number): CSSProperties {
   opacity: 0;
 }
 
+.detail-tile-fovea {
+  border-color: color-mix(in srgb, var(--camera-color) 72%, transparent);
+}
+
 .storyboard.show-focus-and-details .detail-tile {
-  animation: tile-rise 520ms cubic-bezier(0.2, 0.9, 0.18, 1) both;
+  animation: tile-rise var(--transition-duration) var(--transition-curve) both;
   animation-delay: var(--tile-delay);
 }
 

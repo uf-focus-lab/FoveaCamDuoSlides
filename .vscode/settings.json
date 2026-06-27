@@ -1,0 +1,15 @@
+{
+  // Slidev frontmatter uses `---` fences that Markdown tooling misreads as
+  // setext H2 headings (e.g. `layout: two-cols` + `---` -> `## layout: two-cols`).
+  // Disable Copilot + auto-formatting for Markdown so the deck source stays intact.
+  "github.copilot.enable": {
+    "*": true,
+    "markdown": false,
+    "yaml": false
+  },
+  "[markdown]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false
+  }
+}

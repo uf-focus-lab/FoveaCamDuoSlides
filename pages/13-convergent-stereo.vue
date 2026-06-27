@@ -11,7 +11,7 @@ type AnimationState = {
 };
 
 const canvasRef = ref<HTMLDivElement>();
-const stage = useStage(10, { resetOnEnter: true });
+const stage = useStage(10, { presist: true });
 const state = ref<AnimationState>({
   currentStep: -1,
   maxStep: 0,
@@ -280,6 +280,7 @@ async function loadFigure(): Promise<void> {
     });
 
     svg.querySelectorAll<SVGElement>(".box .outline, .box .edge").forEach((element) => {
+      if (element.closest(".camera-left, .camera-right")) return;
       element.setAttribute("stroke", "rgba(0, 0, 0, 0.28)");
     });
 
@@ -410,7 +411,7 @@ button:hover {
 /* Animation styles for data-step elements */
 :deep([data-step]) {
   opacity: 0;
-  transition: opacity 0.4s ease-in-out;
+  transition: opacity var(--transition-duration) var(--transition-curve);
 }
 
 :deep([data-step].show) {
@@ -419,7 +420,7 @@ button:hover {
 
 /* Arrow animation */
 :deep(.arrow) {
-  transition: stroke-dashoffset 0.6s ease-out;
+  transition: stroke-dashoffset var(--transition-duration) var(--transition-curve);
 }
 </style>
 

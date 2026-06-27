@@ -1,0 +1,164 @@
+/* VitePress-like color tokens for the theme-less Slidev deck.
+   Slidev toggles `html.dark` / `html.light`; light is the default fallback. */
+
+:root {
+  color-scheme: light;
+
+  /* Primitive palette */
+  --white: #ffffff;
+  --black: #000000;
+  --neutral: #2f343d;
+  --gray-1: #3f4652;
+  --gray-2: #5b6573;
+  --gray-3: #8b95a5;
+  --gray-soft: rgba(120, 130, 145, 0.14);
+
+  --blue-1: #305fca;
+  --blue-2: #3f78e0;
+  --blue-3: #6b99f0;
+  --blue-soft: rgba(64, 120, 224, 0.14);
+
+  --green-1: #18794e;
+  --green-2: #299764;
+  --green-3: #30a46c;
+  --green-soft: rgba(48, 164, 108, 0.14);
+
+  --yellow-1: #915930;
+  --yellow-2: #946300;
+  --yellow-3: #9f6a00;
+  --yellow-soft: rgba(234, 179, 8, 0.18);
+
+  --red-1: #b8272c;
+  --red-2: #d5393e;
+  --red-3: #e0575b;
+  --red-soft: rgba(224, 87, 91, 0.14);
+
+  /* Semantic surfaces */
+  --bg: var(--white);
+  --bg-alt: #f6f7f9;
+  --bg-elv: var(--white);
+  --bg-soft: #f5f6f8;
+
+  --border: rgba(120, 130, 145, 0.28);
+  --divider: rgba(120, 130, 145, 0.22);
+  --gutter: rgba(120, 130, 145, 0.14);
+
+  --text-1: hsl(220, 20%, 10%);
+  --text-2: var(--gray-2);
+  --text-3: #8a94a3;
+
+  --brand-1: var(--fc-fg);
+  --brand-2: var(--text-2);
+  --brand-3: var(--text-3);
+  --brand-soft: var(--default-soft);
+
+  --default-1: var(--gray-1);
+  --default-2: var(--gray-2);
+  --default-3: var(--gray-3);
+  --default-soft: var(--gray-soft);
+
+  --tip-1: var(--green-1);
+  --tip-2: var(--green-2);
+  --tip-3: var(--green-3);
+  --tip-soft: var(--green-soft);
+
+  --warning-1: var(--yellow-1);
+  --warning-2: var(--yellow-2);
+  --warning-3: var(--yellow-3);
+  --warning-soft: var(--yellow-soft);
+
+  --danger-1: var(--red-1);
+  --danger-2: var(--red-2);
+  --danger-3: var(--red-3);
+  --danger-soft: var(--red-soft);
+
+  /* Camera identity colors */
+  --camera-left: #f76055;
+  --camera-center: #84c481;
+  --camera-right: #6baffb;
+  --camera-left-soft: color-mix(in srgb, var(--camera-left) 18%, transparent);
+  --camera-center-soft: color-mix(in srgb, var(--camera-center) 18%, transparent);
+  --camera-right-soft: color-mix(in srgb, var(--camera-right) 18%, transparent);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 3px 12px rgba(0, 0, 0, 0.08);
+
+  --code-color: #1a1f2b;
+  --code-bg: var(--bg-soft);
+
+  /* Existing deck aliases. Keep components/slides stable while allowing new
+     code to use the unprefixed theme tokens directly. */
+  --fc-bg: var(--bg);
+  --fc-fg: var(--text-1);
+  --fc-muted: var(--text-2);
+  --fc-border: var(--border);
+  --fc-contrast: var(--black);
+
+  --blend: plus-darker;
+  --slidev-theme-primary: var(--brand-1);
+  --slidev-code-radius: 6px;
+  --slidev-code-background: var(--code-bg);
+  --slidev-code-foreground: var(--code-color);
+  --slidev-code-font-family:
+    ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --brand-from: hsl(200, 80%, 50%);
+  --brand-to: hsl(100, 40%, 50%);
+  --brand-gradient: linear-gradient(
+    to bottom right,
+    var(--brand-from),
+    var(--brand-to)
+  );
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --neutral: #e8edf3;
+  --gray-1: #c8d0da;
+  --gray-2: #98a2b3;
+  --gray-3: #6b7280;
+  --gray-soft: rgba(148, 163, 184, 0.16);
+
+  --blue-1: #9bbcff;
+  --blue-2: #7da4f6;
+  --blue-3: #5d86dd;
+  --blue-soft: rgba(125, 164, 246, 0.18);
+
+  --green-1: #8fd7a5;
+  --green-2: #65c685;
+  --green-3: #45ad69;
+  --green-soft: rgba(101, 198, 133, 0.18);
+
+  --yellow-1: #f7c978;
+  --yellow-2: #e6b15d;
+  --yellow-3: #c99446;
+  --yellow-soft: rgba(247, 201, 120, 0.18);
+
+  --red-1: #ff9aa2;
+  --red-2: #f27882;
+  --red-3: #d85c67;
+  --red-soft: rgba(242, 120, 130, 0.18);
+
+  --bg: hsl(220, 20%, 5%);
+  --bg-alt: hsl(220, 18%, 8%);
+  --bg-elv: hsl(220, 16%, 11%);
+  --bg-soft: hsl(220, 15%, 13%);
+
+  --border: hsla(220, 14%, 64%, 0.28);
+  --divider: hsla(220, 14%, 64%, 0.22);
+  --gutter: hsla(220, 14%, 64%, 0.14);
+
+  --text-1: hsl(220, 20%, 90%);
+  --text-2: hsl(220, 20%, 65%);
+  --text-3: hsl(220, 14%, 48%);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.36);
+  --shadow-2: 0 3px 12px rgba(0, 0, 0, 0.42);
+
+  --code-color: #e7ebf0;
+  --code-bg: #161a21;
+
+  --fc-contrast: var(--white);
+  --blend: plus-lighter;
+}

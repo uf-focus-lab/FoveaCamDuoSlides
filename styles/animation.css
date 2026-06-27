@@ -5,6 +5,21 @@
   /* Total length of every slide transition. Slidev defaults this to 0.5s in
      its vars.css; re-declared here so it's tunable in one place. */
   --slidev-transition-duration: 0.4s;
+
+  /* Shared timing for coordinated in-component transitions (e.g. the geometry
+     chart's moving point, projection rays and dimension lines), so subcomponents
+     animate in sync. Read them as `transition: <prop> var(--transition-duration)
+     var(--transition-curve)`; a parent can override either (e.g. set the
+     duration to 0s while dragging for instant tracking). */
+  --transition-duration: 0.7s;
+  --transition-curve: ease-in-out;
+}
+
+/* Helper: ease every animatable property with the shared timing/curve. Put it on
+   an element instead of writing per-property `transition` rules; a parent can
+   still override the vars on its subtree (e.g. `--transition-duration: 0s`). */
+.transition {
+  transition: all var(--transition-duration) var(--transition-curve);
 }
 
 /* Snappy-out curve with a slightly eased (less abrupt) start. Slidev hardcodes

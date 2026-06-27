@@ -20,6 +20,16 @@ declare module "*.webm" {
   export default src;
 }
 
+declare module "*.md" {
+  import type { DefineComponent } from "vue";
+  const component: DefineComponent<
+    Record<string, unknown>,
+    Record<string, unknown>,
+    unknown
+  >;
+  export default component;
+}
+
 declare module "*.css" {
   const content: Record<string, string>;
   export default content;

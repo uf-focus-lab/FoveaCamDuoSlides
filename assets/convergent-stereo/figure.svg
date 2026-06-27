@@ -58,6 +58,20 @@
       .box text {
         font-variant: small-caps;
       }
+      .box.camera-left .outline,
+      .box.camera-left .edge {
+        stroke: var(--camera-left);
+      }
+      .box.camera-left text {
+        fill: var(--camera-left);
+      }
+      .box.camera-right .outline,
+      .box.camera-right .edge {
+        stroke: var(--camera-right);
+      }
+      .box.camera-right text {
+        fill: var(--camera-right);
+      }
       .hex {
         fill: #2a2a3a;
         stroke: #7b8ed8;
@@ -193,7 +207,7 @@
   <!-- Step 0: Input images -->
   <g data-step="0">
     <g class="animate fade from-top">
-      <g class="box" transform="translate(40, 20)">
+      <g class="box camera-left" transform="translate(40, 20)">
         <image
           href="samples/fovea-left.webp"
           x="10"
@@ -209,7 +223,7 @@
       </g>
     </g>
     <g class="animate fade from-bottom">
-      <g class="box" transform="translate(40, 180)">
+      <g class="box camera-right" transform="translate(40, 180)">
         <polygon class="top" points="0,0 90,0 100,10 10,10" />
         <polygon class="side" points="0,0 10,10 10,100 0,90" />
         <image
@@ -390,7 +404,7 @@
     <path class="arrow" d="M 452 70 l 225 0" />
     <path class="arrow" d="M 452 230 l 225 0" />
     <g class="animate fade from-left">
-      <g class="box" transform="translate(690, 20)">
+      <g class="box camera-left" transform="translate(690, 20)">
         <polygon class="top" points="0,0 90,0 100,10 10,10" />
         <polygon class="side" points="0,0 10,10 10,100 0,90" />
         <image
@@ -411,7 +425,7 @@
       </g>
     </g>
     <g class="animate fade from-left">
-      <g class="box" transform="translate(690, 180)">
+      <g class="box camera-right" transform="translate(690, 180)">
         <polygon class="top" points="0,0 90,0 100,10 10,10" />
         <polygon class="side" points="0,0 10,10 10,100 0,90" />
         <image

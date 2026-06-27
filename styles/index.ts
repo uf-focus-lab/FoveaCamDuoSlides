@@ -2,6 +2,7 @@
 // With `theme: none`, no theme styling is applied — we pull in Slidev's core
 // base layout CSS (.slidev-layout padding, heading scale) and then our own.
 import "@slidev/client/styles/layouts-base.css";
+import "./theme.css";
 import "./base.css";
 import "./layout.css";
 import "./animation.css";

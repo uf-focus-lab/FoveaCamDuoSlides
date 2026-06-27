@@ -1,6 +1,6 @@
 import { defineShortcutsSetup } from "@slidev/types";
 import type { NavOperations, ShortcutOptions } from "@slidev/types";
-import { advanceActiveStage } from "stores/stage";
+import { advanceActiveStage, retreatActiveStage } from "stores/stage";
 
 export default defineShortcutsSetup(
   (nav: NavOperations, base: ShortcutOptions[]) => {
@@ -15,6 +15,13 @@ export default defineShortcutsSetup(
                 if (!advanceActiveStage()) void nav.next();
               },
             }
+          : shortcut.name === "prev_space"
+            ? {
+                ...shortcut,
+                fn: () => {
+                  if (!retreatActiveStage()) void nav.prev();
+                },
+              }
           : shortcut,
       );
   },
