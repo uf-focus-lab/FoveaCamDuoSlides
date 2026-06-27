@@ -11,7 +11,7 @@
     "@fortawesome/fontawesome-svg-core": "^7.3.0",
     "@fortawesome/free-solid-svg-icons": "^7.3.0",
     "@fortawesome/vue-fontawesome": "^3.3.0",
-    "@slidev/cli": "^52.16.0",
+    "@slidev/cli": "52.15.2",
     "@types/qrcode": "^1.5.6",
     "@zhangyx1998/svg-loader": "^0.0.1",
     "geometry-core": "^0.0.0",

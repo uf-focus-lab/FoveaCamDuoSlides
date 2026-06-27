@@ -83,8 +83,8 @@ If the object is far enough that it doesn't have any disparity, the information 
 -->
 
 ---
-
-## layout: none
+layout: none
+---
 
 <script setup lang="ts">
 import CameraTurntable from "pages/05-camera-turntable.vue";
