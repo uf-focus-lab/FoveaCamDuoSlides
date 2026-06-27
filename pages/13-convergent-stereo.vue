@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { nextTick, ref, onMounted, onBeforeUnmount, watch } from "vue";
+import FigureSvg from "assets/convergent-stereo/figure.svg";
 import { advanceActiveStage, useStage } from "stores/stage";
 
 type AnimationState = {
@@ -252,22 +253,10 @@ async function playAll(): Promise<void> {
   }
 }
 
-async function loadFigure(): Promise<void> {
+async function initializeFigure(): Promise<void> {
+  await nextTick();
   if (!canvasRef.value) return;
 
-  const response = await fetch("/assets/convergent-stereo/figure.svg");
-  if (!response.ok) {
-    throw new Error(`Failed to load figure.svg: ${response.status}`);
-  }
-
-  let svgContent = await response.text();
-  
-  // Fix image references to point to correct asset paths
-  // Replace both href and xlink:href formats
-  svgContent = svgContent.replace(/href="samples\//g, 'href="/assets/convergent-stereo/samples/');
-  svgContent = svgContent.replace(/xlink:href="\.\/samples\//g, 'xlink:href="/assets/convergent-stereo/samples/');
-  
-  canvasRef.value.innerHTML = svgContent;
   const svg = canvasRef.value.querySelector<SVGSVGElement>("svg");
   if (svg) {
     // Remove the inline background-color style that causes black background
@@ -327,7 +316,7 @@ watch(
 );
 
 onMounted(async () => {
-  await loadFigure();
+  await initializeFigure();
   state.value.animationLoopId = requestAnimationFrame(async () => {
     await startArrowAnimation();
   });
@@ -335,12 +324,12 @@ onMounted(async () => {
   if (props.autoplay) {
     await playAll();
   }
+});
 
-  onBeforeUnmount(() => {
-    if (state.value.animationLoopId) {
-      cancelAnimationFrame(state.value.animationLoopId);
-    }
-  });
+onBeforeUnmount(() => {
+  if (state.value.animationLoopId) {
+    cancelAnimationFrame(state.value.animationLoopId);
+  }
 });
 </script>
 
@@ -426,6 +415,8 @@ button:hover {
 
 <template>
   <div class="container">
-    <div id="canvas" ref="canvasRef"></div>
+    <div id="canvas" ref="canvasRef">
+      <FigureSvg />
+    </div>
   </div>
 </template>

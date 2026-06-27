@@ -25,6 +25,16 @@ interface AnaglyphTile {
 
 const stage = useStage(4);
 
+// Resolve data-collection figures through Vite so they are hashed, copied into
+// the build, and base-prefixed for subpath deploys (a bare "/assets/…" string
+// would 404 on GitHub Pages). Keyed by path relative to assets/data-collection.
+const assetUrls = import.meta.glob<string>(
+  "../assets/data-collection/**/*.webp",
+  { eager: true, query: "?url", import: "default" },
+);
+const asset = (name: string) =>
+  assetUrls[`../assets/data-collection/${name}`];
+
 const showWidePair = computed(() => stage.value >= 2);
 const hideRightWide = computed(() => stage.value >= 3);
 const showFocusAndDetails = computed(() => stage.value >= 4);
@@ -61,32 +71,32 @@ const roiBoxes: FocusBox[] = [
 
 const detailTiles: DetailTile[] = [
   {
-    src: "/assets/data-collection/left_fovea/22.webp",
+    src: asset("left_fovea/22.webp"),
     alt: "Left fovea sample 22",
     camera: "left",
   },
   {
-    src: "/assets/data-collection/right_fovea/22.webp",
+    src: asset("right_fovea/22.webp"),
     alt: "Right fovea sample 22",
     camera: "right",
   },
   {
-    src: "/assets/data-collection/left_fovea/45.webp",
+    src: asset("left_fovea/45.webp"),
     alt: "Left fovea sample 45",
     camera: "left",
   },
   {
-    src: "/assets/data-collection/right_fovea/45.webp",
+    src: asset("right_fovea/45.webp"),
     alt: "Right fovea sample 45",
     camera: "right",
   },
   {
-    src: "/assets/data-collection/left_fovea/68.webp",
+    src: asset("left_fovea/68.webp"),
     alt: "Left fovea sample 68",
     camera: "left",
   },
   {
-    src: "/assets/data-collection/right_fovea/68.webp",
+    src: asset("right_fovea/68.webp"),
     alt: "Right fovea sample 68",
     camera: "right",
   },
@@ -94,15 +104,15 @@ const detailTiles: DetailTile[] = [
 
 const anaglyphTiles: AnaglyphTile[] = [
   {
-    src: "/assets/data-collection/diff/22.webp",
+    src: asset("diff/22.webp"),
     alt: "Anaglyph composite 22",
   },
   {
-    src: "/assets/data-collection/diff/45.webp",
+    src: asset("diff/45.webp"),
     alt: "Anaglyph composite 45",
   },
   {
-    src: "/assets/data-collection/diff/22.webp",
+    src: asset("diff/22.webp"),
     alt: "Anaglyph composite placeholder",
   },
 ];
@@ -158,7 +168,7 @@ function anaglyphStyle(index: number): CSSProperties {
         <figure class="wide-card left-card">
           <img
             class="wide-image"
-            src="/assets/data-collection/wide/R_100.webp"
+            :src="asset('wide/R_100.webp')"
             alt="Wide-angle photo at baseline one"
           />
 
@@ -190,7 +200,7 @@ function anaglyphStyle(index: number): CSSProperties {
         <figure class="wide-card right-card">
           <img
             class="wide-image"
-            src="/assets/data-collection/wide/R_300.webp"
+            :src="asset('wide/R_300.webp')"
             alt="Wide-angle photo at baseline two"
           />
         </figure>
