@@ -59,9 +59,10 @@ layout: two-cols
 <script setup lang="ts">
 import { computed } from "vue";
 import OurSolutionPoints from "pages/04A-our-solution-points.vue";
-import OurSolutionChart from "pages/04B-our-solution-chart.vue";
+import OurSolutionDiagram from "pages/04B-our-solution-diagram.vue";
 import { useStage } from "stores/stage";
 const stage = useStage(7, { preview: -1 }).transient([2, 4, 6]);
+const diagramStage = computed(() => Math.ceil(stage.value / 2))
 </script>
 
 # Our Solution
@@ -72,7 +73,7 @@ const stage = useStage(7, { preview: -1 }).transient([2, 4, 6]);
 
 ::right::
 
-<OurSolutionChart :stage="Math.ceil(stage.value / 2)" />
+<OurSolutionDiagram :stage="diagramStage" />
 
 <!--
 With the creation of foundation models for traditional stereo, getting depth from a wide range of applications has become easy.
