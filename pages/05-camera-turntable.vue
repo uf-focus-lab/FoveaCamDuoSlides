@@ -135,6 +135,10 @@ async function playSegment(
   const token = segmentToken;
   const stopAt = stopTime(segment);
   const holdAt = finalFrameTime(segment);
+  // When holding, stop the instant the final frame begins; running on to
+  // `stopAt` (a full frame later) then seeking back would rewind one frame and
+  // visibly bounce. When not holding, play the segment through to its end.
+  const stopThreshold = holdFinalFrame ? holdAt : stopAt;
   const startAt = startTime(segment);
 
   video.pause();
@@ -159,7 +163,7 @@ async function playSegment(
         return;
       }
 
-      if (video.currentTime >= stopAt) {
+      if (video.currentTime >= stopThreshold) {
         video.pause();
         if (holdFinalFrame) video.currentTime = holdAt;
         stopFrame = undefined;
@@ -182,6 +186,7 @@ async function playPreparedSegment(
 ) {
   const stopAt = stopTime(segment);
   const holdAt = finalFrameTime(segment);
+  const stopThreshold = holdFinalFrame ? holdAt : stopAt;
 
   try {
     await video.play();
@@ -197,7 +202,7 @@ async function playPreparedSegment(
         return;
       }
 
-      if (video.currentTime >= stopAt) {
+      if (video.currentTime >= stopThreshold) {
         video.pause();
         if (holdFinalFrame) video.currentTime = holdAt;
         stopFrame = undefined;

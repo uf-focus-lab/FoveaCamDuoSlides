@@ -8,7 +8,7 @@ import {
   watch,
 } from "vue";
 import CameraModel from "components/CameraModel";
-import CameraRay from "components/CameraRay";
+import CameraRay from "components/CameraRay.vue";
 
 const props = defineProps<{ stage: number }>();
 
@@ -67,7 +67,7 @@ function cameraTransform({
 // After stage 1 the side cameras switch from wide-angle to a narrow telephoto
 // fovea — narrower fov and a longer lens barrel.
 const telephoto = computed(() => props.stage >= 2);
-const sideFov = computed(() => (telephoto.value ? 5 : 45));
+const sideFov = computed(() => (telephoto.value ? 9 : 45));
 const sideLens = computed(() => (telephoto.value ? 180 : 100));
 
 // From stage 3 on, both side cameras repeatedly verge onto a shared point in a
@@ -259,7 +259,7 @@ watch(
         :lens="left.lens"
         :label="left.label"
       >
-        <CameraRay :fov="left.fov" :resolution="5" :cursor="leftCursor" />
+        <CameraRay :fov="left.fov" :res="5" :cursor="leftCursor" />
       </CameraModel>
 
       <CameraModel
@@ -269,7 +269,7 @@ watch(
         :lens="right.lens"
         :label="right.label"
       >
-        <CameraRay :fov="right.fov" :resolution="5" :cursor="rightCursor" />
+        <CameraRay :fov="right.fov" :res="5" :cursor="rightCursor" />
       </CameraModel>
     </svg>
   </div>

@@ -174,6 +174,42 @@ import ConvergentStereoAnimation from "pages/13-convergent-stereo.vue";
 - Huge figure + animation
 
 ---
+layout: two-cols
+---
+
+::left::
+
+# Recap
+
++ **Design**
+
+  FoveaCam Duo delivers high-resolution foveated stereo with prephial awareness. 
+
++ **Calibration**
+
+  The pipeline ensure precise extrinsic and intrinsic mapping.
+
++ **Dataset**
+
+  Automated data collection delivers large amount of raster samples.
+
++ **Convergent Stereo**
+
+  validates disparity signal embedded in foveated views.
+
+::right::
+
+# Next Steps
+
++ **Decision**
+
+  Where to put foveas for most information.
+
++ **Aggregation**
+
+  How to merge information back into wide prepherial.
+
+---
 
 # <span style="color: red">New Results</span>: 3D/4D Scene Upgrade
 

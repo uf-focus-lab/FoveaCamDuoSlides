@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onScopeDispose, ref, watch } from "vue";
-import CameraRay from "components/CameraRay";
+import CameraRay from "components/CameraRay.vue";
 import DimAnnotation from "components/DimAnnotation.vue";
 
 // `stage` drives the sensor parameters: see the choreography note below.
@@ -28,7 +28,7 @@ const SENSOR_HALF = FOCAL_BASE * Math.tan((FOV_BASE / 2) * DEG);
 // Stage choreography (all dimensions stay visible throughout):
 //   3 → discretize: the pixel boundary lines appear (matches ΔZ in the math).
 //   5 → double each sensor's resolution (the "increasing resolution" answer);
-//       stage 4 is the question reveal, so the doubling lands one step later.
+//       new keyed rays are staged outside the FoV, then squeezed into view.
 // Focal doubling is kept but gated past the last stage, so it stays off for now
 // (lower the threshold / add a stage to re-enable it later).
 const boundary = computed(() => props.stage >= 3);
@@ -40,7 +40,7 @@ const fov = computed(
 const sensorY = computed(() => CAM_Y + focal.value); // sensor plane height
 
 // While a structural change (resolution / boundary / focal) is mid-transition,
-// tell CameraRay to drop the highlight so the lit cell doesn't chase rearranging
+// tell CameraRay to drop the highlight so the lit cell doesn't chase changing
 // pixels. The point loop never touches these, so per-frame tracking is unaffected.
 const rayAnimating = ref(false);
 let rayAnimTimer: ReturnType<typeof setTimeout> | undefined;
@@ -215,8 +215,7 @@ function cursorFor(cx: number) {
         <line x1="50" y1="0" x2="10" y2="0" />
         <CameraRay
           :fov="fov"
-          :resolution="res"
-          :max-resolution="RES * 2"
+          :res="res"
           :height="HEIGHT"
           :f="focal"
           :boundary="boundary"
