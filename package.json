@@ -15,6 +15,7 @@
     "@types/qrcode": "^1.5.6",
     "@zhangyx1998/svg-loader": "^0.0.1",
     "geometry-core": "^0.0.0",
+    "mediabunny": "^1.49.0",
     "node-html-parser": "^7.1.0",
     "qrcode": "^1.5.4",
     "sass-embedded": "^1.100.0",
