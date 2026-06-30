@@ -91,7 +91,7 @@ function bbox(pts: Point2d[]) {
     <div class="matrix-group">
       <div class="matrix h-matrix">
         <span class="bracket bracket-left" />
-        <span class="h-symbol">H</span>
+        <span class="h-symbol">H<sub>a<sub>x</sub>, a<sub>y</sub></sub></span>
         <span class="bracket bracket-right" />
       </div>
       <Annotation

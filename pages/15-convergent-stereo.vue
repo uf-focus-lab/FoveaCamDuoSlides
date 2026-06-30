@@ -12,7 +12,7 @@ type AnimationState = {
 };
 
 const canvasRef = ref<HTMLDivElement>();
-const stage = useStage(10, { presist: true });
+const stage = useStage(10, { presist: true, preview: -1 });
 const state = ref<AnimationState>({
   currentStep: -1,
   maxStep: 0,

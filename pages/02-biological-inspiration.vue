@@ -67,6 +67,11 @@ const templateSlots = [
   },
 ];
 
+const COVERFLOW_STEP_PX = 330;
+const DEPTH_STEP_PX = 260;
+const SIDE_ROTATION_DEG = 54;
+const MAX_VISIBLE_OFFSET = 3;
+
 const slides = computed<InspirationSlide[]>(() => {
   if (!discoveredImages.length) {
     return [];
@@ -101,21 +106,66 @@ function offsetFromActive(index: number) {
   return index - activeIndex.value;
 }
 
+function toRadians(degrees: number) {
+  return (degrees * Math.PI) / 180;
+}
+
+function matrixValue(value: number) {
+  return Math.abs(value) < 0.00001 ? "0" : value.toFixed(5);
+}
+
+function coverflowMatrix3d(
+  translateX: number,
+  translateZ: number,
+  rotateY: number,
+  scale: number,
+) {
+  const yaw = toRadians(rotateY);
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+
+  const values = [
+    cy * scale,
+    0,
+    -sy * scale,
+    0,
+    0,
+    scale,
+    0,
+    0,
+    sy * scale,
+    0,
+    cy * scale,
+    0,
+    translateX,
+    0,
+    translateZ,
+    1,
+  ];
+
+  return `matrix3d(${values.map(matrixValue).join(", ")})`;
+}
+
 function cardStyle(index: number) {
   const offset = offsetFromActive(index);
   const absOffset = Math.abs(offset);
-  const limitedOffset = Math.min(absOffset, 3);
+  const limitedOffset = Math.min(absOffset, MAX_VISIBLE_OFFSET);
   const direction = Math.sign(offset);
-  const translateX = offset * 21.5;
-  const translateZ = absOffset === 0 ? 0 : -absOffset * 170;
-  const rotateY = direction === 0 ? 0 : direction < 0 ? 28 : -28;
-  const rotateX = absOffset === 0 ? 0 : 3;
-  const scale = Math.max(0.56, 1 - limitedOffset * 0.16);
+  const translateX = offset * COVERFLOW_STEP_PX;
+  const translateZ = absOffset === 0 ? 0 : -absOffset * DEPTH_STEP_PX;
+  const rotateY =
+    direction === 0 ? 0 : direction < 0 ? SIDE_ROTATION_DEG : -SIDE_ROTATION_DEG;
+  const scale = Math.max(0.48, 1 - limitedOffset * 0.2);
   const opacity = Math.max(0.1, 1 - limitedOffset * 0.26);
   const blur = Math.max(0, limitedOffset - 0.5) * 1.2;
 
   return {
-    transform: `translate(-50%, -50%) translate3d(${translateX}rem, 0, ${translateZ}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(${scale})`,
+    transform: `translate(-50%, -50%) ${coverflowMatrix3d(
+      translateX,
+      translateZ,
+      rotateY,
+      scale,
+    )}`,
     opacity,
     filter: `saturate(${1 - limitedOffset * 0.18}) brightness(${1 - limitedOffset * 0.08}) blur(${blur}px)`,
     zIndex: String(100 - absOffset),
@@ -192,9 +242,11 @@ function cardStyle(index: number) {
   align-items: center;
   justify-content: center;
   padding: 8rem 3.5rem 4.5rem;
-  perspective: 2200px;
+  perspective: 850px;
   perspective-origin: center;
   z-index: 2;
+  --transition-duration: 0.42s;
+  --transition-curve: cubic-bezier(0.2, 0.65, 0.2, 1);
 }
 
 .carousel-stage {

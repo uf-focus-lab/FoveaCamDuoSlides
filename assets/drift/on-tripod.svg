@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 640 480"
+>
+  <defs>
+    <style type="text/css">
+      :root {
+        --green: green;
+        --red: red;
+      }
+      .support {
+        stroke: var(--green);
+        stroke-width: 8px;
+        marker-end: url(#arrow-support);
+        stroke-linecap: round;
+      }
+      .gravity {
+        stroke: var(--red);
+        stroke-width: 8px;
+        marker-end: url(#arrow-gravity);
+        stroke-linecap: round;
+      }
+    </style>
+    <marker
+      id="arrow-support"
+      markerWidth="4"
+      markerHeight="4"
+      refX="2"
+      refY="2"
+      orient="auto"
+    >
+      <path d="M0,0 L4,2 L0,4 z" fill="var(--green)" />
+    </marker>
+    <marker
+      id="arrow-gravity"
+      markerWidth="4"
+      markerHeight="4"
+      refX="2"
+      refY="2"
+      orient="auto"
+    >
+      <path d="M0,0 L4,2 L0,4 z" fill="var(--red)" />
+    </marker>
+  </defs>
+  <image
+    xlink:href="on-tripod.webp"
+    alt="On Tripod"
+    width="490"
+    height="480"
+    x="72"
+    y="74"
+  />
+  <path class="support" d="M 310,120 v -50" />
+  <path class="gravity" d="M 120,300 v +50" />
+  <path class="gravity" d="M 500,300 v +50" />
+</svg>

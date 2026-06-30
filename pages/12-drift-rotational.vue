@@ -1,50 +1,25 @@
 <script setup lang="ts">
 import { computed, useId } from "vue";
+import OnRig from "assets/drift/on-rig.svg";
+import OnTripod from "assets/drift/on-tripod.svg";
 
 const props = defineProps<{ stage: number }>();
 const axisArrowBaseId = `axis-arrow-${useId()}`;
 
 // Stage plan:
-//   1  Cause column, undeformed supports.
-//   2  Cause internal stage: calibration-rig flexure appears.
-//   3  Cause internal stage: tripod flexure appears.
-//   4  Effect column enters, axes separated and aligned.
+//   1  Cause column, calibration-rig figure visible.
+//   2  Cause internal stage: tripod figure reveals in the side-by-side layout.
+//   3  Cause internal stage: force arrows line-draw onto both figures.
+//   4  Effect column enters, cause figures stack as the cause column narrows.
 //   5  Effect internal stage: frame origins overlap without rotation.
 //   6  Effect internal stage: opposite warp rotation misaligns the scan.
 //   7  Mitigation column enters; all columns split evenly.
-const rigWarped = computed(() => props.stage >= 2);
-const tripodWarped = computed(() => props.stage >= 3);
+const tripodFigureIn = computed(() => props.stage >= 2);
+const causeArrowsIn = computed(() => props.stage >= 3);
 const effectIn = computed(() => props.stage >= 4);
 const colocated = computed(() => props.stage >= 5);
 const rotated = computed(() => props.stage >= 6);
 const mitigationIn = computed(() => props.stage >= 7);
-
-const WARP_DEG = 6;
-
-// Calibration rig: a cantilever arm off a turntable post droops under the
-// camera's weight, bending the arm and tilting the camera.
-const RIG_DROOP = 20;
-const rigArmEnd = computed(() => ({
-  x: 372,
-  y: 134 + (rigWarped.value ? RIG_DROOP : 0),
-}));
-const rigArmPath = computed(() => {
-  const e = rigArmEnd.value;
-  return rigWarped.value
-    ? `M150,134 Q262,${134 + RIG_DROOP * 1.5} ${e.x},${e.y}`
-    : `M150,134 L${e.x},${e.y}`;
-});
-const rigCamTransform = computed(
-  () =>
-    `translate(${rigArmEnd.value.x}px, ${rigArmEnd.value.y}px) rotate(${
-      rigWarped.value ? WARP_DEG : 0
-    }deg)`,
-);
-
-// Tripod: the head flexes under load, tilting the camera the other way.
-const tripodCamTransform = computed(
-  () => `translate(300px, 360px) rotate(${tripodWarped.value ? -WARP_DEG : 0}deg)`,
-);
 
 // Axes demo: two camera frames whose synchronized FoV scan only diverges once
 // their origins are first overlapped, then rotated by opposite warp.
@@ -78,99 +53,16 @@ function frameTransform(side: "left" | "right") {
       <!-- Cause: how the camera is supported, the load, and the warp. -->
       <article class="drift-col cause-col">
         <div class="col-body">
-          <svg class="structure" viewBox="0 0 600 540" overflow="visible">
-          <defs>
-            <marker
-              id="warp-arrow"
-              viewBox="0 0 10 10"
-              refX="8"
-              refY="5"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,1 L9,5 L0,9 Z" fill="currentColor" />
-            </marker>
-          </defs>
-
-          <!-- Panel: calibration rig -->
-          <text class="panel-title" x="28" y="34">On the calibration rig</text>
-
-          <ellipse class="rig-turntable" cx="150" cy="236" rx="86" ry="20" />
-          <path
-            class="rig-spin"
-            d="M96,214 A70 24 0 0 1 204,214"
-            marker-end="url(#warp-arrow)"
-          />
-          <line class="support" x1="150" y1="236" x2="150" y2="134" />
-
-          <!-- Undeformed reference + the deformed (drooping) arm. -->
-          <path class="reference" d="M150,134 L372,134" />
-          <path
-            class="support arm"
-            :d="rigArmPath"
-            :style="{ d: `path('${rigArmPath}')` }"
-          />
-
-          <g class="ghost" :class="{ show: rigWarped }">
-            <g transform="translate(372 134)">
-              <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
-              <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
-            </g>
-          </g>
-          <g class="cam" :style="{ transform: rigCamTransform }">
-            <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
-            <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
-          </g>
-
-          <line
-            class="load"
-            :x1="rigArmEnd.x"
-            :y1="rigArmEnd.y + 26"
-            :x2="rigArmEnd.x"
-            :y2="rigArmEnd.y + 74"
-            marker-end="url(#warp-arrow)"
-          />
-          <text class="load-label" :x="rigArmEnd.x + 12" :y="rigArmEnd.y + 60">
-            load
-          </text>
-          <text class="warp-label" :class="{ show: rigWarped }" x="430" y="150">
-            cantilever flexure → θ
-          </text>
-
-          <!-- Panel: tripod -->
-          <text class="panel-title" x="28" y="318">On a tripod</text>
-
-          <line class="ground" x1="180" y1="500" x2="420" y2="500" />
-          <line class="support leg-back" x1="300" y1="372" x2="300" y2="500" />
-          <line class="support" x1="300" y1="372" x2="232" y2="500" />
-          <line class="support" x1="300" y1="372" x2="368" y2="500" />
-          <rect class="tripod-head" x="262" y="362" width="76" height="14" rx="4" />
-
-          <g class="ghost" :class="{ show: tripodWarped }">
-            <g transform="translate(300 360)">
-              <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
-              <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
-            </g>
-          </g>
-          <g class="cam" :style="{ transform: tripodCamTransform }">
-            <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
-            <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
-          </g>
-
-          <line
-            class="load"
-            x1="300"
-            y1="388"
-            x2="300"
-            y2="436"
-            marker-end="url(#warp-arrow)"
-          />
-          <text class="load-label" x="312" y="422">load</text>
-          <text class="warp-label" :class="{ show: tripodWarped }" x="360" y="350">
-            head flexure → θ
-          </text>
-          </svg>
+          <div class="cause-figures">
+            <OnRig
+              class="cause-svg rig-figure active"
+              :class="{ 'arrows-in': causeArrowsIn }"
+            />
+            <OnTripod
+              class="cause-svg tripod-figure"
+              :class="{ active: tripodFigureIn, 'arrows-in': causeArrowsIn }"
+            />
+          </div>
         </div>
         <h2 class="col-title">Cause</h2>
       </article>
@@ -362,6 +254,96 @@ function frameTransform(side: "left" | "right") {
   min-height: 0;
 }
 
+.cause-figures {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.cause-svg {
+  --green: #2fbf71;
+  --red: var(--red-2, #ef4444);
+  position: absolute;
+  top: 0;
+  display: block;
+  box-sizing: border-box;
+  height: 100%;
+  color: var(--fc-fg);
+  overflow: visible;
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  transition:
+    top var(--transition-duration) var(--transition-curve),
+    left var(--transition-duration) var(--transition-curve),
+    width var(--transition-duration) var(--transition-curve),
+    height var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.cause-svg.active {
+  opacity: 1;
+  transform: none;
+}
+
+.rig-figure {
+  left: 0;
+  width: calc(50% - 0.55rem);
+}
+
+.tripod-figure {
+  left: calc(50% + 0.55rem);
+  width: calc(50% - 0.55rem);
+}
+
+.rot-cols.effect-in .rig-figure,
+.rot-cols.effect-in .tripod-figure {
+  left: 0;
+  width: 100%;
+  height: calc(50% - 0.45rem);
+}
+
+.rot-cols.effect-in .rig-figure {
+  top: 0;
+}
+
+.rot-cols.effect-in .tripod-figure {
+  top: calc(50% + 0.45rem);
+}
+
+.cause-svg :deep(.support),
+.cause-svg :deep(.gravity) {
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+  opacity: 0;
+  transition:
+    stroke-dashoffset var(--transition-duration) var(--transition-curve),
+    opacity 1ms linear var(--transition-duration);
+}
+
+.cause-svg :deep(marker path) {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.cause-svg.arrows-in :deep(.support),
+.cause-svg.arrows-in :deep(.gravity) {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition:
+    stroke-dashoffset var(--transition-duration) var(--transition-curve),
+    opacity 1ms linear;
+}
+
+.cause-svg.arrows-in :deep(marker path) {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 .axes-body {
   --axes-drawing-width: 560px;
   align-self: center;
@@ -391,7 +373,6 @@ function frameTransform(side: "left" | "right") {
   margin-inline: calc((100% - var(--axes-drawing-width)) / 2);
 }
 
-.structure,
 .axes {
   width: 100%;
   height: 100%;
@@ -416,120 +397,6 @@ function frameTransform(side: "left" | "right") {
 
 .mitigation-body p {
   margin: 0;
-}
-
-/* ---- Structural-support diagram ---- */
-.panel-title {
-  fill: var(--fc-fg);
-  font-size: 18px;
-  font-weight: 600;
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
-}
-
-.support {
-  stroke: var(--fc-fg);
-  stroke-width: 7;
-  stroke-linecap: round;
-  fill: none;
-}
-
-.arm {
-  transition: d var(--transition-duration) var(--transition-curve);
-}
-
-.leg-back {
-  opacity: 0.4;
-  stroke-dasharray: 4 8;
-}
-
-.reference {
-  fill: none;
-  stroke: color-mix(in srgb, var(--fc-fg) 40%, transparent);
-  stroke-width: 2;
-  stroke-dasharray: 6 8;
-}
-
-.rig-turntable {
-  fill: color-mix(in srgb, var(--fc-fg) 10%, transparent);
-  stroke: var(--fc-fg);
-  stroke-width: 3;
-}
-
-.rig-spin {
-  fill: none;
-  stroke: color-mix(in srgb, var(--fc-fg) 55%, transparent);
-  stroke-width: 2.5;
-}
-
-.tripod-head {
-  fill: color-mix(in srgb, var(--fc-fg) 14%, transparent);
-  stroke: var(--fc-fg);
-  stroke-width: 3;
-}
-
-.ground {
-  stroke: color-mix(in srgb, var(--fc-fg) 55%, transparent);
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-
-.cam {
-  transform-box: view-box;
-  transform-origin: 0 0;
-  transition: transform var(--transition-duration) var(--transition-curve);
-}
-
-.cam-body {
-  fill: color-mix(in srgb, var(--fc-fg) 12%, var(--fc-bg));
-  stroke: var(--fc-fg);
-  stroke-width: 3;
-}
-
-.cam-lens {
-  fill: color-mix(in srgb, var(--fc-fg) 28%, var(--fc-bg));
-  stroke: var(--fc-fg);
-  stroke-width: 3;
-}
-
-.ghost {
-  opacity: 0;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-}
-
-.ghost.show {
-  opacity: 0.5;
-}
-
-.ghost .cam-body,
-.ghost .cam-lens {
-  fill: none;
-  stroke: color-mix(in srgb, var(--fc-fg) 50%, transparent);
-  stroke-width: 2;
-  stroke-dasharray: 5 6;
-}
-
-.load {
-  stroke: var(--red-2);
-  stroke-width: 4;
-  stroke-linecap: round;
-}
-
-.load-label {
-  fill: var(--red-2);
-  font: italic 700 18px "Times New Roman", serif;
-}
-
-.warp-label {
-  fill: var(--fc-fg);
-  font-size: 17px;
-  font-weight: 600;
-  opacity: 0;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-}
-
-.warp-label.show {
-  opacity: 0.85;
 }
 
 /* ---- Axes misalignment demo ---- */
