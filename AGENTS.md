@@ -26,6 +26,7 @@ The project uses **pnpm**; see `pnpm-workspace.yaml`. Install dependencies with 
 - Keep local reference symlinks under `references/`. `references/` is ignored by git and is local per user/computer, so available references differ by environment. When the user mentions a related project or external reference, look into `references/`.
 - `components/*.vue` are auto-imported as global components and can be used in any slide by tag name with no import. `components.d.ts` is generated and should not be hand-edited.
 - Components in `pages/` should be named with the slide index prefix, such as `01-cover.vue` where `01` is the slide index. If a slide needs multiple page components, suffix the index with letters: `01A-...vue`, `01B-...vue`, etc.
+- When inserting, deleting, or moving slides in `slides.md`, check all subsequent imports from `pages/` and rename/reindex affected page components so their numeric prefixes still match their slide positions.
 - The last HTML comment (`<!-- ... -->`) on a slide becomes the presenter-mode speaker notes.
 - Styling is UnoCSS utility classes inline in Markdown plus Slidev built-in classes such as `abs-br` and `slidev-icon-btn`.
 - Camera identity colors must come from `styles/theme.css`: use `--camera-left`, `--camera-center`, and `--camera-right` instead of hardcoded per-camera red/green/blue values.

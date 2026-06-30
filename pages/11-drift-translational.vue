@@ -69,10 +69,6 @@ function driftArrow(station: Station) {
 
 <template>
   <section class="translational">
-    <header class="block-head">
-      <h2 class="block-title">Translational Drift</h2>
-    </header>
-
     <figure class="scene">
       <svg class="scene-svg" :viewBox="frameViewBox" overflow="visible">
         <g
@@ -146,18 +142,6 @@ function driftArrow(station: Station) {
   gap: 1.2rem;
   width: 100%;
   height: 100%;
-}
-
-.block-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.block-title {
-  margin: 0;
-  font-size: 1.7rem;
-  font-weight: 700;
 }
 
 .block-sub {

@@ -1,57 +1,49 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, useId } from "vue";
 
 const props = defineProps<{ stage: number }>();
+const axisArrowBaseId = `axis-arrow-${useId()}`;
 
-// Right column content is cross-faded: the structural-support diagram explains
-// the cause (stage 3), then the axes demo shows the effect (stage 4+).
-const showStructure = computed(() => props.stage >= 6 && props.stage < 7);
-const showAxes = computed(() => props.stage >= 7);
-const colocated = computed(() => props.stage >= 8);
-const rotated = computed(() => props.stage >= 9);
+// Stage plan:
+//   1  Cause column, undeformed supports.
+//   2  Cause internal stage: calibration-rig flexure appears.
+//   3  Cause internal stage: tripod flexure appears.
+//   4  Effect column enters, axes separated and aligned.
+//   5  Effect internal stage: frame origins overlap without rotation.
+//   6  Effect internal stage: opposite warp rotation misaligns the scan.
+//   7  Mitigation column enters; all columns split evenly.
+const rigWarped = computed(() => props.stage >= 2);
+const tripodWarped = computed(() => props.stage >= 3);
+const effectIn = computed(() => props.stage >= 4);
+const colocated = computed(() => props.stage >= 5);
+const rotated = computed(() => props.stage >= 6);
+const mitigationIn = computed(() => props.stage >= 7);
 
-// Warp develops a beat after the diagram appears so the deformation is seen
-// forming under load rather than being there from the start.
 const WARP_DEG = 6;
-const warped = ref(false);
-watch(
-  showStructure,
-  async (visible) => {
-    if (!visible) {
-      warped.value = false;
-      return;
-    }
-    warped.value = false;
-    await nextTick();
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    warped.value = true;
-  },
-  { immediate: true },
-);
 
 // Calibration rig: a cantilever arm off a turntable post droops under the
 // camera's weight, bending the arm and tilting the camera.
 const RIG_DROOP = 20;
 const rigArmEnd = computed(() => ({
   x: 372,
-  y: 134 + (warped.value ? RIG_DROOP : 0),
+  y: 134 + (rigWarped.value ? RIG_DROOP : 0),
 }));
 const rigArmPath = computed(() => {
   const e = rigArmEnd.value;
-  return warped.value
+  return rigWarped.value
     ? `M150,134 Q262,${134 + RIG_DROOP * 1.5} ${e.x},${e.y}`
     : `M150,134 L${e.x},${e.y}`;
 });
 const rigCamTransform = computed(
   () =>
     `translate(${rigArmEnd.value.x}px, ${rigArmEnd.value.y}px) rotate(${
-      warped.value ? WARP_DEG : 0
+      rigWarped.value ? WARP_DEG : 0
     }deg)`,
 );
 
 // Tripod: the head flexes under load, tilting the camera the other way.
 const tripodCamTransform = computed(
-  () => `translate(300px, 360px) rotate(${warped.value ? -WARP_DEG : 0}deg)`,
+  () => `translate(300px, 360px) rotate(${tripodWarped.value ? -WARP_DEG : 0}deg)`,
 );
 
 // Axes demo: two camera frames whose synchronized FoV scan only diverges once
@@ -63,6 +55,10 @@ const frames = [
 const SEP = { left: { x: 145, y: 250 }, right: { x: 455, y: 250 } };
 const OVERLAP = { x: 300, y: 250 };
 const ROT = 6;
+function axisArrowId(side: "left" | "right") {
+  return `${axisArrowBaseId}-${side}`;
+}
+
 function frameTransform(side: "left" | "right") {
   const p = colocated.value ? OVERLAP : SEP[side];
   const rot = rotated.value ? (side === "left" ? -ROT : ROT) : 0;
@@ -72,18 +68,17 @@ function frameTransform(side: "left" | "right") {
 
 <template>
   <section class="rotational">
-    <header class="block-head">
-      <h2 class="block-title">Rotational Drift</h2>
-      <p class="block-sub">
-        Structural deformation under load warps the optical mounting, rotating
-        each camera's frame. Mitigated with rigid metal structural components.
-      </p>
-    </header>
-
-    <div class="rot-stage">
+    <div
+      class="rot-cols"
+      :class="{
+        'effect-in': effectIn,
+        'mitigation-in': mitigationIn,
+      }"
+    >
       <!-- Cause: how the camera is supported, the load, and the warp. -->
-      <div class="layer" :class="{ show: showStructure }">
-        <svg class="structure" viewBox="0 0 600 540" overflow="visible">
+      <article class="drift-col cause-col">
+        <div class="col-body">
+          <svg class="structure" viewBox="0 0 600 540" overflow="visible">
           <defs>
             <marker
               id="warp-arrow"
@@ -117,7 +112,7 @@ function frameTransform(side: "left" | "right") {
             :style="{ d: `path('${rigArmPath}')` }"
           />
 
-          <g class="ghost" :class="{ show: warped }">
+          <g class="ghost" :class="{ show: rigWarped }">
             <g transform="translate(372 134)">
               <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
               <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
@@ -139,7 +134,7 @@ function frameTransform(side: "left" | "right") {
           <text class="load-label" :x="rigArmEnd.x + 12" :y="rigArmEnd.y + 60">
             load
           </text>
-          <text class="warp-label" :class="{ show: warped }" x="430" y="150">
+          <text class="warp-label" :class="{ show: rigWarped }" x="430" y="150">
             cantilever flexure → θ
           </text>
 
@@ -152,7 +147,7 @@ function frameTransform(side: "left" | "right") {
           <line class="support" x1="300" y1="372" x2="368" y2="500" />
           <rect class="tripod-head" x="262" y="362" width="76" height="14" rx="4" />
 
-          <g class="ghost" :class="{ show: warped }">
+          <g class="ghost" :class="{ show: tripodWarped }">
             <g transform="translate(300 360)">
               <rect class="cam-body" x="-30" y="-19" width="60" height="38" rx="6" />
               <rect class="cam-lens" x="22" y="-11" width="14" height="22" rx="3" />
@@ -172,42 +167,46 @@ function frameTransform(side: "left" | "right") {
             marker-end="url(#warp-arrow)"
           />
           <text class="load-label" x="312" y="422">load</text>
-          <text class="warp-label" :class="{ show: warped }" x="360" y="350">
+          <text class="warp-label" :class="{ show: tripodWarped }" x="360" y="350">
             head flexure → θ
           </text>
-        </svg>
-      </div>
+          </svg>
+        </div>
+        <h2 class="col-title">Cause</h2>
+      </article>
+
+      <div class="col-divider effect-divider" aria-hidden="true"></div>
 
       <!-- Effect: synchronized scan that misaligns once the frames warp apart. -->
-      <div class="layer axes-layer" :class="{ show: showAxes }">
-        <svg class="axes" viewBox="0 0 600 460" overflow="visible">
-          <defs>
-            <marker
-              id="axis-arrow"
-              viewBox="0 0 10 10"
-              refX="8"
-              refY="5"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,1 L9,5 L0,9 Z" fill="context-stroke" />
-            </marker>
-          </defs>
-
+      <article class="drift-col effect-col" :aria-hidden="!effectIn">
+        <div class="col-body axes-body" :class="{ merged: colocated }">
+          <svg class="axes" viewBox="0 0 600 460" overflow="visible">
           <g
             v-for="f in frames"
             :key="f.side"
             class="frame"
             :style="{ transform: frameTransform(f.side), color: f.color }"
           >
+            <defs>
+              <marker
+                :id="axisArrowId(f.side)"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,1 L9,5 L0,9 Z" fill="currentColor" />
+              </marker>
+            </defs>
             <line
               class="axis"
               x1="-124"
               y1="0"
               x2="124"
               y2="0"
-              marker-end="url(#axis-arrow)"
+              :marker-end="`url(#${axisArrowId(f.side)})`"
             />
             <line
               class="axis"
@@ -215,7 +214,7 @@ function frameTransform(side: "left" | "right") {
               y1="124"
               x2="0"
               y2="-124"
-              marker-end="url(#axis-arrow)"
+              :marker-end="`url(#${axisArrowId(f.side)})`"
             />
             <circle class="axis-o" :class="{ hollow: f.side === 'right' }" r="4.5" />
             <g class="fov">
@@ -224,60 +223,172 @@ function frameTransform(side: "left" | "right") {
               <line class="fov-x" x1="0" y1="-11" x2="0" y2="11" />
             </g>
           </g>
-        </svg>
+          </svg>
+        </div>
+        <h2 class="col-title">Effect</h2>
+      </article>
 
-      </div>
+      <div class="col-divider mitigation-divider" aria-hidden="true"></div>
+
+      <article class="drift-col mitigation-col" :aria-hidden="!mitigationIn">
+        <div class="mitigation-body">
+          <p>Rigid metal structural components reduce load-induced frame rotation.</p>
+          <p>One-shot field calibration corrects residual drift before capture.</p>
+        </div>
+        <h2 class="col-title">Mitigation</h2>
+      </article>
     </div>
   </section>
 </template>
 
 <style scoped lang="scss">
 .rotational {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
   width: 100%;
   height: 100%;
+  color: var(--fc-fg);
 }
 
-.block-head {
+.rot-cols {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.drift-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 0 0.65rem;
+  overflow: visible;
+  opacity: 0;
+  transition:
+    left var(--transition-duration) var(--transition-curve),
+    width var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve);
 }
 
-.block-title {
+.cause-col {
+  left: 0;
+  width: 100%;
+  opacity: 1;
+}
+
+.effect-col {
+  left: 100%;
+  width: calc(100% * 2 / 3);
+}
+
+.mitigation-col {
+  left: 100%;
+  width: calc(100% / 3);
+}
+
+.effect-col,
+.mitigation-col {
+  pointer-events: none;
+}
+
+.col-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 1px;
   margin: 0;
-  font-size: 1.7rem;
+  background: color-mix(in srgb, var(--fc-fg) 42%, transparent);
+  opacity: 0;
+  transition:
+    left var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve);
+}
+
+.effect-divider {
+  left: 100%;
+}
+
+.mitigation-divider {
+  left: 100%;
+}
+
+.rot-cols.effect-in .cause-col {
+  width: calc(100% / 3);
+}
+
+.rot-cols.effect-in .effect-col {
+  left: calc(100% / 3);
+}
+
+.rot-cols.effect-in .effect-divider {
+  left: calc(100% / 3);
+  opacity: 1;
+}
+
+.rot-cols.mitigation-in .mitigation-divider {
+  left: calc(100% * 2 / 3);
+  opacity: 1;
+}
+
+.rot-cols.effect-in .effect-col,
+.rot-cols.mitigation-in .mitigation-col {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rot-cols.mitigation-in .effect-col {
+  width: calc(100% / 3);
+}
+
+.rot-cols.mitigation-in .mitigation-col {
+  left: calc(100% * 2 / 3);
+}
+
+.col-title {
+  flex: 0 0 auto;
+  margin: 0.65rem 0 0;
+  color: var(--fc-fg);
+  font-size: 1.25rem;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
-.block-sub {
-  margin: 0;
-  max-width: 46ch;
-  font-size: 1.05rem;
-  line-height: 1.45;
-  color: var(--fc-muted);
-}
-
-.rot-stage {
-  position: relative;
+.col-body {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.layer {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-  pointer-events: none;
+.axes-body {
+  --axes-drawing-width: 560px;
+  align-self: center;
+  width: 100%;
+  max-width: var(--axes-drawing-width);
+  margin-inline: 0;
+  overflow: visible;
+  transition:
+    max-width var(--transition-duration) var(--transition-curve),
+    margin-inline var(--transition-duration) var(--transition-curve);
 }
 
-.layer.show {
-  opacity: 1;
+.axes-body.merged {
+  max-width: 380px;
+  margin-inline: -2.5rem;
+}
+
+.axes-body .axes {
+  transition:
+    width var(--transition-duration) var(--transition-curve),
+    margin-inline var(--transition-duration) var(--transition-curve);
+}
+
+.axes-body.merged .axes {
+  width: var(--axes-drawing-width);
+  max-width: none;
+  margin-inline: calc((100% - var(--axes-drawing-width)) / 2);
 }
 
 .structure,
@@ -286,6 +397,25 @@ function frameTransform(side: "left" | "right") {
   height: 100%;
   min-height: 0;
   color: var(--fc-fg);
+  isolation: isolate;
+}
+
+.mitigation-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.3rem;
+  min-height: 0;
+  padding: 0 0.35rem;
+  color: var(--fc-fg);
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  font-weight: 650;
+  line-height: 1.28;
+}
+
+.mitigation-body p {
+  margin: 0;
 }
 
 /* ---- Structural-support diagram ---- */
@@ -406,6 +536,7 @@ function frameTransform(side: "left" | "right") {
 .frame {
   transform-box: view-box;
   transform-origin: 0 0;
+  mix-blend-mode: var(--blend);
   transition: transform var(--transition-duration) var(--transition-curve);
 }
 
@@ -473,10 +604,6 @@ function frameTransform(side: "left" | "right") {
   100% {
     transform: translate(78px, 78px);
   }
-}
-
-.axes-layer {
-  gap: 0.4rem;
 }
 
 </style>

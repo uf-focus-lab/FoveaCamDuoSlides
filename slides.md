@@ -146,11 +146,31 @@ import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
 
 ---
 
+# Calibration Drift - Translational
+
 <script setup lang="ts">
-import DriftProblem from "pages/11-drift.vue";
+import { useStage } from "stores/stage";
+import DriftTranslational from "pages/11-drift-translational.vue";
+const stage = useStage(5, { preview: -1 });
 </script>
 
-<DriftProblem />
+<div style="height: calc(100% - 72px);">
+  <DriftTranslational :stage="stage" />
+</div>
+
+---
+
+# Calibration Drift - Rotational
+
+<script setup lang="ts">
+import { useStage } from "stores/stage";
+import DriftRotational from "pages/12-drift-rotational.vue";
+const stage = useStage(7, { preview: -1 });
+</script>
+
+<div style="height: calc(100% - 72px);">
+  <DriftRotational :stage="stage" />
+</div>
 
 ---
 
@@ -164,7 +184,7 @@ import DriftProblem from "pages/11-drift.vue";
 - Visualization of the data projected to the wide context view -->
 
 <script setup lang="ts">
-import DataCollection from "pages/13-data-collection.vue";
+import DataCollection from "pages/14-data-collection.vue";
 </script>
 
 <div style="margin-top: 1.25rem; width: 100%;">
@@ -174,7 +194,7 @@ import DataCollection from "pages/13-data-collection.vue";
 ---
 
 <script setup lang="ts">
-import ConvergentStereoAnimation from "pages/14-convergent-stereo.vue";
+import ConvergentStereoAnimation from "pages/15-convergent-stereo.vue";
 </script>
 
 # Convergent Stereo

@@ -1,0 +1,10 @@
+# Image master files
+*.tiff
+*.png
+*.jpg
+*.jpeg
+*.psd
+# Video master files
+*.mov
+# Conversion scripts
+*.sh
