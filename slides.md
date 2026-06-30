@@ -20,12 +20,26 @@ import Cover from "pages/01-cover.vue";
 
 ---
 
-# Biological Inspiration <Eyes />
+# Biological Inspiration
+<script setup lang="ts">
+import BiologicalInspiration from "pages/02-biological-inspiration.vue";
+</script>
 
-- Images of predators and their eyes (e.g., owl, cat, eagle, etc.)
-- Crypsis analysis (animated simulation)
+<BiologicalInspiration />
 
-> Results up front
+<!--
+What are cameras if not emulations of the eyes? As an optics lab, we care alot about what there is to learn from biological optics. Evolution rarely creats systems without purpose. 
+Eyes are extremely complex systems with too many revolving parts to completely understand, but eye systems are designed for a purpose with strengths and weaknesses. 
+-->
+--- 
+
+<script setup lang="ts">
+import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
+</script>
+
+# Stereo, Foveation, and Crypsis
+
+<StereoFoveationCrypsis />
 
 ---
 
