@@ -114,11 +114,22 @@ import CalibrationSetup from "pages/07-calibration-setup.vue";
 <CalibrationSetup />
 
 ---
+layout: none
+title: Calibration - Process
+---
+
+<script setup lang="ts">
+import CalibrationProcess from "pages/08-calibration-process.vue";
+</script>
+
+<CalibrationProcess />
+
+---
 
 # Calibration - Extrinsic
 
 <script setup lang="ts">
-import CalibrationExtrinsic from "pages/08-calibration-extrinsic.vue";
+import CalibrationExtrinsic from "pages/09-calibration-extrinsic.vue";
 </script>
 
 <CalibrationExtrinsic />
@@ -127,14 +138,19 @@ import CalibrationExtrinsic from "pages/08-calibration-extrinsic.vue";
 
 # Calibration - Intrinsic
 
-- How we used the corners of a marker to findout rectification matrices.
+<script setup lang="ts">
+import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
+</script>
+
+<CalibrationIntrinsic />
 
 ---
 
-# Drift Problem & Correction
+<script setup lang="ts">
+import DriftProblem from "pages/11-drift.vue";
+</script>
 
-- Translational drift from voltage instability, field correctable with tri-marker board.
-- Rotational drift from lack of structural rigidity, impacts both extrinsic and intrinsic calibration, mitigatable with metal structural components.
+<DriftProblem />
 
 ---
 
@@ -148,7 +164,7 @@ import CalibrationExtrinsic from "pages/08-calibration-extrinsic.vue";
 - Visualization of the data projected to the wide context view -->
 
 <script setup lang="ts">
-import DataCollection from "pages/12-data-collection.vue";
+import DataCollection from "pages/13-data-collection.vue";
 </script>
 
 <div style="margin-top: 1.25rem; width: 100%;">
@@ -158,7 +174,7 @@ import DataCollection from "pages/12-data-collection.vue";
 ---
 
 <script setup lang="ts">
-import ConvergentStereoAnimation from "pages/13-convergent-stereo.vue";
+import ConvergentStereoAnimation from "pages/14-convergent-stereo.vue";
 </script>
 
 # Convergent Stereo

@@ -8,6 +8,8 @@ import Marker from "components/Marker.vue";
 const MARKER_Y = 150;
 const CENTER_MARKER_ENTRY_DY = -90;
 const CAMERA_Y = 650;
+const CENTER_RAY_H = 1040;
+const SIDE_RAY_H = 1500;
 const D_ANNOTATION_OFFSET = 340;
 const D_ANNOTATION_ENTRY_OFFSET = 470;
 const MARKER_SWEEP = 150;
@@ -156,6 +158,10 @@ function rayStyle(camera: Camera) {
   return { transform: `rotate(${angle}deg)` };
 }
 
+function rayHeight(camera: Camera) {
+  return camera.id === "center" ? CENTER_RAY_H : SIDE_RAY_H;
+}
+
 const centerCameraWorld = computed(() => cameraWorld(cameras[1]));
 const centerLinkStyle = computed(() => ({
   opacity: centerMarkerVisible.value ? 0.66 : 0,
@@ -243,7 +249,7 @@ const centerDepthStyle = computed(() => ({
             class="calibration-ray"
             :style="{ opacity: camera.id === 'center' ? 0.4 : 0.8 }"
             :fov="camera.id === 'center' ? 60 : 8"
-            :h="1040"
+            :h="rayHeight(camera)"
             :boundaries="camera.id === 'center'"
             stroke="currentColor"
             stroke-width="1.5"

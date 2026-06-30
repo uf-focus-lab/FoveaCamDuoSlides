@@ -33,19 +33,21 @@ export interface StageRef extends Ref<number> {
   transient: (n: number | number[], param?: number | (() => any)) => StageRef;
 }
 
+type StageBoundaryFallback = () => void | Promise<void>;
+
 interface ActiveStageController {
-  forward: () => boolean;
-  backward: () => boolean;
+  forward: (fallback?: StageBoundaryFallback) => boolean;
+  backward: (fallback?: StageBoundaryFallback) => boolean;
 }
 
 let activeStageController: ActiveStageController | null = null;
 
-export function advanceActiveStage() {
-  return activeStageController?.forward() ?? false;
+export function advanceActiveStage(fallback?: StageBoundaryFallback) {
+  return activeStageController?.forward(fallback) ?? false;
 }
 
-export function retreatActiveStage() {
-  return activeStageController?.backward() ?? false;
+export function retreatActiveStage(fallback?: StageBoundaryFallback) {
+  return activeStageController?.backward(fallback) ?? false;
 }
 
 // The active slide's stage is mirrored into `location.hash` as a bare number
@@ -99,21 +101,99 @@ function nextFrame() {
   return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-async function waitForSlideContentAnimations() {
-  await nextTick();
-  await nextFrame();
+function getSlideContentRoot() {
+  if (typeof document === "undefined") return null;
+  return (
+    document.querySelector("div#slide-content") ??
+    document.querySelector(".slidev-layout") ??
+    document.body
+  );
+}
 
-  if (typeof document === "undefined") return;
-  const root = document.querySelector("div#slide-content");
-  if (!root) return;
-
-  const activeAnimations = root.getAnimations?.({ subtree: true }) ?? [];
-  const animations = activeAnimations.filter((animation) => {
+function finiteAnimations(root: Element | Document) {
+  return (root.getAnimations?.({ subtree: true }) ?? []).filter((animation) => {
     const timing = animation.effect?.getTiming();
-    return timing?.iterations !== Infinity;
+    return (
+      timing?.iterations !== Infinity &&
+      animation.playState !== "finished" &&
+      animation.playState !== "idle"
+    );
+  });
+}
+
+function watchAnimationEvents(root: Element) {
+  let pending = 0;
+  let observed = false;
+  let resolveSettled = () => {};
+  const settled = new Promise<void>((resolve) => {
+    resolveSettled = resolve;
   });
 
-  await Promise.allSettled(animations.map((animation) => animation.finished));
+  const includesTarget = (target: EventTarget | null) =>
+    target instanceof Node && root.contains(target);
+  const maybeSettle = () => {
+    if (observed && pending === 0) resolveSettled();
+  };
+  const start = (event: Event) => {
+    if (!includesTarget(event.target)) return;
+    observed = true;
+    pending += 1;
+  };
+  const finish = (event: Event) => {
+    if (!includesTarget(event.target) || pending === 0) return;
+    pending -= 1;
+    maybeSettle();
+  };
+
+  root.addEventListener("transitionrun", start, true);
+  root.addEventListener("animationstart", start, true);
+  root.addEventListener("transitionend", finish, true);
+  root.addEventListener("transitioncancel", finish, true);
+  root.addEventListener("animationend", finish, true);
+  root.addEventListener("animationcancel", finish, true);
+
+  return {
+    get observed() {
+      return observed;
+    },
+    get settled() {
+      return settled;
+    },
+    stop() {
+      root.removeEventListener("transitionrun", start, true);
+      root.removeEventListener("animationstart", start, true);
+      root.removeEventListener("transitionend", finish, true);
+      root.removeEventListener("transitioncancel", finish, true);
+      root.removeEventListener("animationend", finish, true);
+      root.removeEventListener("animationcancel", finish, true);
+    },
+  };
+}
+
+async function waitForSlideContentAnimations() {
+  const root = getSlideContentRoot();
+  if (!root) return;
+
+  const eventWatch = watchAnimationEvents(root);
+  try {
+    await nextTick();
+    // SVG/CSS transitions created by class changes may not appear in
+    // getAnimations() until the browser has performed style and animation
+    // updates. Two frames keeps transient stages from sampling too early.
+    await nextFrame();
+    await nextFrame();
+
+    let animations = finiteAnimations(root);
+    while (animations.length > 0) {
+      await Promise.allSettled(animations.map((animation) => animation.finished));
+      await nextFrame();
+      animations = finiteAnimations(root);
+    }
+
+    if (eventWatch.observed) await eventWatch.settled;
+  } finally {
+    eventWatch.stop();
+  }
 }
 
 // Resolve once the slide transition has settled, i.e. the outgoing slide has
@@ -126,9 +206,7 @@ async function waitForSlideHidden() {
 
   if (typeof document === "undefined") return;
   const root = document.querySelector("#slideshow") ?? document.body;
-  const animations = (root.getAnimations?.({ subtree: true }) ?? []).filter(
-    (animation) => animation.effect?.getTiming().iterations !== Infinity,
-  );
+  const animations = finiteAnimations(root);
 
   await Promise.allSettled(animations.map((animation) => animation.finished));
 }
@@ -146,8 +224,9 @@ async function waitForSlideHidden() {
  * decrements. The active slide's stage is reflected in `location.hash` (`#2`),
  * which also restores it on reload / deep link. Set `stage.busy = true` while
  * an animation runs to queue further arrow changes; queued Left/Right inputs
- * cancel each other through a signed counter. Optional boundary callbacks can
- * handle navigation after the first/last stage.
+ * cancel each other through a signed counter. A queued request can carry a
+ * boundary fallback, so Space can still navigate after the stage queue settles.
+ * Optional boundary callbacks can handle navigation after the first/last stage.
  *
  * The listeners live in an {@link effectScope} attached to the calling
  * component's scope, so they auto-unregister on unmount.
@@ -172,6 +251,8 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
   const busy = ref(false);
   const transientStages = new Set<number>();
   let pendingDelta = 0;
+  let pendingForwardFallback: StageBoundaryFallback | undefined;
+  let pendingBackwardFallback: StageBoundaryFallback | undefined;
   // Bumped on every (de)activation; a deferred reset only fires if its token is
   // still current, so navigating back before the slide hides cancels it.
   let resetRun = 0;
@@ -188,6 +269,8 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
 
   const clearSuspendedState = () => {
     pendingDelta = 0;
+    pendingForwardFallback = undefined;
+    pendingBackwardFallback = undefined;
     busy.value = false;
   };
 
@@ -209,26 +292,75 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
     }
   };
 
+  const queueStep = (delta: -1 | 1, fallback?: StageBoundaryFallback) => {
+    pendingDelta += delta;
+    if (delta > 0) {
+      pendingForwardFallback = fallback;
+    } else {
+      pendingBackwardFallback = fallback;
+    }
+
+    if (pendingDelta === 0) {
+      pendingForwardFallback = undefined;
+      pendingBackwardFallback = undefined;
+    } else if (pendingDelta > 0) {
+      pendingBackwardFallback = undefined;
+    } else {
+      pendingForwardFallback = undefined;
+    }
+  };
+
   const flushQueuedStep = () => {
     if (busy.value || pendingDelta === 0 || !isActive.value) return;
 
     const delta = Math.sign(pendingDelta) as -1 | 1;
     pendingDelta -= delta;
-    applyStep(delta);
+    const fallback =
+      delta > 0 ? pendingForwardFallback : pendingBackwardFallback;
+
+    if (delta > 0 && pendingDelta <= 0) {
+      pendingForwardFallback = undefined;
+    } else if (delta < 0 && pendingDelta >= 0) {
+      pendingBackwardFallback = undefined;
+    }
+
+    const handled = applyStep(delta);
+    if (!handled) {
+      if (delta > 0 && pendingDelta > 0) {
+        pendingDelta = 0;
+        pendingForwardFallback = undefined;
+      }
+      if (delta < 0 && pendingDelta < 0) {
+        pendingDelta = 0;
+        pendingBackwardFallback = undefined;
+      }
+      void fallback?.();
+      return;
+    }
+
+    if (pendingDelta !== 0 && !busy.value && isActive.value) {
+      queueMicrotask(flushQueuedStep);
+    }
   };
 
-  const requestStep = (delta: -1 | 1) => {
+  const requestStep = (delta: -1 | 1, fallback?: StageBoundaryFallback) => {
     if (busy.value) {
-      pendingDelta += delta;
+      queueStep(delta, fallback);
       return true;
     }
 
-    return applyStep(delta);
+    const handled = applyStep(delta);
+    if (!handled && fallback) {
+      void fallback();
+      return true;
+    }
+
+    return handled;
   };
 
   const controller: ActiveStageController = {
-    forward: () => requestStep(1),
-    backward: () => requestStep(-1),
+    forward: (fallback) => requestStep(1, fallback),
+    backward: (fallback) => requestStep(-1, fallback),
   };
 
   const scope = effectScope();
@@ -354,7 +486,7 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
         }
 
         const currentRun = ++run;
-        stage.busy = true;
+        exposed.busy = true;
 
         void (async () => {
           try {
@@ -365,7 +497,7 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
             if (currentRun !== run) return;
             const stillTransient =
               stage.value === transientStage && isActive.value && !isPreview.value;
-            stage.busy = false;
+            exposed.busy = false;
             if (stillTransient) stage.value = transientStage + direction;
           }
         })();
@@ -376,7 +508,7 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
     const stopActiveWatch = watch(isActive, (active) => {
       if (!active) {
         cancel();
-        stage.busy = false;
+        exposed.busy = false;
       }
     });
 

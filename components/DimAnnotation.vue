@@ -4,8 +4,8 @@ import { computed, useId } from "vue";
 // `number[]` (not a tuple) so template array literals assign without friction.
 type Pt = number[];
 
-// A linear dimension between anchors `a` and `b`: an arrowed line (arrowhead +
-// witness bar at each end) running parallel to `dir`, shifted `offset` units
+// A linear dimension between anchors `a` and `b`: an arrowed line with optional
+// witness bars at the arrowheads, running parallel to `dir`, shifted `offset` units
 // perpendicular from the a–b midpoint. Any anchor whose arrowhead no longer
 // sits on it gets a dashed helper line. Arrow + label use `currentColor` unless
 // `fill` overrides; `--dim-weight` / `--dim-font` (CSS vars) tune the sizes.
@@ -18,14 +18,26 @@ const props = withDefaults(
     label?: string;
     fill?: string; // colour override for arrow + label
     labelGap?: number; // label distance beyond the line
+    showBar?: boolean; // whether arrowheads include the witness bar
   }>(),
-  { offset: 0, labelGap: 36 },
+  { offset: 0, labelGap: 36, showBar: true },
 );
 
 const id = `dim-arrow-${useId()}`;
+const barlessInset = 5;
 const r = (x: number) => Math.round(x * 100) / 100;
 const seg = (p: Pt, q: Pt) => `M${r(p[0])},${r(p[1])} L${r(q[0])},${r(q[1])}`;
 const far = (p: Pt, q: Pt) => Math.hypot(p[0] - q[0], p[1] - q[1]) > 0.5;
+const insetSeg = (p: Pt, q: Pt, inset: number) => {
+  const dx = q[0] - p[0];
+  const dy = q[1] - p[1];
+  const len = Math.hypot(dx, dy);
+  const d = Math.min(inset, len / 2);
+  if (!Number.isFinite(len) || len <= 0.5 || d <= 0) return seg(p, q);
+  const ux = dx / len;
+  const uy = dy / len;
+  return seg([p[0] + ux * d, p[1] + uy * d], [q[0] - ux * d, q[1] - uy * d]);
+};
 
 const g = computed(() => {
   const { a, b, offset } = props;
@@ -45,6 +57,7 @@ const g = computed(() => {
   const side = offset < 0 ? -1 : 1; // push the label to the far side of the line
   return {
     line: seg(a2, b2),
+    visibleLine: props.showBar ? seg(a2, b2) : insetSeg(a2, b2, barlessInset),
     helperA: far(a, a2) ? seg(a, a2) : null,
     helperB: far(b, b2) ? seg(b, b2) : null,
     lx: (a2[0] + b2[0]) / 2 + side * props.labelGap * perp[0],
@@ -66,8 +79,16 @@ const g = computed(() => {
         orient="auto-start-reverse"
         overflow="visible"
       >
-        <polygon points="0.3,1.2 3.5,3 0.3,4.8" fill="context-stroke" />
-        <line x1="3.5" y1="0" x2="3.5" y2="6" stroke="context-stroke" stroke-width="0.5" />
+        <polygon points="0.3,1.2 3.5,3 0.3,4.8" fill="currentColor" />
+        <line
+          v-if="showBar"
+          x1="3.5"
+          y1="0"
+          x2="3.5"
+          y2="6"
+          stroke="currentColor"
+          stroke-width="0.5"
+        />
       </marker>
     </defs>
 
@@ -85,6 +106,14 @@ const g = computed(() => {
     />
     <path
       class="bar"
+      :d="g.visibleLine"
+      :style="{ d: `path('${g.visibleLine}')` }"
+      :marker-start="showBar ? `url(#${id})` : undefined"
+      :marker-end="showBar ? `url(#${id})` : undefined"
+    />
+    <path
+      v-if="!showBar"
+      class="marker-carrier"
       :d="g.line"
       :style="{ d: `path('${g.line}')` }"
       :marker-start="`url(#${id})`"
@@ -107,6 +136,13 @@ const g = computed(() => {
   stroke-width: var(--dim-weight, 4);
   stroke-dasharray: var(--dim-dash, none);
   stroke-linecap: var(--dim-linecap, butt);
+  transition: d var(--transition-duration) var(--transition-curve);
+}
+.marker-carrier {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0;
+  stroke-width: var(--dim-weight, 4);
   transition: d var(--transition-duration) var(--transition-curve);
 }
 .guide {
