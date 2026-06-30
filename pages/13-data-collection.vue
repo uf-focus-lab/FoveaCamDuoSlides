@@ -41,9 +41,9 @@ const showFocusAndDetails = computed(() => stage.value >= 4);
 
 const roiBoxes: FocusBox[] = [
   {
-    x: 43,
-    y: 23,
-    width: 15,
+    x: 45,
+    y: 25,
+    width: 13,
     height: 10,
     label: "Target A",
     color: "#22d3ee",
@@ -51,8 +51,8 @@ const roiBoxes: FocusBox[] = [
   },
   {
     x: 3,
-    y: 55,
-    width: 15,
+    y: 57,
+    width: 13,
     height: 10,
     label: "Target B",
     color: "#f97316",
@@ -61,7 +61,7 @@ const roiBoxes: FocusBox[] = [
   {
     x: 55,
     y: 75,
-    width: 15,
+    width: 13,
     height: 10,
     label: "Target C",
     color: "#84cc16",
@@ -112,7 +112,7 @@ const anaglyphTiles: AnaglyphTile[] = [
     alt: "Anaglyph composite 45",
   },
   {
-    src: asset("diff/22.webp"),
+    src: asset("diff/68.webp"),
     alt: "Anaglyph composite placeholder",
   },
 ];
