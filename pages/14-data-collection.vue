@@ -32,8 +32,7 @@ const assetUrls = import.meta.glob<string>(
   "../assets/data-collection/**/*.webp",
   { eager: true, query: "?url", import: "default" },
 );
-const asset = (name: string) =>
-  assetUrls[`../assets/data-collection/${name}`];
+const asset = (name: string) => assetUrls[`../assets/data-collection/${name}`];
 
 const showWidePair = computed(() => stage.value >= 2);
 const hideRightWide = computed(() => stage.value >= 3);
@@ -188,7 +187,11 @@ function anaglyphStyle(index: number): CSSProperties {
       <div class="baseline-slot" aria-hidden="true">
         <div class="baseline-arrow">
           <span class="baseline-text">600mm</span>
-          <svg viewBox="0 0 100 14" preserveAspectRatio="none" class="baseline-svg">
+          <svg
+            viewBox="0 0 100 14"
+            preserveAspectRatio="none"
+            class="baseline-svg"
+          >
             <line x1="6" y1="7" x2="94" y2="7" />
             <path d="M6 7 L11 4 L11 10 Z" />
             <path d="M94 7 L89 4 L89 10 Z" />
@@ -433,7 +436,7 @@ function anaglyphStyle(index: number): CSSProperties {
   height: calc(100% + var(--label-band));
   width: calc(100% + var(--detail-expand));
   display: grid;
-  grid-template-columns: .8fr .8fr .8fr;
+  grid-template-columns: 0.8fr 0.8fr 0.8fr;
   grid-template-rows: auto repeat(3, auto);
   align-content: start;
   gap: 0.7rem;
@@ -472,7 +475,8 @@ function anaglyphStyle(index: number): CSSProperties {
   letter-spacing: 0.03em;
   color: #e0f2fe;
   background: rgba(15, 23, 42, 0.82);
-  border: 1px solid color-mix(in srgb, var(--camera-label-color) 72%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--camera-label-color) 72%, transparent);
   border-radius: 999px;
   padding: 0.24rem 0.45rem;
 }
@@ -491,7 +495,7 @@ function anaglyphStyle(index: number): CSSProperties {
 
 .detail-tile {
   aspect-ratio: 4 / 3;
-  width: 92%;          /* smaller border box */
+  width: 92%; /* smaller border box */
   justify-self: center;
   align-self: center;
   border-radius: 12px;
@@ -546,54 +550,6 @@ function anaglyphStyle(index: number): CSSProperties {
   100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@media (max-width: 980px) {
-  .storyboard {
-    --label-band: 1.9rem;
-    padding-top: 1.9rem;
-  }
-
-  .storyboard-main {
-    grid-template-columns: 1fr;
-  }
-
-  .wide-slot {
-    min-height: 16rem;
-  }
-
-  .baseline-slot {
-    min-height: 2rem;
-  }
-
-  .right-slot {
-    min-height: 20rem;
-  }
-
-  .detail-grid {
-    top: 0;
-    height: 100%;
-    width: 100%;
-    left: 0;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto repeat(10, auto);
-  }
-
-  .detail-column-labels {
-    grid-column: 1;
-    grid-template-columns: 1fr;
-  }
-
-  .detail-tile,
-  .detail-tile-anaglyph {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-  }
-
-  .storyboard.hide-right-wide .wide-angle-label {
-    left: 50%;
-    top: 0.15rem;
   }
 }
 </style>

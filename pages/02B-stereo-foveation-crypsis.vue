@@ -193,30 +193,4 @@ const foveationBullets = [
 .reveal.past {
   opacity: 0.72;
 }
-
-@media (max-width: 1100px) {
-  .comparison-layout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    height: auto;
-  }
-
-  .animation-panel {
-    min-height: 18rem;
-  }
-
-  .topic-card {
-    grid-template-columns: 8rem minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 800px) {
-  .topic-card {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .topic-media {
-    max-width: 14rem;
-  }
-}
 </style>
