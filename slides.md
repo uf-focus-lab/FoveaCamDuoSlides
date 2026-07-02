@@ -29,9 +29,12 @@ import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 
 <!--
 What are cameras if not emulations of the eyes? As an optics lab, we care alot about what there is to learn from biological optics. Evolution rarely creats systems without purpose. 
-Eyes are extremely complex systems with too many revolving parts to completely understand, but eye systems are designed for a purpose with strengths and weaknesses. 
+Eyes are extremely complex systems with too many revolving parts to completely understand, but eye systems are designed for a purpose with strengths and weaknesses.
+
+As an optics lab, we care alot about redesigning sensors and cameras for new functions. To discover what new functions are possible, we look at biological systems. Evolution has produced a wide range of eyes, suited for different environments and different purposes.
 -->
---- 
+
+---
 
 <script setup lang="ts">
 import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
@@ -40,6 +43,12 @@ import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 # Stereo, Foveation, and Crypsis
 
 <StereoFoveationCrypsis />
+
+---
+
+# Second Best Result
+
++ Videos of fovea tracking object while wide angle context is show. 
 
 ---
 
