@@ -20,7 +20,7 @@ const inspirationImages = Object.fromEntries(
 // Pick the file for each slot here.
 const slotImages = {
   stereo: "hawk.webp",
-  foveation: "fovea.gif",
+  foveation: "fovea.webp",
 };
 
 const stereoImage = computed(() => inspirationImages[slotImages.stereo] ?? "");
@@ -36,7 +36,7 @@ const stereoBullets = [
 ];
 
 const foveationBullets = [
-  "Foveation allows animals to focus on a small region of interest.",
+  "Concentration of photoreceptors in eyes allow details in ROI.",
   "This allows animals to track objects of interest with high acuity.",
 ];
 </script>

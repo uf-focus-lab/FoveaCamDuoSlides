@@ -61,6 +61,7 @@ const props = withDefaults(
     zoomRowOffsets?: RowZoomOffset[];
     zoomCellOffsets?: CellZoomOffsets;
     zoomRevealAfterGrid?: boolean;
+    showZoomOnly?: boolean;
     showZoomBoxes?: boolean;
     zoomBoxBorder?: string;
     zoomBoxRows?: number[];
@@ -74,6 +75,10 @@ const props = withDefaults(
     zoomColumnFrameColors?: string[];
     showOffsetDebug?: boolean;
     offsetDebugPrecision?: number;
+    columnLabels?: string[];
+    columnLabelSpans?: number[];
+    showColumnLabels?: boolean;
+    columnLabelBand?: string;
     rowLabels?: string[];
     showRowLabels?: boolean;
     rowLabelBand?: string;
@@ -108,6 +113,7 @@ const props = withDefaults(
     zoomRowOffsets: () => [],
     zoomCellOffsets: () => [],
     zoomRevealAfterGrid: false,
+    showZoomOnly: false,
     showZoomBoxes: true,
     zoomBoxBorder: "2px solid #22d3ee",
     zoomBoxRows: undefined,
@@ -121,6 +127,10 @@ const props = withDefaults(
     zoomColumnFrameColors: () => [],
     showOffsetDebug: false,
     offsetDebugPrecision: 1,
+    columnLabels: () => [],
+    columnLabelSpans: () => [],
+    showColumnLabels: false,
+    columnLabelBand: "1.9rem",
     rowLabels: () => [],
     showRowLabels: false,
     rowLabelBand: "2.2rem",
@@ -214,6 +224,65 @@ const stage = useStage(maxStage.value, {
   presist: props.resetOnEnter ? false : "back",
 });
 const ready = ref(false);
+
+const zoomColumnCount = computed(() =>
+  props.zoomStartsOn === "odd"
+    ? Math.floor(props.columns / 2)
+    : Math.ceil(props.columns / 2),
+);
+
+const displayColumns = computed(() =>
+  props.showZoomOnly ? totalRows.value : props.columns,
+);
+
+const displayRows = computed(() =>
+  props.showZoomOnly ? zoomColumnCount.value : totalRows.value,
+);
+
+interface RenderCell {
+  item: GridItem;
+  displayIndex: number;
+  sourceIndex: number;
+}
+
+interface ColumnLabelItem {
+  text: string;
+  span: number;
+}
+
+function zoomSourceColumnAt(displayColumn: number): number {
+  const start = props.zoomStartsOn === "odd" ? 1 : 0;
+  return start + displayColumn * 2;
+}
+
+const renderCells = computed<RenderCell[]>(() => {
+  if (!props.showZoomOnly) {
+    return resolvedItems.value.map((item, index) => ({
+      item,
+      displayIndex: index,
+      sourceIndex: index,
+    }));
+  }
+
+  const cells: RenderCell[] = [];
+  const rows = totalRows.value;
+  const columns = zoomColumnCount.value;
+
+  for (let zoomColumn = 0; zoomColumn < columns; zoomColumn += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const sourceColumn = zoomSourceColumnAt(zoomColumn);
+      const sourceIndex = row * props.columns + sourceColumn;
+      const item = resolvedItems.value[sourceIndex] ?? { title: `Tile ${sourceIndex + 1}` };
+      cells.push({
+        item,
+        displayIndex: cells.length,
+        sourceIndex,
+      });
+    }
+  }
+
+  return cells;
+});
 
 onMounted(() => {
   if (props.revealMode === "auto") {
@@ -322,6 +391,12 @@ function shouldRenderZoom(index: number): boolean {
   return !!source?.src;
 }
 
+function hasZoomNeighbor(col: number): boolean {
+  return props.zoomStartsOn === "odd"
+    ? col + 1 < props.columns
+    : col - 1 >= 0;
+}
+
 function zoomPhaseActive(): boolean {
   if (!props.alternateColumnZoom) {
     return false;
@@ -345,10 +420,6 @@ function shouldUseZoom(index: number): boolean {
 
 function zoomSourceItem(index: number): GridItem | undefined {
   return resolvedItems.value[zoomSourceIndexFor(index)];
-}
-
-function shouldRenderZoomColumnAsSource(index: number): boolean {
-  return shouldRenderZoom(index) && !zoomPhaseActive();
 }
 
 function shouldRenderStandardItem(index: number): boolean {
@@ -376,11 +447,7 @@ function showZoomBox(index: number): boolean {
     return false;
   }
 
-  const hasNeighbor = props.zoomStartsOn === "odd"
-    ? col + 1 < props.columns
-    : col - 1 >= 0;
-
-  return hasNeighbor;
+  return hasZoomNeighbor(col);
 }
 
 function showDebugSourceBox(index: number): boolean {
@@ -393,11 +460,7 @@ function showDebugSourceBox(index: number): boolean {
     return false;
   }
 
-  const hasNeighbor = props.zoomStartsOn === "odd"
-    ? col + 1 < props.columns
-    : col - 1 >= 0;
-
-  return hasNeighbor;
+  return hasZoomNeighbor(col);
 }
 
 function zoomBoxStyle(index: number): CSSProperties {
@@ -533,6 +596,27 @@ function rowLabelStyle(rowIdx: number): CSSProperties {
   } as CSSProperties;
 }
 
+const columnLabelItems = computed<ColumnLabelItem[]>(() => {
+  const labels: ColumnLabelItem[] = [];
+  let column = 0;
+
+  for (let index = 0; index < props.columnLabels.length && column < displayColumns.value; index += 1) {
+    const rawSpan = props.columnLabelSpans[index] ?? 1;
+    const span = Math.max(1, Math.min(rawSpan, displayColumns.value - column));
+    const text = props.columnLabels[index];
+
+    if (!text) {
+      column += span;
+      continue;
+    }
+
+    labels.push({ text, span });
+    column += span;
+  }
+
+  return labels;
+});
+
 function offsetDebugText(index: number): string {
   const row = rowIndex(index) + 1;
   const col = columnIndex(index) + 1;
@@ -556,8 +640,8 @@ function isHighlightRow(index: number): boolean {
 const rootStyle = computed(
   () =>
     ({
-      "--grid-columns": String(props.columns),
-      "--grid-rows": String(totalRows.value),
+      "--grid-columns": String(displayColumns.value),
+      "--grid-rows": String(displayRows.value),
       "--grid-gap": props.gap,
       "--tile-aspect": props.tileAspectRatio,
       "--tile-radius": props.tileRadius,
@@ -567,6 +651,7 @@ const rootStyle = computed(
       "--tile-transition": `${props.transitionMs}ms`,
       "--tile-offset-y": props.startOffsetY,
       "--tile-offset-x": props.startOffsetX,
+      "--column-label-band": props.columnLabelBand,
       "--row-label-band": props.rowLabelBand,
     }) as CSSProperties
 );
@@ -576,7 +661,24 @@ const rootStyle = computed(
   <section class="results-grid-wrap" :style="rootStyle">
     <div v-if="label" class="results-grid-label">{{ label }}</div>
 
-    <div class="results-grid-shell" :class="{ 'with-row-labels': showRowLabels }">
+    <div
+      class="results-grid-shell"
+      :class="{
+        'with-row-labels': showRowLabels,
+        'with-column-labels': showColumnLabels,
+      }"
+    >
+      <div v-if="showColumnLabels" class="column-labels" aria-hidden="true">
+        <div
+          v-for="(columnLabel, labelIdx) in columnLabelItems"
+          :key="`column-label-${labelIdx}`"
+          class="column-label"
+          :style="{ gridColumn: `span ${columnLabel.span}` }"
+        >
+          {{ columnLabel.text }}
+        </div>
+      </div>
+
       <div v-if="showRowLabels" class="row-labels" aria-hidden="true">
         <div
           v-for="rowIdx in totalRows"
@@ -591,43 +693,43 @@ const rootStyle = computed(
       <div class="results-grid-stack">
         <div class="results-grid">
           <article
-            v-for="(item, index) in resolvedItems"
-            :key="`${item.src ?? 'placeholder'}-${index}`"
+            v-for="cell in renderCells"
+            :key="`${cell.item.src ?? 'placeholder'}-${cell.sourceIndex}`"
             class="result-tile"
             :class="{
-              visible: isVisible(index),
-              placeholder: !item.src,
-              'highlight-row': isHighlightRow(index),
-              'zoom-tile': shouldRenderZoom(index),
+              visible: isVisible(cell.sourceIndex),
+              placeholder: !cell.item.src,
+              'highlight-row': isHighlightRow(cell.sourceIndex),
+              'zoom-tile': shouldRenderZoom(cell.sourceIndex),
             }"
-            :style="tileStyle(index)"
+            :style="tileStyle(cell.displayIndex)"
           >
             <img
-              v-if="shouldRenderZoom(index)"
+              v-if="shouldRenderZoom(cell.sourceIndex)"
               class="result-image"
-              :src="zoomSourceItem(index)?.src"
-              :alt="zoomSourceItem(index)?.alt ?? `Zoom source ${index + 1}`"
-              :style="zoomColumnImageStyle(index)"
+              :src="zoomSourceItem(cell.sourceIndex)?.src"
+              :alt="zoomSourceItem(cell.sourceIndex)?.alt ?? `Zoom source ${cell.sourceIndex + 1}`"
+              :style="zoomColumnImageStyle(cell.sourceIndex)"
             />
             <img
-              v-else-if="shouldRenderStandardItem(index) && item.src"
+              v-else-if="shouldRenderStandardItem(cell.sourceIndex) && cell.item.src"
               class="result-image"
-              :src="item.src"
-              :alt="item.alt ?? item.title ?? `Result ${index + 1}`"
+              :src="cell.item.src"
+              :alt="cell.item.alt ?? cell.item.title ?? `Result ${cell.sourceIndex + 1}`"
             />
-            <div v-else class="result-placeholder">{{ item.title ?? `Tile ${index + 1}` }}</div>
+            <div v-else class="result-placeholder">{{ cell.item.title ?? `Tile ${cell.sourceIndex + 1}` }}</div>
 
-            <div v-if="showZoomBox(index)" class="zoom-box" :style="zoomBoxStyle(index)"></div>
-            <div v-else-if="showDebugSourceBox(index)" class="zoom-box zoom-box-debug" :style="zoomBoxStyle(index)"></div>
+            <div v-if="showZoomBox(cell.sourceIndex)" class="zoom-box" :style="zoomBoxStyle(cell.sourceIndex)"></div>
+            <div v-else-if="showDebugSourceBox(cell.sourceIndex)" class="zoom-box zoom-box-debug" :style="zoomBoxStyle(cell.sourceIndex)"></div>
 
-            <div v-if="showOffsetDebug && shouldShowZoomOverlays(index)" class="offset-debug-pill">
-              {{ offsetDebugText(index) }}
+            <div v-if="showOffsetDebug && shouldShowZoomOverlays(cell.sourceIndex)" class="offset-debug-pill">
+              {{ offsetDebugText(cell.sourceIndex) }}
             </div>
-            <div v-if="showOffsetDebug && shouldShowZoomOverlays(index)" class="offset-debug-crosshair" aria-hidden="true"></div>
+            <div v-if="showOffsetDebug && shouldShowZoomOverlays(cell.sourceIndex)" class="offset-debug-crosshair" aria-hidden="true"></div>
 
-            <div v-if="showCaptions && (item.title || item.subtitle)" class="result-caption">
-              <p v-if="item.title" class="result-title">{{ item.title }}</p>
-              <p v-if="item.subtitle" class="result-subtitle">{{ item.subtitle }}</p>
+            <div v-if="showCaptions && (cell.item.title || cell.item.subtitle)" class="result-caption">
+              <p v-if="cell.item.title" class="result-title">{{ cell.item.title }}</p>
+              <p v-if="cell.item.subtitle" class="result-subtitle">{{ cell.item.subtitle }}</p>
             </div>
           </article>
         </div>
@@ -671,6 +773,36 @@ const rootStyle = computed(
 
 .results-grid-shell.with-row-labels {
   padding-left: var(--row-label-band);
+}
+
+.results-grid-shell.with-column-labels {
+  padding-top: var(--column-label-band);
+}
+
+.column-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--column-label-band);
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--grid-gap);
+  pointer-events: none;
+}
+
+.column-label {
+  align-self: center;
+  justify-self: center;
+  white-space: nowrap;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  letter-spacing: 0.03em;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  padding: 0.2rem 0.45rem;
 }
 
 .row-labels {
