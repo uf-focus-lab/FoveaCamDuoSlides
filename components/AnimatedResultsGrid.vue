@@ -992,18 +992,4 @@ const rootStyle = computed(
   font-size: 0.56rem;
   color: #94a3b8;
 }
-
-@media (max-width: 980px) {
-  .results-grid-shell.with-row-labels {
-    padding-left: 1.6rem;
-  }
-
-  .row-label {
-    font-size: 0.56rem;
-  }
-
-  .results-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 </style>

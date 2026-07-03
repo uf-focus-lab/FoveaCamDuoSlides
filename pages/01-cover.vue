@@ -190,12 +190,6 @@ p.attribution {
   font-size: 0.95rem;
   opacity: 0.8;
 }
-@media (max-width: 1100px) {
-  .author-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    row-gap: 1rem;
-  }
-}
 .focus-lab-logo {
   display: flex;
   color: white;
