@@ -23,6 +23,7 @@ type Position =
   | "RB";
 type Length = number | string;
 type Offset = Length | [Length, Length];
+type Point = [Length, Length];
 
 const props = withDefaults(
   defineProps<{
@@ -30,12 +31,28 @@ const props = withDefaults(
     position?: Position;
     offset?: Offset;
     label?: string;
+    pin?: boolean;
+    guideTo?: Point;
+    labelAt?: Point;
+    textAnchor?: "start" | "middle" | "end";
+    baseline?:
+      | "auto"
+      | "middle"
+      | "hanging"
+      | "text-after-edge"
+      | "central"
+      | "alphabetic";
   }>(),
   {
     show: true,
     position: "B",
     offset: undefined,
     label: "",
+    pin: false,
+    guideTo: undefined,
+    labelAt: undefined,
+    textAnchor: undefined,
+    baseline: undefined,
   },
 );
 
@@ -50,7 +67,26 @@ const parsedPosition = computed(() => {
     align: raw[1] as "L" | "R" | "T" | "B" | undefined,
   };
 });
+const manualGuideTo = computed(() =>
+  props.guideTo
+    ? { x: lengthToPx(props.guideTo[0]), y: lengthToPx(props.guideTo[1]) }
+    : undefined,
+);
+const manualLabelAt = computed(() =>
+  props.labelAt
+    ? { x: lengthToPx(props.labelAt[0]), y: lengthToPx(props.labelAt[1]) }
+    : undefined,
+);
 const route = computed(() => {
+  if (manualGuideTo.value) {
+    const end = manualGuideTo.value;
+    return {
+      elbow: { x: end.x, y: end.y },
+      end,
+      path: `M0,0 L${round(end.x)},${round(end.y)}`,
+    };
+  }
+
   const [primary, secondary] = offsetPx.value;
   const { side, align } = parsedPosition.value;
   const elbow = { x: 0, y: 0 };
@@ -98,6 +134,17 @@ const offsetPx = computed(() => {
   return [lengthToPx(offset[0]), lengthToPx(offset[1])] as const;
 });
 const labelGeometry = computed(() => {
+  if (manualLabelAt.value) {
+    return {
+      x: manualLabelAt.value.x,
+      y: manualLabelAt.value.y,
+      anchor: props.textAnchor ?? "start",
+      baseline: props.baseline ?? "middle",
+      enterX: fontPx.value * 0.35,
+      enterY: 0,
+    };
+  }
+
   const { side, align } = parsedPosition.value;
   const gap = fontPx.value * 0.35;
   const end = route.value.end;
@@ -142,6 +189,8 @@ const svgStyle = computed(() => ({
   "--label-hidden-y": `${round(labelGeometry.value.y + labelGeometry.value.enterY)}px`,
 }));
 const anchorStyle = computed(() => {
+  if (props.pin) return {};
+
   const { side } = parsedPosition.value;
   switch (side) {
     case "T":
@@ -229,8 +278,8 @@ onBeforeUnmount(() => {
       class="label"
       x="0"
       y="0"
-      :text-anchor="labelGeometry.anchor"
-      :dominant-baseline="labelGeometry.baseline"
+      :text-anchor="(props.textAnchor ?? labelGeometry.anchor) as any"
+      :dominant-baseline="(props.baseline ?? labelGeometry.baseline) as any"
     >
       <slot>{{ props.label }}</slot>
     </text>

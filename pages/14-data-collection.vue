@@ -23,7 +23,7 @@ interface AnaglyphTile {
   alt: string;
 }
 
-const stage = useStage(4);
+const stage = useStage(3);
 
 // Resolve data-collection figures through Vite so they are hashed, copied into
 // the build, and base-prefixed for subpath deploys (a bare "/assets/…" string
@@ -34,9 +34,8 @@ const assetUrls = import.meta.glob<string>(
 );
 const asset = (name: string) => assetUrls[`../assets/data-collection/${name}`];
 
-const showWidePair = computed(() => stage.value >= 2);
-const hideRightWide = computed(() => stage.value >= 3);
-const showFocusAndDetails = computed(() => stage.value >= 4);
+const hideRightWide = computed(() => stage.value >= 2);
+const showFocusAndDetails = computed(() => stage.value >= 3);
 
 const roiBoxes: FocusBox[] = [
   {
@@ -152,9 +151,8 @@ function anaglyphStyle(index: number): CSSProperties {
 
 <template>
   <div
-    class="storyboard"
+    class="storyboard show-wide-pair"
     :class="{
-      'show-wide-pair': showWidePair,
       'hide-right-wide': hideRightWide,
       'show-focus-and-details': showFocusAndDetails,
     }"

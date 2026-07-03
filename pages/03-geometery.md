@@ -3,15 +3,26 @@ import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import Annotation from "components/Annotation.vue";
 
 defineProps<{ stage: number }>();
 
 config.autoAddCss = false; // CSS imported above; avoid runtime injection / flash
+
+const callouts = [
+  { left: "40px", top: "145px", position: "BR", label: "Depth", show: 1 },
+  { left: "125px", top: "90px", position: "TR", label: "Baseline", show: 1 },
+  { left: "98px", top: "90px", position: "TL", label: "Focal Length", show: 1 },
+  // { left: "372px", top: "132px", position: "TL", label: "baseline b", show: 2 },
+  // { left: "120px", top: "244px", position: "BR", label: "depth resolution", show: 3 },
+  // { left: "286px", top: "244px", position: "BL", label: "per-pixel step", show: 3 },
+  // { left: "142px", top: "340px", position: "T", label: "increasing resolution", show: 4 },
+];
 </script>
 
 <style scoped lang="scss">
 section.math {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   text-align: left;
   position: absolute;
   top: calc(50% + 20px);
@@ -28,6 +39,27 @@ section.math :deep(.katex-display) {
 section.math :deep(.katex-display),
 section.math :deep(.katex-display > .katex) {
   text-align: left;
+}
+
+.math-callouts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.math-callout {
+  position: absolute;
+  color: var(--fc-fg);
+  opacity: 0.95;
+}
+
+.math-callout.depth,
+.math-callout.disparity {
+  color: #cbd5e1;
+}
+
+.math-callout.resolution {
+  color: var(--yellow-1);
 }
 
 .eq {
@@ -65,16 +97,14 @@ section.math :deep(.katex-display > .katex) {
   overflow: visible;
 }
 
-/* Same-row reveal: the comma fades in; the derivative fades while sliding in
-   20px from the right. Both keep their layout slot, so the base eq stays put. */
+/* Stacked reveal: the derivative appears on the next line. */
 .eqrow {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 0.4em;
+  margin-left: 2rem;
+  margin-top: 2rem;
+  display: grid;
+  gap: 0.25em;
 }
 
-.sep,
 .deriv {
   opacity: 0;
   transition:
@@ -84,10 +114,6 @@ section.math :deep(.katex-display > .katex) {
 
 .deriv {
   transform: translateX(20px);
-}
-
-.sep.show {
-  opacity: 1;
 }
 
 .deriv.show {
@@ -119,17 +145,26 @@ section.math :deep(.katex-display > .katex) {
 
 <section class="math">
 
+<div class="math-callouts" aria-hidden="true">
+  <Annotation
+    v-for="(callout, index) in callouts"
+    :key="`${callout.label}-${index}`"
+    class="math-callout"
+    :class="{ resolution: callout.show >= 3, depth: callout.show === 1, disparity: callout.show === 1 }"
+    :show="stage >= callout.show"
+    :style="{ left: callout.left, top: callout.top }"
+    :position="callout.position as 'T' | 'TL' | 'TR' | 'B' | 'BL' | 'BR' | 'L' | 'LT' | 'LB' | 'R' | 'RT' | 'RB'"
+    offset="1.2em"
+  >
+    {{ callout.label }}
+  </Annotation>
+</div>
+
 Depth $Z$ from disparity $d$ (px):
 
 <div class="eqrow">
-
+ 
 $$Z=\frac{f \cdot b}{d}$$
-
-<div class="sep" :class="{ show: stage >= 2 }">
-
-$$,$$
-
-</div>
 
 <div class="deriv" :class="{ show: stage >= 2 }">
 
@@ -143,9 +178,10 @@ $$\frac{\delta Z}{\delta d} = - \frac{f \cdot b}{d^2}$$
 <div class="reveal-body">
 
 Depth <b><i>resolution</i></b> $\Delta Z$ per pixel step:
+$\delta d$ = 1
 
 $$
-|\Delta Z| ~=~ \frac{f \cdot b}{d^2} ~=~ \frac{Z ^ 2}{f \cdot b}
+ |\delta Z| ~=~ \frac{f \cdot b}{d^2} ~=~ \frac{Z ^ 2}{f \cdot b}
 $$
 
 </div>
