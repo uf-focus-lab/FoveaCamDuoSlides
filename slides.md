@@ -179,7 +179,7 @@ const stage = useStage(5, { preview: -1 });
 <script setup lang="ts">
 import { useStage } from "stores/stage";
 import DriftRotational from "pages/12-drift-rotational.vue";
-const stage = useStage(7, { preview: -1 });
+const stage = useStage(9, { preview: -1 });
 </script>
 
 <div style="height: calc(100% - 72px);">

@@ -2,6 +2,9 @@
 import { computed, useId } from "vue";
 import OnRig from "assets/drift/on-rig.svg";
 import OnTripod from "assets/drift/on-tripod.svg";
+import StructureBase from "assets/structure/Base.webp";
+import StructureMetal from "assets/structure/Metal.webp";
+import StructureTransparentRed from "assets/structure/Transparent-Red.webp";
 
 const props = defineProps<{ stage: number }>();
 const axisArrowBaseId = `axis-arrow-${useId()}`;
@@ -13,19 +16,38 @@ const axisArrowBaseId = `axis-arrow-${useId()}`;
 //   4  Effect column enters, cause figures stack as the cause column narrows.
 //   5  Effect internal stage: frame origins overlap without rotation.
 //   6  Effect internal stage: opposite warp rotation misaligns the scan.
-//   7  Mitigation column enters; all columns split evenly.
+//   7  Mitigation column enters with the full assembly.
+//   8  Highlight the structural parts to be replaced.
+//   9  Swap highlight to the metal replacement.
 const tripodFigureIn = computed(() => props.stage >= 2);
 const causeArrowsIn = computed(() => props.stage >= 3);
 const effectIn = computed(() => props.stage >= 4);
 const colocated = computed(() => props.stage >= 5);
 const rotated = computed(() => props.stage >= 6);
 const mitigationIn = computed(() => props.stage >= 7);
+const mitigationStep = computed(() => Math.max(0, Math.min(3, props.stage - 6)));
+const mitigationStepClass = computed(() => `structure-step-${mitigationStep.value}`);
+const mitigationLabel = computed(() => {
+  switch (mitigationStep.value) {
+    case 2:
+      return "Structural frame plates and rails highlighted for metal replacement";
+    case 3:
+      return "Metal replacement structure";
+    default:
+      return "Full FoveaCam Duo Mini assembly before structural replacement";
+  }
+});
 
 // Axes demo: two camera frames whose synchronized FoV scan only diverges once
 // their origins are first overlapped, then rotated by opposite warp.
 const frames = [
   { side: "left", color: "var(--camera-left)" },
   { side: "right", color: "var(--camera-right)" },
+] as const;
+const structureLayers = [
+  { src: StructureBase, class: "base", alt: "Full FoveaCam Duo Mini assembly" },
+  { src: StructureTransparentRed, class: "highlight", alt: "" },
+  { src: StructureMetal, class: "metal", alt: "" },
 ] as const;
 const SEP = { left: { x: 145, y: 250 }, right: { x: 455, y: 250 } };
 const OVERLAP = { x: 300, y: 250 };
@@ -123,9 +145,23 @@ function frameTransform(side: "left" | "right") {
       <div class="col-divider mitigation-divider" aria-hidden="true"></div>
 
       <article class="drift-col mitigation-col" :aria-hidden="!mitigationIn">
-        <div class="mitigation-body">
-          <p>Rigid metal structural components reduce load-induced frame rotation.</p>
-          <p>One-shot field calibration corrects residual drift before capture.</p>
+        <div
+          class="mitigation-body"
+          :class="mitigationStepClass"
+          role="img"
+          :aria-label="mitigationLabel"
+        >
+          <figure class="structure-animation" aria-hidden="true">
+            <img
+              v-for="layer in structureLayers"
+              :key="layer.class"
+              class="structure-layer"
+              :class="layer.class"
+              :src="layer.src"
+              :alt="layer.alt"
+              draggable="false"
+            />
+          </figure>
         </div>
         <h2 class="col-title">Mitigation</h2>
       </article>
@@ -384,19 +420,46 @@ function frameTransform(side: "left" | "right") {
 .mitigation-body {
   display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 1.3rem;
   min-height: 0;
-  padding: 0 0.35rem;
-  color: var(--fc-fg);
-  font-size: clamp(1.1rem, 2vw, 1.55rem);
-  font-weight: 650;
-  line-height: 1.28;
+  padding: 0;
+  overflow: visible;
 }
 
-.mitigation-body p {
+.structure-animation {
+  position: relative;
+  width: 170%;
+  aspect-ratio: 2834 / 1715;
   margin: 0;
+  pointer-events: none;
+  transform: translateX(1.5%);
+}
+
+.structure-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  user-select: none;
+  transform: translateZ(0);
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.structure-step-0 .base,
+.structure-step-1 .base {
+  opacity: 1;
+}
+
+.structure-step-2 .highlight {
+  opacity: 1;
+}
+
+.structure-step-3 .metal {
+  opacity: 1;
 }
 
 /* ---- Axes misalignment demo ---- */
