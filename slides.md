@@ -28,10 +28,8 @@ import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 <BiologicalInspiration />
 
 <!--
-What are cameras if not emulations of the eyes? As an optics lab, we care alot about what there is to learn from biological optics. Evolution rarely creats systems without purpose. 
-Eyes are extremely complex systems with too many revolving parts to completely understand, but eye systems are designed for a purpose with strengths and weaknesses.
 
-As an optics lab, we care alot about redesigning sensors and cameras for new functions. To discover what new functions are possible, we look at biological systems. Evolution has produced a wide range of eyes, suited for different environments and different purposes.
+In our work, we focus on redesigning sensors and cameras for new functions. To discover what new functions are possible, we look at biological systems. Evolution has produced a wide range of eyes, suited for different environments and different purposes, and there's a lot to learn from these biological systems when creating mechanical systems.
 -->
 
 ---
@@ -40,13 +38,13 @@ As an optics lab, we care alot about redesigning sensors and cameras for new fun
 import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 </script>
 
-# Stereo, Foveation, and Crypsis
+# Stereo and Foveation
 
 <StereoFoveationCrypsis />
 
 ---
 
-# Second Best Result
+# Crypsis and Second Best Result
 
 + Videos of fovea tracking object while wide angle context is show. 
 
@@ -58,7 +56,7 @@ import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 import { useStage } from "stores/stage";
 import GeometryMath from "pages/03-geometery.md";
 import GeometryChart from "pages/03-geometry.vue";
-const stage = useStage(5, { preview: -1 }).transient(4, 600);
+const stage = useStage(6, { preview: -1 });
 </script>
 
 <GeometryMath :stage="stage" />
@@ -167,33 +165,6 @@ import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
 
 <CalibrationIntrinsic />
 
----
-
-# Calibration Drift - Translational
-
-<script setup lang="ts">
-import { useStage } from "stores/stage";
-import DriftTranslational from "pages/11-drift-translational.vue";
-const stage = useStage(5, { preview: -1 });
-</script>
-
-<div style="height: calc(100% - 72px);">
-  <DriftTranslational :stage="stage" />
-</div>
-
----
-
-# Calibration Drift - Rotational
-
-<script setup lang="ts">
-import { useStage } from "stores/stage";
-import DriftRotational from "pages/12-drift-rotational.vue";
-const stage = useStage(9, { preview: -1 });
-</script>
-
-<div style="height: calc(100% - 72px);">
-  <DriftRotational :stage="stage" />
-</div>
 
 ---
 
@@ -224,6 +195,18 @@ import ConvergentStereoAnimation from "pages/15-convergent-stereo.vue";
 
 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 1rem;">
   <ConvergentStereoAnimation :delay="500" />
+</div>
+
+--- 
+
+# Example Walkthrough
+
+<script setup lang="ts">
+import ExampleWalkthrough from "pages/16-example-walkthrough.vue";
+</script>
+
+<div style="width: 100%; margin-top: 0.5rem;">
+  <ExampleWalkthrough />
 </div>
 
 ---
@@ -398,3 +381,32 @@ layout: two-cols
 ---
 
 # Thank You
+
+
+---
+
+# Calibration Drift - Translational
+
+<script setup lang="ts">
+import { useStage } from "stores/stage";
+import DriftTranslational from "pages/11-drift-translational.vue";
+const stage = useStage(5, { preview: -1 });
+</script>
+
+<div style="height: calc(100% - 72px);">
+  <DriftTranslational :stage="stage" />
+</div>
+
+---
+
+# Calibration Drift - Rotational
+
+<script setup lang="ts">
+import { useStage } from "stores/stage";
+import DriftRotational from "pages/12-drift-rotational.vue";
+const stage = useStage(7, { preview: -1 });
+</script>
+
+<div style="height: calc(100% - 72px);">
+  <DriftRotational :stage="stage" />
+</div>

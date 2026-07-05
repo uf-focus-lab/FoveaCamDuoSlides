@@ -2,6 +2,12 @@
 import { ref } from "vue";
 import Focus from "assets/logos/focus.svg";
 import ICCP2026 from "assets/logos/iccp-2026.svg";
+import yuxuanZhangPhoto from "assets/people/yuxuan-zhang.webp";
+import jacobCarterPhoto from "assets/people/jacob-carter.webp";
+import hannahKirklandPhoto from "assets/people/hannah-kirkland.webp";
+import michaelTomadakisPhoto from "assets/people/michael-tomadakis.webp";
+import noahRalphPhoto from "assets/people/noah-ralph.webp";
+import sanjeevKoppalPhoto from "assets/people/sanjeev-koppal.jpg";
 
 type Author = {
   name: string;
@@ -13,32 +19,32 @@ const authors: Author[] = [
   {
     name: "Yuxuan Zhang*",
     initials: "YZ",
-    photo: "/authors/yuxuan-zhang.webp",
+    photo: yuxuanZhangPhoto,
   },
   {
     name: "Jacob Carter*",
     initials: "JC",
-    photo: "/authors/jacob-carter.webp",
+    photo: jacobCarterPhoto,
   },
   {
     name: "Hannah Kirkland",
     initials: "HK",
-    photo: "/authors/hannah-kirkland.webp",
+    photo: hannahKirklandPhoto,
   },
   {
     name: "Michael Tomadakis",
     initials: "MT",
-    photo: "/authors/michael-tomadakis.webp",
+    photo: michaelTomadakisPhoto,
   },
   {
     name: "Noah Ralph",
     initials: "NR",
-    photo: "/authors/noah-ralph.webp",
+    photo: noahRalphPhoto,
   },
   {
     name: "Sanjeev J. Koppal",
     initials: "SK",
-    photo: "/authors/sanjeev-koppal.webp",
+    photo: sanjeevKoppalPhoto,
   },
 ];
 

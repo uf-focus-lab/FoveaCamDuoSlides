@@ -32,8 +32,8 @@ const SENSOR_HALF = FOCAL_BASE * Math.tan((FOV_BASE / 2) * DEG);
 // Focal doubling is kept but gated past the last stage, so it stays off for now
 // (lower the threshold / add a stage to re-enable it later).
 const boundary = computed(() => props.stage >= 3);
-const res = computed(() => (props.stage >= 5 ? RES * 2 : RES));
-const focal = computed(() => (props.stage >= 6 ? FOCAL_BASE * 2 : FOCAL_BASE));
+const res = computed(() => (props.stage >= 6 ? RES * 2 : RES));
+const focal = computed(() => (FOCAL_BASE));
 const fov = computed(
   () => (2 * Math.atan(SENSOR_HALF / focal.value)) / DEG, // covariant with focal
 );
