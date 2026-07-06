@@ -258,19 +258,16 @@ function renderDisplay(expr: string) {
   margin-bottom: 0.45em;
   overflow: hidden;
   opacity: 1;
-  transform: translateY(0);
   transition:
     max-height var(--transition-duration) var(--transition-curve),
     margin-bottom var(--transition-duration) var(--transition-curve),
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
+    opacity var(--transition-duration) var(--transition-curve);
 }
 
 .reveal-disappear.hide {
   max-height: 0;
   margin-bottom: 0;
   opacity: 0;
-  transform: translateY(-0.35em);
 }
 
 .block-group {
@@ -340,8 +337,33 @@ function renderDisplay(expr: string) {
   padding: 0.85em 1.45em 1.1em 1.45em;
 }
 
+.math-block-derivative .equation-shell {
+  padding-top: 0;
+  transition: padding-top var(--transition-duration) var(--transition-curve);
+}
+
 .math-block-derivative.compact .equation-shell {
   padding-top: 0.85em;
+}
+
+.primary-group.compact .math-block-derivative {
+  transition-delay:
+    var(--transition-duration),
+    var(--transition-duration),
+    0s,
+    var(--transition-duration);
+}
+
+.primary-group.compact .math-block-derivative .equation-shell {
+  transition-delay: var(--transition-duration);
+}
+
+.secondary-group .math-block-resolution {
+  transition-delay:
+    0s,
+    0s,
+    var(--transition-duration),
+    var(--transition-duration);
 }
 
 .equation-shell-callouts .math-callouts {

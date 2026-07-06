@@ -127,7 +127,7 @@ function boxStyle(box: FocusBox): CSSProperties {
 }
 
 function tileStyle(index: number): CSSProperties {
-  const row = Math.floor(index / 2) + 2;
+  const row = Math.floor(index / 2) + 1;
   const column = (index % 2) + 1;
   const camera = detailTiles[index].camera;
 
@@ -144,7 +144,7 @@ function anaglyphStyle(index: number): CSSProperties {
   return {
     "--tile-delay": `${(detailTiles.length + index) * 85}ms`,
     gridColumn: "3",
-    gridRow: String(index + 2),
+    gridRow: String(index + 1),
   } as CSSProperties;
 }
 </script>
@@ -208,8 +208,8 @@ function anaglyphStyle(index: number): CSSProperties {
 
         <div class="detail-grid" aria-hidden="true">
           <div class="detail-column-labels">
-            <p class="column-label column-label-left">Left fovea</p>
-            <p class="column-label column-label-right">Right fovea</p>
+            <p class="column-label column-label-left">Left Fovea</p>
+            <p class="column-label column-label-right">Right Fovea</p>
             <p class="column-label column-label-center">Anaglyph</p>
           </div>
 
@@ -302,7 +302,7 @@ function anaglyphStyle(index: number): CSSProperties {
   left: 50%;
   top: -1.1rem;
   transform: translateX(-50%);
-  font-size: 0.67rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #bae6fd;
 }
@@ -427,19 +427,15 @@ function anaglyphStyle(index: number): CSSProperties {
 
 .detail-grid {
   position: absolute;
-  top: calc(var(--label-band) * -1);
-  right: 0;
-  bottom: 0;
-  left: calc(-1 * var(--detail-expand));
-  height: calc(100% + var(--label-band));
-  width: calc(100% + var(--detail-expand));
+  inset: 0;
   display: grid;
-  grid-template-columns: 0.8fr 0.8fr 0.8fr;
-  grid-template-rows: auto repeat(3, auto);
-  align-content: start;
-  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-content: stretch;
+  gap: 0.35rem;
   opacity: 0;
   pointer-events: none;
+  overflow: visible;
 }
 
 .storyboard.show-focus-and-details .detail-grid {
@@ -447,13 +443,17 @@ function anaglyphStyle(index: number): CSSProperties {
 }
 
 .detail-column-labels {
-  grid-column: 1 / span 3;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(-1 * var(--label-band) + 0.15rem);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.7rem;
+  gap: 0.35rem;
   align-items: center;
   opacity: 0;
   transform: translate3d(0, -8px, 0);
+  z-index: 3;
 }
 
 .storyboard.show-focus-and-details .detail-column-labels {
@@ -468,7 +468,7 @@ function anaglyphStyle(index: number): CSSProperties {
   --camera-label-color: var(--camera-center);
   margin: 0;
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: #e0f2fe;
@@ -476,7 +476,7 @@ function anaglyphStyle(index: number): CSSProperties {
   border: 1px solid
     color-mix(in srgb, var(--camera-label-color) 72%, transparent);
   border-radius: 999px;
-  padding: 0.24rem 0.45rem;
+  padding: 0.28rem 0.45rem;
 }
 
 .column-label-left {
@@ -492,10 +492,10 @@ function anaglyphStyle(index: number): CSSProperties {
 }
 
 .detail-tile {
-  aspect-ratio: 4 / 3;
-  width: 92%; /* smaller border box */
-  justify-self: center;
-  align-self: center;
+  width: 100%;
+  height: 100%;
+  justify-self: stretch;
+  align-self: stretch;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.45);

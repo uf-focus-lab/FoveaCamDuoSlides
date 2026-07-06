@@ -130,7 +130,7 @@ const props = withDefaults(
     columnLabels: () => [],
     columnLabelSpans: () => [],
     showColumnLabels: false,
-    columnLabelBand: "1.9rem",
+    columnLabelBand: "2.5rem",
     rowLabels: () => [],
     showRowLabels: false,
     rowLabelBand: "2.2rem",
@@ -761,7 +761,7 @@ const rootStyle = computed(
 
 .results-grid-label {
   margin-bottom: 0.65rem;
-  font-size: 0.8rem;
+  font-size: 2rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   color: #cbd5e1;
@@ -795,13 +795,13 @@ const rootStyle = computed(
   align-self: center;
   justify-self: center;
   white-space: nowrap;
-  font-size: 0.66rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #cbd5e1;
   letter-spacing: 0.03em;
-  background: rgba(15, 23, 42, 0.82);
+  /* background: rgba(15, 23, 42, 0.82);
   border: 1px solid rgba(148, 163, 184, 0.45);
-  border-radius: 999px;
+  border-radius: 999px; */
   padding: 0.2rem 0.45rem;
 }
 

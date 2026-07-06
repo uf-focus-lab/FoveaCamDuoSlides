@@ -311,7 +311,7 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 );
 </script>
 
-<div style="transform: scale(0.80); transform-origin: top center; width: 100%; margin-top: 0.35rem;">
+<div style="transform: scale(0.75); transform-origin: top center; width: 100%; margin-top: 0.35rem;">
   <AnimatedResultsGrid
     :items="depthItems"
     :columns="8"

@@ -30,6 +30,7 @@ const showStereo = computed(() => stage.value >= 1 && stage.value < 3);
 const showFovea = computed(() => stage.value >= 2);
 const moveFoveaLeft = computed(() => stage.value >= 3);
 const showTextBox = computed(() => stage.value >= 3);
+const showOurWorkHighlight = computed(() => stage.value >= 4);
 
 const stereoBullets = [
   "Multiple eyes allow triangulation of objects in the world.",
@@ -100,9 +101,21 @@ const noteSections = [
     </article>
 
     <aside class="text-box" :class="{ show: showTextBox }">
-      <h3>Foveation Implementation</h3>
+      <h4>Foveation Implementation Challenges</h4>
       <div class="note-sections">
-        <section v-for="note in noteSections" :key="note.title" class="note-section">
+        <section
+          v-for="(note, index) in noteSections"
+          :key="note.title"
+          class="note-section"
+          :class="{ 'our-work-highlight': showOurWorkHighlight && index === 0 }"
+        >
+          <span
+            v-if="showOurWorkHighlight && index === 0"
+            class="our-work-tag"
+            aria-label="Our work"
+          >
+            Our work
+          </span>
           <img
             v-if="note.image"
             :src="note.image"
@@ -262,13 +275,119 @@ const noteSections = [
 
 .note-section {
   display: grid;
-  grid-template-columns: 4.75rem minmax(0, 1fr);
+  grid-template-columns: 8rem minmax(0, 1fr);
   gap: 0.8rem;
   align-items: start;
+  position: relative;
+}
+
+.our-work-highlight {
+  border-radius: 1rem;
+}
+
+.our-work-highlight::before,
+.our-work-highlight::after {
+  content: "";
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: 1rem;
+  pointer-events: none;
+}
+
+.our-work-highlight::before {
+  background:
+    linear-gradient(var(--camera-right), var(--camera-right)) left top / 0% 2px no-repeat,
+    linear-gradient(var(--camera-right), var(--camera-right)) right top / 2px 0% no-repeat,
+    linear-gradient(var(--camera-right), var(--camera-right)) right bottom / 0% 2px no-repeat,
+    linear-gradient(var(--camera-right), var(--camera-right)) left bottom / 2px 0% no-repeat;
+  animation: note-box-trace 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.our-work-highlight::after {
+  border: 2px solid color-mix(in srgb, var(--camera-right) 75%, white 25%);
+  opacity: 0;
+  animation: note-box-glow 350ms ease 900ms forwards;
+}
+
+.our-work-tag {
+  position: absolute;
+  right: .5rem;
+  bottom: .5rem;
+  padding: 0.24rem 0.66rem;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in srgb, var(--camera-right) 22%, var(--fc-bg) 78%);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--camera-right) 72%, black 28%);
+  opacity: 0;
+  transform: translateY(0.2rem) scale(0.96);
+  /* box-shadow: 0 6px 14px color-mix(in srgb, var(--camera-right) 20%, transparent); */
+  animation: our-work-tag-in 280ms ease 950ms forwards;
+}
+
+@keyframes note-box-trace {
+  0% {
+    background-size:
+      0% 2px,
+      2px 0%,
+      0% 2px,
+      2px 0%;
+  }
+  25% {
+    background-size:
+      100% 2px,
+      2px 0%,
+      0% 2px,
+      2px 0%;
+  }
+  50% {
+    background-size:
+      100% 2px,
+      2px 100%,
+      0% 2px,
+      2px 0%;
+  }
+  75% {
+    background-size:
+      100% 2px,
+      2px 100%,
+      100% 2px,
+      2px 0%;
+  }
+  100% {
+    background-size:
+      100% 2px,
+      2px 100%,
+      100% 2px,
+      2px 100%;
+  }
+}
+
+@keyframes note-box-glow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes our-work-tag-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.2rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .note-thumb {
-  width: 4.75rem;
+  width: 6rem;
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 0.8rem;
@@ -276,7 +395,7 @@ const noteSections = [
 }
 
 .note-copy h4 {
-  font-size: 1.1rem;
+  font-size: 2rem;
   margin-bottom: 0.25rem;
 }
 
