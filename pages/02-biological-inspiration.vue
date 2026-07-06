@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import CoverFlow from "components/CoverFlow.vue";
+import { computed } from "vue";
+import CoverFlow, { type CoverFlowItem } from "components/CoverFlow.vue";
 import { useStage } from "stores/stage";
 
 const assetUrls = import.meta.glob(
@@ -33,13 +33,13 @@ const selectedImageNames: AnimalSlide[] = [
   // { file: "kismet.webp", label: "Kismet" },
 ];
 
-const slides = selectedImageNames.flatMap(({ file }) => {
+const slides = selectedImageNames.flatMap<CoverFlowItem>(({ file, label }) => {
   const src = assetsByName[file];
   if (!src) {
     console.warn(`[02-biological-inspiration] Missing inspiration image: ${file}`);
     return [];
   }
-  return [src];
+  return [{ src, caption: label, key: file }];
 });
 
 const stage = useStage(Math.max(slides.length, 1), {
@@ -53,21 +53,6 @@ const activeIndex = computed(() => {
   }
   return Math.min(stage.value - 1, length - 1);
 });
-
-const activeLabel = computed(
-  () => selectedImageNames[activeIndex.value]?.label ?? "",
-);
-
-const labelDirection = ref<1 | -1>(1);
-
-watch(activeIndex, (next, previous) => {
-  if (next === previous) return;
-  labelDirection.value = next > previous ? 1 : -1;
-});
-
-const labelTransitionName = computed(() =>
-  labelDirection.value > 0 ? "animal-label-forward" : "animal-label-backward",
-);
 </script>
 
 <template>
@@ -77,11 +62,6 @@ const labelTransitionName = computed(() =>
       :active-index="activeIndex"
       class="inspiration-cover-flow"
     />
-    <Transition :name="labelTransitionName" mode="out-in">
-      <p v-if="activeLabel" :key="activeLabel" class="animal-label">
-        {{ activeLabel }}
-      </p>
-    </Transition>
   </section>
 </template>
 
@@ -100,60 +80,8 @@ section.slide {
   overflow: visible;
 }
 
-.animal-label {
-  position: absolute;
-  left: 50%;
-  bottom: -2.5rem;
-  transform: translate3d(-50%, 0, 0);
-  margin: 0;
-  padding: 0.28rem 0.8rem;
+.inspiration-cover-flow :deep(.cover-flow-caption) {
   color: var(--fc-fg);
-  font-size: 2rem;
   letter-spacing: 0.04em;
-  z-index: 3;
-  pointer-events: none;
-  white-space: nowrap;
-  --transition-duration: 0.25s;
-}
-
-.animal-label-forward-enter-active,
-.animal-label-forward-leave-active,
-.animal-label-backward-enter-active,
-.animal-label-backward-leave-active {
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
-}
-
-.animal-label-forward-enter-from {
-  opacity: 0;
-  transform: translate3d(calc(-50% + 1.4rem), 0.25rem, 0);
-}
-
-.animal-label-forward-enter-to,
-.animal-label-forward-leave-from {
-  opacity: 1;
-  transform: translate3d(-50%, 0, 0);
-}
-
-.animal-label-forward-leave-to {
-  opacity: 0;
-  transform: translate3d(calc(-50% - 1.4rem), -0.15rem, 0);
-}
-
-.animal-label-backward-enter-from {
-  opacity: 0;
-  transform: translate3d(calc(-50% - 1.4rem), 0.25rem, 0);
-}
-
-.animal-label-backward-enter-to,
-.animal-label-backward-leave-from {
-  opacity: 1;
-  transform: translate3d(-50%, 0, 0);
-}
-
-.animal-label-backward-leave-to {
-  opacity: 0;
-  transform: translate3d(calc(-50% + 1.4rem), -0.15rem, 0);
 }
 </style>

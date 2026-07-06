@@ -1,12 +1,32 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, type Component } from "vue";
 
 type CssLength = number | string;
 type ObjectFit = "contain" | "cover" | "fill" | "none" | "scale-down";
 type Model = number | { k: number; b: number };
 
+// A cover-flow tile is either an image URL (rendered as <img>) or a component
+// descriptor (rendered as <component :is>) so slides can mix media and rich
+// Vue tiles in the same flow. Objects may carry a caption that rides along with
+// the tile (same matrix3d transform) and fades in only while centered.
+type CoverFlowImageItem = {
+  src: string;
+  caption?: string;
+  key?: string | number;
+};
+type CoverFlowComponentItem = {
+  component: Component;
+  props?: Record<string, unknown>;
+  caption?: string;
+  key?: string | number;
+};
+export type CoverFlowItem =
+  | string
+  | CoverFlowImageItem
+  | CoverFlowComponentItem;
+
 interface CoverFlowProps {
-  items: string[];
+  items: CoverFlowItem[];
   activeIndex?: number;
   aspectRatio?: Model;
   translateXRatio?: Model;
@@ -243,30 +263,74 @@ function imageAlt(src: string, index: number) {
 
   return basename || `Cover flow image ${index + 1}`;
 }
+
+type NormalizedItem = {
+  kind: "image" | "component";
+  src?: string;
+  component?: Component;
+  componentProps?: Record<string, unknown>;
+  caption?: string;
+  key: string | number;
+};
+
+const normalizedItems = computed<NormalizedItem[]>(() =>
+  props.items.map((item, index) => {
+    if (typeof item === "string") {
+      return { kind: "image", src: item, key: `${item}-${index}` };
+    }
+
+    if ("component" in item) {
+      return {
+        kind: "component",
+        component: item.component,
+        componentProps: item.props,
+        caption: item.caption,
+        key: item.key ?? index,
+      };
+    }
+
+    return {
+      kind: "image",
+      src: item.src,
+      caption: item.caption,
+      key: item.key ?? `${item.src}-${index}`,
+    };
+  }),
+);
 </script>
 
 <template>
   <div class="cover-flow" :style="coverFlowStyle">
     <div ref="stageRef" class="cover-flow-stage">
       <article
-        v-for="(src, index) in items"
-        :key="`${src}-${index}`"
+        v-for="(item, index) in normalizedItems"
+        :key="item.key"
         class="cover-flow-card"
         :class="{ active: index === activeIndex }"
         :style="cardStyle(index)"
       >
         <div class="image-frame">
           <img
-            :src="src"
-            :alt="imageAlt(src, index)"
+            v-if="item.kind === 'image'"
+            :src="item.src"
+            :alt="imageAlt(item.src ?? '', index)"
             :style="{
               objectFit: props.objectFit,
               objectPosition: props.objectPosition,
             }"
             draggable="false"
           />
+          <component
+            :is="item.component"
+            v-else
+            class="cover-flow-card-component"
+            v-bind="item.componentProps ?? {}"
+          />
           <div class="fade-overlay" />
         </div>
+        <figcaption v-if="item.caption" class="cover-flow-caption">
+          {{ item.caption }}
+        </figcaption>
       </article>
     </div>
   </div>
@@ -324,6 +388,12 @@ function imageAlt(src: string, index: number) {
   user-select: none;
 }
 
+.cover-flow-card-component {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .fade-overlay {
   position: absolute;
   inset: 0;
@@ -331,5 +401,29 @@ function imageAlt(src: string, index: number) {
   opacity: var(--cover-flow-fade);
   pointer-events: none;
   transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+/*
+ * The caption is a child of the card, so it inherits the same matrix3d
+ * transform and rides along with its tile. Its own opacity fades from 0 on the
+ * side stages to 1 only when the tile is centered.
+ */
+.cover-flow-caption {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.2em);
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.cover-flow-card.active .cover-flow-caption {
+  opacity: 1;
 }
 </style>
