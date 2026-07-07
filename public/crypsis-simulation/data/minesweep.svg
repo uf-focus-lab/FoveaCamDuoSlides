@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  style="background: #0aa1"
+  viewBox="-60 -60 120 120"
+>
+  <style>
+    * {
+      stroke-width: 0.1;
+      stroke-linejoin: round;
+      fill-rule: evenodd;
+      fill: #fa0;
+    }
+    circle.target,
+    g.targets circle {
+      fill: #f004;
+      stroke: #f00;
+    }
+  </style>
+  <g class="annotations grid">
+    <path
+      style="stroke: #fff2; stroke-width: 0.1"
+      d="
+    M -60 -50 H 120
+    M -60 -40 H 120
+    M -60 -30 H 120
+    M -60 -20 H 120
+    M -60 -10 H 120
+    M -60 +00 H 120
+    M -60 +10 H 120
+    M -60 +20 H 120
+    M -60 +30 H 120
+    M -60 +40 H 120
+    M -60 +50 H 120
+    M -50 -60 V 120
+    M -40 -60 V 120
+    M -30 -60 V 120
+    M -20 -60 V 120
+    M -10 -60 V 120
+    M +00 -60 V 120
+    M +10 -60 V 120
+    M +20 -60 V 120
+    M +30 -60 V 120
+    M +40 -60 V 120
+    M +50 -60 V 120
+  "
+    />
+  </g>
+  <g class="targets">
+    <circle cx="0" cy="0" r="10" data-standoff="10" />
+  </g>
+  <rect x="-11.5" y="3" width="8" height="6" />
+  <rect x="5" y="-1" width="5" height="7" />
+  <rect x="-8" y="-10" width="12" height="3" />
+</svg>

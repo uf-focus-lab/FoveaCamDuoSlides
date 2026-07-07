@@ -46,7 +46,11 @@ import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 
 # Crypsis and Second Best Result
 
-+ Videos of fovea tracking object while wide angle context is show. 
+<script setup lang="ts">
+import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
+</script>
+
+<CrypsisSimulation />
 
 ---
 

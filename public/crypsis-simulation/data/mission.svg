@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  style="background: #0aa1"
+  viewBox="-1 -1 30 18"
+>
+  <style>
+    * {
+      stroke: black;
+      stroke-width: 0.1;
+      stroke-linejoin: round;
+      fill-rule: evenodd;
+      fill: #fa0;
+    }
+    circle.target,
+    g.targets circle {
+      fill: #f004;
+      stroke: #f00;
+    }
+  </style>
+  <g class="targets">
+    <circle cx="7" cy="5" r="6" />
+    <circle cx="10" cy="9" r="6" />
+    <circle cx="19" cy="10" r="6" />
+  </g>
+  <rect x="2" y="1" width="3" height="2" />
+  <circle cx="5" cy="10" r="2" />
+  <rect x="10" y="2" width="3" height="3" />
+  <polygon points="12 10 14 14 16 14 18 12 16 10 13 9" />
+  <path
+    d="
+    M 22 6 L 28 5 L 26 12 L 20 8 Z
+    M 23 7 L 26 7 L 25 10 L 22 8 Z"
+  />
+</svg>
