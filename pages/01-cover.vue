@@ -7,7 +7,7 @@ import jacobCarterPhoto from "assets/people/jacob-carter.webp";
 import hannahKirklandPhoto from "assets/people/hannah-kirkland.webp";
 import michaelTomadakisPhoto from "assets/people/michael-tomadakis.webp";
 import noahRalphPhoto from "assets/people/noah-ralph.webp";
-import sanjeevKoppalPhoto from "assets/people/sanjeev-koppal.jpg";
+import sanjeevKoppalPhoto from "assets/people/sanjeev-koppal.webp";
 
 type Author = {
   name: string;
@@ -136,10 +136,10 @@ const markPhotoFailed = (name: string) => {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-size: 20px;
+  font-size: 30px;
 }
 h1 {
-  font-size: 3.2rem;
+  font-size: 3.5rem;
   line-height: 1.2;
   font-weight: 400;
   max-width: 30ch;
@@ -148,7 +148,7 @@ h1 {
   }
 }
 .author-grid {
-  width: min(100%, 1120px);
+  width: min(70%, 1120px);
   margin-top: 1.3rem;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -181,7 +181,7 @@ h1 {
 }
 .author-name {
   font-family: "Times New Roman", serif;
-  font-size: clamp(0.86rem, 1.2vw, 1.04rem);
+  font-size: .6rem;
   line-height: 1.2;
   opacity: 0.93;
   text-align: center;

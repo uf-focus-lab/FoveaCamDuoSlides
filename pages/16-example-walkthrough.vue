@@ -5,26 +5,49 @@ import { useStage } from "stores/stage";
 const stage = useStage(4);
 
 const assetUrls = import.meta.glob<string>(
-  "../assets/{data-collection,depth-results}/**/*.webp",
+  "../assets/alg_example/**/*.webp",
   { eager: true, query: "?url", import: "default" },
 );
 
 const asset = (name: string) => assetUrls[`../assets/${name}`] ?? "";
 
-const wideSrc = asset("data-collection/wide/R_100.webp");
-const foveaLeftSrc = asset("data-collection/left_fovea/45.webp");
-const foveaRightSrc = asset("data-collection/right_fovea/45.webp");
-const outputA = asset("depth-results/disp/22_disparity.webp");
-const outputB = asset("depth-results/wide_stereo/22.webp");
+const wideSrc = asset("alg_example/wide.webp");
+const foveaLeftSrc = asset("alg_example/fovea-left.webp");
+const foveaRightSrc = asset("alg_example/fovea-right.webp");
+const outputA = asset("alg_example/prior.webp");
+const outputB = asset("alg_example/disparity.webp");
+
+const roi = {
+  left: 76,
+  top: 82,
+  width: 15,
+  height: 15,
+};
+
+const zoomScaleX = 100 / roi.width;
+const zoomScaleY = 100 / roi.height;
+const zoomScale = Math.min(zoomScaleX, zoomScaleY);
+
+const walkthroughStyle = {
+  "--roi-left": `${roi.left}%`,
+  "--roi-top": `${roi.top}%`,
+  "--roi-width": `${roi.width}%`,
+  "--roi-height": `${roi.height}%`,
+  "--zoom-scale": `${zoomScale}`,
+  "--zoom-x": `${-(roi.left / roi.width) * 100}%`,
+  "--zoom-y": `${-(roi.top / roi.height) * 100}%`,
+};
 
 const showRoi = computed(() => stage.value >= 2);
 const showZoom = computed(() => stage.value >= 3);
 const showOutputs = computed(() => stage.value >= 4);
+const labelOutputs = computed(() => stage.value >= 4);
 </script>
 
 <template>
   <div
     class="walkthrough"
+    :style="walkthroughStyle"
     :class="{
       'is-roi': showRoi,
       'is-zoom': showZoom,
@@ -32,11 +55,14 @@ const showOutputs = computed(() => stage.value >= 4);
     }"
     aria-label="Example walkthrough from wide image to model outputs"
   >
-    <section class="wide-panel">
-      <img :src="wideSrc" alt="Wide-angle camera frame" class="wide-image" />
-      <div class="roi-box" aria-hidden="true"></div>
-      <div class="roi-label" aria-hidden="true">ROI</div>
-    </section>
+    <div class="wide-preview">
+      <div class="wide-label">Wide Angle</div>
+      <section class="wide-panel">
+        <img :src="wideSrc" alt="Wide-angle camera frame" class="wide-image" />
+        <div class="roi-box" aria-hidden="true"></div>
+      </section>
+    </div>
+    <div class="roi-label" aria-hidden="true">ROI</div>
 
     <section class="fovea-panel" aria-hidden="true">
       <div class="fovea-preview">
@@ -52,18 +78,23 @@ const showOutputs = computed(() => stage.value >= 4);
       </div>
     </section>
 
-    <div class="flow" aria-hidden="true">
-      <div class="outputs">
-        <figure class="output-card">
-          <img :src="outputA" alt="Disparity output" />
-          <figcaption>Prior</figcaption>
-        </figure>
-        <figure class="output-card">
-          <img :src="outputB" alt="Depth fusion output" />
-          <figcaption>Ours</figcaption>
-        </figure>
+    <section class="fovea-panel" aria-hidden="true">
+      <div class="fovea-preview">
+        <div class="fovea-label">Outputs</div>
+        <div class="fovea-grid">
+          <figure class="fovea-card">
+            <img :src="outputA" alt="Disparity output" class="fovea-image" />
+            <div class="output-label" v-if="labelOutputs">Monocular</div>
+          <!-- <figcaption>Prior</figcaption> -->
+          </figure>
+          <figure class="fovea-card">
+            <img :src="outputB" alt="Depth fusion output" class="fovea-image" />
+            <div class="output-label" v-if="labelOutputs">Ours</div>
+            <!-- <figcaption>Ours</figcaption> -->
+          </figure>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -76,7 +107,7 @@ const showOutputs = computed(() => stage.value >= 4);
   --accent: #dd6b20;
   --stack-tile-height: 12rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.95fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
   width: 100%;
@@ -92,9 +123,25 @@ const showOutputs = computed(() => stage.value >= 4);
   overflow: hidden;
 }
 
+.wide-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  align-self: center;
+}
+
+.wide-label {
+  align-self: center;
+  z-index: 1;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #f0f6ff;
+}
+
 .wide-panel {
   aspect-ratio: 4 / 3;
-  align-self: center;
   transform: translateX(0) scale(1);
   transition: transform var(--transition-duration) var(--transition-curve);
 }
@@ -104,8 +151,8 @@ const showOutputs = computed(() => stage.value >= 4);
   height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: 0 0;
   transform: translate(0, 0) scale(1);
-  transform-origin: 59% 55%;
   transition:
     transform var(--transition-duration) var(--transition-curve),
     filter var(--transition-duration) var(--transition-curve);
@@ -113,12 +160,12 @@ const showOutputs = computed(() => stage.value >= 4);
 
 .roi-box {
   position: absolute;
-  left: 48%;
-  top: 41%;
-  width: 22%;
-  height: 28%;
+  left: var(--roi-left);
+  top: var(--roi-top);
+  width: var(--roi-width);
+  height: var(--roi-height);
   border: 3px solid var(--accent);
-  border-radius: 0.5rem;
+  /* border-radius: 0.5rem; */
   box-shadow: 0 0 0 999px rgb(0 0 0 / 0.38);
   opacity: 0;
   transform: scale(0.85);
@@ -135,12 +182,12 @@ const showOutputs = computed(() => stage.value >= 4);
 
 .roi-label {
   position: absolute;
-  left: 50%;
-  top: 73%;
+  left: 40%;
+  top: 72%;
   transform: translateX(-50%) translateY(0.5rem);
   padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
+  border-radius: 5px;
+  font-size: 1rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 600;
@@ -154,6 +201,7 @@ const showOutputs = computed(() => stage.value >= 4);
 
 .fovea-panel {
   position: relative;
+  min-width: 0;
   opacity: 0;
   transform: translateX(-1.25rem) scale(0.92);
   transition:
@@ -170,25 +218,23 @@ const showOutputs = computed(() => stage.value >= 4);
 }
 
 .fovea-label {
-  position: absolute;
-  left: 0.45rem;
-  top: 0.35rem;
+  align-self: center;
   z-index: 1;
-  font-size: 0.64rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
   color: #f0f6ff;
-  background: rgb(9 20 36 / 0.78);
-  border: 1px solid rgb(240 246 255 / 0.35);
-  border-radius: 999px;
-  padding: 0.12rem 0.42rem;
+  /* background: rgb(9 20 36 / 0.78); */
+  /* border: 1px solid rgb(240 246 255 / 0.35); */
+  /* border-radius: 999px; */
+  /* padding: 0.12rem 0.42rem; */
 }
 
 .fovea-image {
   width: 100%;
   height: var(--stack-tile-height);
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 
@@ -201,11 +247,30 @@ const showOutputs = computed(() => stage.value >= 4);
 }
 
 .fovea-card {
+  position: relative;
   margin: 0;
-  border: 1px solid rgb(255 255 255 / 0.35);
-  border-radius: 0.35rem;
-  overflow: hidden;
-  background: #02060d;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.output-label {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  z-index: 2;
+  font-size: 1rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #f0f6ff;
+  background: rgb(9 20 36 / 0.78);
+  border: 1px solid rgb(240 246 255 / 0.35);
+  border-radius: 999px;
+  padding: 0.18rem 0.42rem;
+  pointer-events: none;
 }
 
 .flow {
@@ -232,17 +297,15 @@ const showOutputs = computed(() => stage.value >= 4);
 }
 
 .output-card {
-  aspect-ratio: 4 / 3;
   margin: 0;
-  position: relative;
-  border-radius: 0.35rem;
   border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 0.35rem;
   overflow: hidden;
   background: #02060d;
 }
 
 .output-card img {
-  width: 100%;
+  width: 70%;
   height: var(--stack-tile-height);
   object-fit: fill;
   display: block;
@@ -277,7 +340,9 @@ const showOutputs = computed(() => stage.value >= 4);
 }
 
 .walkthrough.is-zoom .wide-image {
-  transform: translate(-20%, -14%) scale(2.8);
+  transform: translate(var(--zoom-x), var(--zoom-y)) scale(var(--zoom-scale));
+}
+.walkthrough .wide-image {
   filter: saturate(1.05) contrast(1.03);
 }
 
@@ -287,7 +352,7 @@ const showOutputs = computed(() => stage.value >= 4);
   top: 0;
   width: 100%;
   height: 100%;
-  border-radius: 0;
+  border-radius: 10px;
   box-shadow: 0 0 0 999px rgb(0 0 0 / 0.08);
 }
 
