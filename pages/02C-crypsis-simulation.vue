@@ -4,6 +4,19 @@ import { computed, ref, watch } from "vue";
 
 const isActive = useIsSlideActive();
 const runId = ref(0);
+const baseUrl = import.meta.env.BASE_URL;
+
+const assetUrls = import.meta.glob(
+  "../assets/crypsis/*.{png,jpg,jpeg,webp,avif,gif}",
+  {
+    eager: true,
+    import: "default",
+    query: "?url",
+  },
+) as Record<string, string>;
+
+const asset = (name: string) => assetUrls[`../assets/crypsis/${name}`] ?? "";
+const crypsisImageA = asset("crypsis.webp");
 
 watch(
   isActive,
@@ -13,27 +26,26 @@ watch(
   { immediate: true },
 );
 
-const frameSrc = computed(() => `/crypsis-simulation/index.html?kiosk=1&run=${runId.value}`);
+const frameSrc = computed(
+  () => `${baseUrl}crypsis-simulation/index.html?kiosk=1&run=${runId.value}`,
+);
 </script>
 
 <template>
   <section class="crypsis-slide" :data-active="isActive">
     <aside class="info-panel" aria-label="Crypsis definition and examples">
       <p class="kicker">Definition</p>
-      <h2 class="title">Crypsis</h2>
       <p class="definition">
-        Crypsis is the ability of an organism to avoid detection by blending with its background
-        through color, texture, or shape.
+        Crypsis is the ability of an organism to see without being detected. 
       </p>
 
       <div class="placeholder-grid" aria-hidden="true">
         <figure class="placeholder-card">
-          <div class="placeholder-image">Placeholder Image A</div>
-          <figcaption>Background Match</figcaption>
+          <div class="placeholder-image">
+            <img :src="crypsisImageA" alt="Crypsis Example A" />
+          </div>
         </figure>
         <figure class="placeholder-card">
-          <div class="placeholder-image">Placeholder Image B</div>
-          <figcaption>Disruptive Pattern</figcaption>
         </figure>
       </div>
     </aside>
@@ -89,7 +101,7 @@ const frameSrc = computed(() => `/crypsis-simulation/index.html?kiosk=1&run=${ru
 
 .definition {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 1.2rem;
   line-height: 1.35;
   color: color-mix(in srgb, #ecf4ff 92%, #9fb2ca);
 }
@@ -109,17 +121,21 @@ const frameSrc = computed(() => `/crypsis-simulation/index.html?kiosk=1&run=${ru
 }
 
 .placeholder-image {
-  height: 7.8rem;
+  position: relative;
+  height: 11rem;
   border-radius: 0.55rem;
   border: 1px dashed rgb(236 244 255 / 0.45);
-  background:
-    linear-gradient(150deg, rgb(42 65 92 / 0.95), rgb(17 29 44 / 0.95)),
-    repeating-linear-gradient(45deg, transparent 0 12px, rgb(236 244 255 / 0.08) 12px 24px);
-  color: rgb(236 244 255 / 0.85);
-  font-size: 0.78rem;
-  letter-spacing: 0.03em;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
+}
+
+.placeholder-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: bottom;
+  display: block;
 }
 
 .placeholder-card figcaption {
@@ -145,5 +161,11 @@ const frameSrc = computed(() => `/crypsis-simulation/index.html?kiosk=1&run=${ru
   border: 0;
   display: block;
   background: #0a1420;
+  --zoom: 2.5;
+  --pan-x: 65%; /* 0% = left edge, 50% = center, 100% = right edge */
+  --pan-y: 60%; /* 0% = top edge, 50% = center, 100% = bottom edge */
+  transform: scale(var(--zoom));
+  transform-origin: var(--pan-x) var(--pan-y);
+  margin-bottom: calc((1 - 1 / var(--zoom)) * -100%);
 }
 </style>

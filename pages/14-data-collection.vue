@@ -240,7 +240,7 @@ function anaglyphStyle(index: number): CSSProperties {
 .storyboard {
   --label-band: 2.4rem;
   --baseline-col: 7rem;
-  --main-gap: 1rem;
+  --main-gap: 0rem;
   --detail-expand: calc(var(--baseline-col) + var(--main-gap));
   position: relative;
   width: 100%;
@@ -432,9 +432,12 @@ function anaglyphStyle(index: number): CSSProperties {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
   align-content: stretch;
-  gap: 0.35rem;
+  row-gap: 0rem;    /* vertical spacing between rows */
+  column-gap: 0.2rem; 
   opacity: 0;
   pointer-events: none;
+  /* background: grey;
+  border-radius: 999px; */
   overflow: visible;
 }
 
@@ -449,7 +452,7 @@ function anaglyphStyle(index: number): CSSProperties {
   top: calc(-1 * var(--label-band) + 0.15rem);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.35rem;
+  gap: 0.25rem;
   align-items: center;
   opacity: 0;
   transform: translate3d(0, -8px, 0);
@@ -498,14 +501,14 @@ function anaglyphStyle(index: number): CSSProperties {
   align-self: stretch;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.45);
+  border: none;
   background: #111827;
   transform: translate3d(0, 24px, 0) scale(0.93);
   opacity: 0;
 }
 
 .detail-tile-fovea {
-  border-color: color-mix(in srgb, var(--camera-color) 72%, transparent);
+  border-color: transparent;
 }
 
 .storyboard.show-focus-and-details .detail-tile {
