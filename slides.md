@@ -54,7 +54,17 @@ import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
 
 ---
 
-# Second Best Result 
+# Engineering Foveation
+
+<script setup lang="ts">
+import MechanicalChallenges from "pages/02D-mechanical-challenges.vue";
+</script>
+
+<MechanicalChallenges />
+
+---
+
+# Preview
 
 ---
 
@@ -90,8 +100,8 @@ import { computed } from "vue";
 import OurSolutionPoints from "pages/04A-our-solution-points.vue";
 import OurSolutionDiagram from "pages/04B-our-solution-diagram.vue";
 import { useStage } from "stores/stage";
-const stage = useStage(7, { preview: -1 }).transient([2, 4, 6]);
-const diagramStage = computed(() => Math.ceil(stage.value / 2))
+const stage = useStage(9, { preview: -1 }).transient([2, 4, 6]);
+const diagramStage = computed(() => Math.min(4, Math.ceil(stage.value / 2)));
 </script>
 
 # Our Solution
@@ -155,24 +165,7 @@ import CalibrationProcess from "pages/08-calibration-process.vue";
 
 ---
 
-# Calibration - Extrinsic
-
-<script setup lang="ts">
-import CalibrationExtrinsic from "pages/09-calibration-extrinsic.vue";
-</script>
-
-<CalibrationExtrinsic />
-
----
-
-# Calibration - Intrinsic
-
-<script setup lang="ts">
-import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
-</script>
-
-<CalibrationIntrinsic />
-
+# Calibration - Reprojection Error
 
 ---
 
@@ -232,6 +225,7 @@ const assetUrls = import.meta.glob(
     query: "?url",
   },
 ) as Record<string, string>;
+
 
 const asset = (name: string) => assetUrls[`./assets/depth-results/${name}`] ?? "";
 
@@ -324,7 +318,7 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
     :items="depthItems"
     :columns="8"
     :rows="5"
-    tile-aspect-ratio="4 / 3"
+    tile-aspect-ratio="4 / 3"f
     gap="0.18rem"
     reveal-mode="stage"
     :reveal-grid-at-once="true"
@@ -347,49 +341,46 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 </div>
 
 ---
-layout: two-cols
----
 
-::left::
+# Depth Photometric Error
+
+<div style="width: 100%; margin-top: 0.45rem;">
+  <DepthPhotometricErrorTable />
+</div>
+
+--- 
 
 # Recap
 
-+ **Design**
+<div style="width: 70%; margin: 0.25rem auto 0;">
+  <RecapTiles :crypsis-zoom="3" :crypsis-crop-x="-40" :crypsis-crop-y="-40" />
+</div>
 
-  FoveaCam Duo delivers high-resolution foveated stereo with prephial awareness. 
 
-+ **Calibration**
-
-  The pipeline ensure precise extrinsic and intrinsic mapping.
-
-+ **Dataset**
-
-  Automated data collection delivers large amount of raster samples.
-
-+ **Convergent Stereo**
-
-  validates disparity signal embedded in foveated views.
-
-::right::
-
-# Next Steps
-
-+ **Decision**
-
-  Where to put foveas for most information.
-
-+ **Aggregation**
-
-  How to merge information back into wide prepherial.
-
----
-
-# <span style="color: red">New Results</span>: 3D/4D Scene Upgrade
-
----
+--- 
 
 # Thank You
 
+
+---
+
+# Calibration - Extrinsic
+
+<script setup lang="ts">
+import CalibrationExtrinsic from "pages/09-calibration-extrinsic.vue";
+</script>
+
+<CalibrationExtrinsic />
+
+---
+
+# Calibration - Intrinsic
+
+<script setup lang="ts">
+import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
+</script>
+
+<CalibrationIntrinsic />
 
 ---
 

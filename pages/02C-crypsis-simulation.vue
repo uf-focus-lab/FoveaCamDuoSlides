@@ -47,6 +47,7 @@ const frameSrc = computed(
         <figure class="placeholder-card">
         </figure>
       </div>
+      <h3>See paper for additional analysis!</h3>
     </aside>
 
     <div class="frame-shell">

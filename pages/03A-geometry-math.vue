@@ -69,7 +69,7 @@ const primaryBlocks: MathBlock[] = [
   },
   {
     key: "derivative",
-    intro: "Derivate with respect to disparity:",
+    intro: "Differentiate with respect to disparity:",
     introShowFrom: 2,
     introHideAt: 3,
     equation: "\\frac{\\delta Z}{\\delta d} = - \\frac{f \\cdot b}{d^2}",

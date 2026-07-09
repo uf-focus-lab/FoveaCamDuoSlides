@@ -33,6 +33,8 @@ const assetUrls = import.meta.glob<string>(
   { eager: true, query: "?url", import: "default" },
 );
 const asset = (name: string) => assetUrls[`../assets/data-collection/${name}`];
+const huggingFaceQrSrc =
+  assetUrls["../assets/data-collection/qr_code.webp"];
 
 const hideRightWide = computed(() => stage.value >= 2);
 const showFocusAndDetails = computed(() => stage.value >= 3);
@@ -233,6 +235,19 @@ function anaglyphStyle(index: number): CSSProperties {
         </div>
       </section>
     </div>
+
+    <footer class="storyboard-footer" aria-hidden="true">
+      <article class="footer-qr-tile">
+        <p class="footer-qr-label">HuggingFace</p>
+        <img
+          v-if="huggingFaceQrSrc"
+          class="footer-qr-image"
+          :src="huggingFaceQrSrc"
+          alt="HuggingFace QR code"
+        />
+        <div v-else class="qr-placeholder">Drop qr_code.webp here</div>
+      </article>
+    </footer>
   </div>
 </template>
 
@@ -241,10 +256,10 @@ function anaglyphStyle(index: number): CSSProperties {
   --label-band: 2.4rem;
   --baseline-col: 7rem;
   --main-gap: 0rem;
-  --detail-expand: calc(var(--baseline-col) + var(--main-gap));
   position: relative;
   width: 100%;
   padding-top: var(--label-band);
+  padding-bottom: 0.5rem;
 }
 
 .storyboard-main {
@@ -526,6 +541,73 @@ function anaglyphStyle(index: number): CSSProperties {
 
 .detail-tile-anaglyph {
   min-height: 0;
+}
+
+.storyboard-footer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.2rem;
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+}
+
+.storyboard.show-focus-and-details .storyboard-footer {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.footer-qr-tile {
+  width: min(32rem, 30%);
+  min-height: 4.9rem;
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, #f59e0b 75%, transparent);
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, #f59e0b 10%, #020617);
+}
+
+.footer-qr-label {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fde68a;
+  /* background: rgba(15, 23, 42, 0.82); */
+  /* border: 1px solid color-mix(in srgb, #f59e0b 72%, transparent);
+  border-radius: 999px; */
+  padding: 0.28rem 0.45rem;
+}
+
+.footer-qr-image {
+  width: 100%;
+  height: 100%;
+  max-height: 4rem;
+  object-fit: contain;
+  display: block;
+  /* background: #020617; */
+}
+
+.qr-placeholder {
+  width: 100%;
+  height: 4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px dashed color-mix(in srgb, #f59e0b 65%, transparent);
+  color: #fde68a;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 0.45rem;
 }
 
 @keyframes roi-pop {

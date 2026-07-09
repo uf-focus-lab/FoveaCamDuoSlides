@@ -1,10 +1,16 @@
 <script setup lang="ts">
-defineProps<{ stage: number }>();
+import { computed } from "vue";
+import ospreyImage from "assets/our-solution/Osprey.webp";
+
+const props = defineProps<{ stage: number }>();
+
+const dissolveList = computed(() => props.stage >= 9);
+const showRaptorPanel = computed(() => props.stage >= 9);
 </script>
 
 <template>
   <section class="points">
-    <div class="solution-list">
+    <div class="solution-list" :class="{ hidden: dissolveList }">
       <div class="reveal" :class="{ show: stage >= 2, past: stage >= 4 }">
         <div class="reveal-body solution-item">
           <div class="solution-rail" aria-hidden="true">
@@ -34,11 +40,26 @@ defineProps<{ stage: number }>();
         </div>
       </div>
     </div>
+
+    <div class="raptor-panel" :class="{ show: showRaptorPanel }">
+      <div class="raptor-image-frame">
+        <img class="raptor-image" :src="ospreyImage" alt="Osprey in flight" />
+      </div>
+      <p class="raptor-caption">
+        Stereo and Foveation in combination allow us to emulate biological
+        advantages to bandwidth, detail, and crypsis!
+      </p>
+    </div>
   </section>
 </template>
 
 <style scoped lang="scss">
 .points {
+  --osprey-crop-x: 55%;
+  --osprey-crop-y: 28%;
+  --osprey-crop-zoom: 1.18;
+  --osprey-crop-ratio: 16 / 9;
+
   position: absolute;
   top: calc(50% + 20px);
   left: 40px;
@@ -46,6 +67,21 @@ defineProps<{ stage: number }>();
   font-size: 2rem;
   text-align: left;
   width: 24ch;
+  min-height: 10.8em;
+  display: grid;
+}
+
+.solution-list {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s ease;
+}
+
+.solution-list.hidden {
+  opacity: 0.05;
+  transform: translateX(3.8ch);
+  pointer-events: none;
 }
 
 .reveal {
@@ -137,6 +173,50 @@ defineProps<{ stage: number }>();
 }
 
 .solution-item b {
+  color: var(--yellow-1);
+}
+
+.raptor-panel {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+
+.raptor-panel.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.raptor-image-frame {
+  width: 100%;
+  aspect-ratio: var(--osprey-crop-ratio);
+  overflow: hidden;
+  border-radius: 0.35em;
+  border: 2px solid color-mix(in srgb, var(--yellow-1) 45%, transparent);
+  background: color-mix(in srgb, var(--fc-bg) 92%, transparent);
+}
+
+.raptor-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--osprey-crop-x) var(--osprey-crop-y);
+  transform: scale(var(--osprey-crop-zoom));
+  transform-origin: center;
+}
+
+.raptor-caption {
+  margin: 0;
+  font-size: 0.7em;
+  line-height: 1.3;
   color: var(--yellow-1);
 }
 </style>
