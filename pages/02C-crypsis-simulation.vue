@@ -4,7 +4,6 @@ import { computed, ref, watch } from "vue";
 
 const isActive = useIsSlideActive();
 const runId = ref(0);
-const baseUrl = import.meta.env.BASE_URL;
 
 const assetUrls = import.meta.glob(
   "../assets/crypsis/*.{png,jpg,jpeg,webp,avif,gif}",
@@ -27,7 +26,7 @@ watch(
 );
 
 const frameSrc = computed(
-  () => `${baseUrl}crypsis-simulation/index.html?kiosk=1&run=${runId.value}`,
+  () => `./crypsis-simulation/index.html?kiosk=1&run=${runId.value}`,
 );
 </script>
 
