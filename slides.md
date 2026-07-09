@@ -32,6 +32,16 @@ import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 In our work, we focus on redesigning sensors and cameras for new functions. To discover what new functions are possible, we look at biological systems. Evolution has produced a wide range of eyes, suited for different environments and different purposes, and there's a lot to learn from these biological systems when creating mechanical systems.
 -->
 
+--- 
+
+# Related Work
+
+<script setup lang="ts">
+import RelatedWork from "pages/02A-related-work.vue";
+</script>
+
+<RelatedWork />
+
 ---
 
 <script setup lang="ts">
@@ -42,15 +52,6 @@ import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 
 <StereoFoveationCrypsis />
 
----
-
-# Crypsis
-
-<script setup lang="ts">
-import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
-</script>
-
-<CrypsisSimulation />
 
 ---
 
@@ -65,6 +66,16 @@ import MechanicalChallenges from "pages/02D-mechanical-challenges.vue";
 ---
 
 # Preview
+
+---
+
+# Crypsis
+
+<script setup lang="ts">
+import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
+</script>
+
+<CrypsisSimulation />
 
 ---
 
