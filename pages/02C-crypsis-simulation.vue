@@ -3,16 +3,109 @@ import { useIsSlideActive } from "@slidev/client";
 import { computed, ref, watch } from "vue";
 import { renderToString } from "katex";
 import { useStage } from "stores/stage";
+import Annotation from "components/Annotation.vue";
 
 const isActive = useIsSlideActive();
 const runId = ref(0);
 const stage = useStage(4, { preview: -1 });
+const frameEl = ref<HTMLIFrameElement | null>(null);
 
 const eq7 = "D_i \\triangleq \\|A-T_i\\|_2 < D_{\\max}";
 const eq8 = "D_{\\max} \\triangleq \\frac{S_t}{2\\tan(\\theta_T / 2)} \\approx \\frac{S_t}{\\theta_T}";
 const feasibleRegion = "\\{ A \\mid D_{\\min} < \\|A-T_i\\|_2 < D_{\\max} \\}";
 const eq12 =
   "\\frac{dP_{\\mathrm{succ}}}{dD_{\\max}} = \\frac{2\\pi D_{\\max}}{|\\Omega|}(1-p)^{\\mathcal{A}_{\\mathrm{blk}}(D_{\\max})} \\ge 0";
+
+type AnnotationPosition =
+  | "T"
+  | "TL"
+  | "TR"
+  | "B"
+  | "BL"
+  | "BR"
+  | "L"
+  | "LT"
+  | "LB"
+  | "R"
+  | "RT"
+  | "RB";
+
+type Callout = {
+  left: string;
+  top: string;
+  position: AnnotationPosition;
+  label: string;
+  show: number;
+};
+
+type MathBlock = {
+  key: string;
+  intro: string;
+  introShowFrom: number;
+  introHideAt: number;
+  equation: string;
+  showFrom: number;
+  callouts?: Callout[];
+};
+
+const eq7Callouts: Callout[] = [
+  { left: "2.1em", top: "0.95em", position: "TR", label: "Observer", show: 1 },
+  { left: "8.4em", top: "0.95em", position: "TR", label: "Target", show: 1 },
+  { left: "5.4em", top: "3.25em", position: "BR", label: "Range", show: 1 },
+  {
+    left: "15.5em",
+    top: "2.25em",
+    position: "R",
+    label: "Resolvable limit",
+    show: 1,
+  },
+];
+
+const mathBlocks: MathBlock[] = [
+  {
+    key: "eq7",
+    intro:
+      "To observe target $i$, observer $A$ must be close enough to resolve it.",
+    introShowFrom: 1,
+    introHideAt: 2,
+    equation: eq7,
+    showFrom: 1,
+    callouts: eq7Callouts,
+  },
+  {
+    key: "eq8",
+    intro:
+      "This range limit is set by target size $S_t$ and angular resolution $\\theta_T$.",
+    introShowFrom: 2,
+    introHideAt: 3,
+    equation: eq8,
+    showFrom: 2,
+  },
+  {
+    key: "region",
+    intro:
+      "Crypsis is feasible only in this band: far enough to stay unseen, close enough to still see.",
+    introShowFrom: 3,
+    introHideAt: 4,
+    equation: feasibleRegion,
+    showFrom: 3,
+  },
+  {
+    key: "eq12",
+    intro:
+      "As $D_{\\max}$ increases, the feasible crypsis region expands and success becomes more likely.",
+    introShowFrom: 4,
+    introHideAt: 5,
+    equation: eq12,
+    showFrom: 4,
+  },
+];
+
+function renderInline(text: string) {
+  return text.replace(/\$([^$]+)\$/g, (_, expr: string) =>
+    renderToString(expr, { throwOnError: false }),
+  );
+}
 
 function renderDisplay(expr: string) {
   return renderToString(expr, {
@@ -29,6 +122,42 @@ watch(
   { immediate: true },
 );
 
+function syncSimulationRegionGrowth() {
+  const doc = frameEl.value?.contentDocument;
+  if (!doc) return;
+
+  const root = doc.getElementById("app");
+  if (!root) return;
+
+  const styleId = "slidev-feasible-growth-style";
+  let styleNode = doc.getElementById(styleId) as HTMLStyleElement | null;
+
+  if (!styleNode) {
+    styleNode = doc.createElement("style");
+    styleNode.id = styleId;
+    styleNode.textContent = `
+      svg.simulation-world .annotations.feasible-regions {
+        clip-path: circle(6% at 50% 50%);
+        transition: clip-path 900ms var(--transition-curve, ease-in-out);
+      }
+      #app.grow-feasible-region svg.simulation-world .annotations.feasible-regions {
+        clip-path: circle(46% at 50% 50%);
+      }
+    `;
+    doc.head.appendChild(styleNode);
+  }
+
+  root.classList.toggle("grow-feasible-region", stage.value >= 4);
+}
+
+watch(
+  stage,
+  () => {
+    syncSimulationRegionGrowth();
+  },
+  { immediate: true },
+);
+
 const frameSrc = computed(
   () => `./crypsis-simulation/index.html?kiosk=1&run=${runId.value}`,
 );
@@ -37,61 +166,55 @@ const frameSrc = computed(
 <template>
   <section class="crypsis-slide" :data-active="isActive">
     <aside class="info-panel" aria-label="Crypsis definition and examples">
-      <!-- <p class="kicker reveal-block" :class="{ show: stage >= 1 }">Definition</p> -->
-      <!-- <p class="definition reveal-block" :class="{ show: stage >= 1 }">
-        Crypsis is the ability of an organism to see without being detected.
-      </p> -->
-
       <section class="equation-panel" aria-label="Crypsis equations from paper">
-        <p class="equation-explainer reveal-block" :class="{ show: stage >= 2 }">
-          We define a feasible observation region using the target position, the observer position, a maximum distance for resolving the target, and a minimum distance for remaining unseen.
-        </p>
+        <article
+          v-for="block in mathBlocks"
+          :key="block.key"
+          class="math-block"
+          :class="{ show: stage >= block.showFrom }"
+        >
+          <div
+            class="equation-explainer reveal-disappear"
+            :class="{ hide: stage >= block.introHideAt, show: stage >= block.introShowFrom }"
+            v-html="renderInline(block.intro)"
+          />
 
-        <div class="reveal-block" :class="{ show: stage >= 2 }">
-          <p class="equation-label">Eq. (7)</p>
-          <div class="equation-line" v-html="renderDisplay(eq7)" />
-        </div>
+          <div
+            class="equation-shell"
+            :class="{
+              'equation-shell-callouts': !!block.callouts?.length,
+              'equation-shell-eq7': block.key === 'eq7',
+            }"
+          >
+            <div v-if="block.callouts?.length" class="math-callouts" aria-hidden="true">
+              <Annotation
+                v-for="(callout, index) in block.callouts"
+                :key="`${callout.label}-${index}`"
+                class="math-callout"
+                :show="stage >= callout.show"
+                :style="{ left: callout.left, top: callout.top }"
+                :position="callout.position"
+                offset="1.2em"
+              >
+                {{ callout.label }}
+              </Annotation>
+            </div>
 
-        <div class="reveal-block" :class="{ show: stage >= 2 }">
-          <p class="equation-label">Eq. (8)</p>
-          <div class="equation-line" v-html="renderDisplay(eq8)" />
-        </div>
-
-        <!-- <div class="reveal-block" :class="{ show: stage >= 3 }">
-          <p class="equation-label">Feasible Region</p>
-          <div class="equation-line" v-html="renderDisplay(feasibleRegion)" />
-        </div>
-
-        <p class="equation-explainer reveal-block" :class="{ show: stage >= 3 }">
-          These equations say there is a band where observation is possible: close enough to resolve the target, but far enough away to avoid being seen.
-        </p>
-
-        <p class="equation-explainer reveal-block" :class="{ show: stage >= 4 }">
-          We further derive this in terms of probability under obstacle uncertainty. More details are in the paper.
-        </p>
-      -->
-        <div class="reveal-block" :class="{ show: stage >= 4 }">
-          <p class="equation-label">Eq. (12)</p>
-          <div class="equation-line" v-html="renderDisplay(eq12)" />
-        </div>
-
-        <!-- <p class="equation-explainer reveal-block" :class="{ show: stage >= 4 }">
-          Eq. (12) shows that increasing the maximum observable distance strictly improves the probability of successful observation.
-        </p> -->
-        <!--
-        <p class="equation-closing reveal-block" :class="{ show: stage >= 4 }">
-          We go into these derivations in detail in the paper.
-        </p> -->
+            <div class="equation-line" v-html="renderDisplay(block.equation)" />
+          </div>
+        </article>
       </section>
     </aside>
 
     <div class="frame-shell">
       <iframe
+        ref="frameEl"
         :key="runId"
         :src="frameSrc"
         title="Crypsis Simulation"
         class="crypsis-frame"
         loading="eager"
+        @load="syncSimulationRegionGrowth"
       />
     </div>
   </section>
@@ -111,7 +234,7 @@ const frameSrc = computed(
 .info-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.7rem;
   border-radius: 1rem;
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   background: color-mix(in srgb, #101b2a 86%, black);
@@ -120,7 +243,13 @@ const frameSrc = computed(
   color: #ecf4ff;
 }
 
-.reveal-block {
+.equation-panel {
+  margin-top: 0.1rem;
+  padding: 0;
+  --eq7-gap: 0.7rem;
+}
+
+.math-block {
   opacity: 0;
   transform: translateX(20px);
   transition:
@@ -128,52 +257,73 @@ const frameSrc = computed(
     transform var(--transition-duration) var(--transition-curve);
 }
 
-.reveal-block.show {
+.math-block + .math-block {
+  margin-top: 0.9rem;
+}
+
+.math-block.show {
   opacity: 1;
   transform: translateX(0);
 }
 
-.kicker {
+.reveal-disappear {
+  display: block;
+  max-height: 0;
   margin: 0;
-  font-size: 0.9rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  opacity: 0.8;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height var(--transition-duration) var(--transition-curve),
+    margin var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+  transform: translateX(20px);
 }
 
-.title {
+.reveal-disappear.show {
+  max-height: 3.2em;
+  margin: 0.25rem 0 0.25rem;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-disappear.hide {
+  max-height: 0;
   margin: 0;
-  font-size: 1.35rem;
-  line-height: 1.1;
+  opacity: 0;
+  transform: translateX(0);
 }
 
-.definition {
-  margin: 0;
-  font-size: 1.55rem;
-  line-height: 1.25;
-  color: color-mix(in srgb, #ecf4ff 92%, #9fb2ca);
+.equation-shell {
+  display: inline-block;
 }
 
-.equation-panel {
-  margin-top: 0.35rem;
-  padding: 0.95rem 1rem;
-  border-radius: 0.55rem;
-  border: 1px solid rgb(236 244 255 / 0.2);
-  background: rgb(10 20 32 / 0.5);
+.equation-shell-eq7 {
+  margin-top: var(--eq7-gap);
 }
 
-.equation-label {
-  margin: 0.55rem 0 0.25rem;
-  font-size: 0.88rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgb(236 244 255 / 0.72);
+.equation-shell-callouts {
+  position: relative;
+  padding: 0.7em 0.9em 0.95em 0.9em;
+}
+
+.equation-shell-callouts .math-callouts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.math-callout {
+  position: absolute;
+  font-size: 0.7em;
+  opacity: 0.95;
+  color: rgb(255, 172, 172);
 }
 
 .equation-line {
   margin: 0;
-  font-size: 1.15rem;
-  line-height: 1.35;
+  font-size: 1.18rem;
+  line-height: 1.34;
   color: #f3f8ff;
   font-family: "Times New Roman", serif;
 }
@@ -188,17 +338,10 @@ const frameSrc = computed(
 }
 
 .equation-explainer {
-  margin: 0.75rem 0 0.45rem;
-  font-size: 1rem;
-  line-height: 1.4;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.36;
   color: #d9e7f7;
-}
-
-.equation-closing {
-  margin: 0.7rem 0 0;
-  font-size: 0.96rem;
-  line-height: 1.4;
-  color: #cfe1f6;
 }
 
 .frame-shell {

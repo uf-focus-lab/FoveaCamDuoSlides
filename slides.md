@@ -65,7 +65,15 @@ import MechanicalChallenges from "pages/02D-mechanical-challenges.vue";
 
 ---
 
-# Preview
+# Preview- Foveal Tracking
+
+<script setup lang="ts">
+import PreviewThreePanelPlaceholder from "components/PreviewThreePanelPlaceholder.vue";
+</script>
+
+<div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
+  <PreviewThreePanelPlaceholder />
+</div>
 
 ---
 
