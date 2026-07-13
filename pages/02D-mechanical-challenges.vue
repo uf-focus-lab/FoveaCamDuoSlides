@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useStage } from "stores/stage";
-import kismetImage from "assets/inspiration/kismet.webp";
-import segmentationImage from "assets/inspiration/segmentation.webp";
 
 const stage = useStage(3, { preview: 3 });
 
@@ -20,11 +18,6 @@ const highlightFirst = computed(() => stage.value >= 3);
       <article class="challenge-card" :class="{ show: showFirst, primary: highlightFirst }">
         <p class="challenge-index">Challenge 1</p>
         <h3>Build a mechanical system capable of foveation</h3>
-        <img
-          class="challenge-image"
-          :src="kismetImage"
-          alt="Kismet robotic head as inspiration for mechanical foveation"
-        />
         <!-- <p class="challenge-copy">
           Realize controllable foveated sensing hardware that can reliably execute the desired gaze behavior.
         </p> -->
@@ -33,11 +26,6 @@ const highlightFirst = computed(() => stage.value >= 3);
       <article class="challenge-card" :class="{ show: showSecond }">
         <p class="challenge-index">Challenge 2</p>
         <h3>Know where to place the foveation</h3>
-        <img
-          class="challenge-image"
-          :src="segmentationImage"
-          alt="Segmentation mask illustrating where attention should be allocated"
-        />
         <!-- <p class="challenge-copy">
           Decide where the system should attend so high-resolution sensing is used where it matters most.
         </p> -->
@@ -58,9 +46,9 @@ const highlightFirst = computed(() => stage.value >= 3);
 
 .kicker {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 1.15rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: color-mix(in srgb, currentColor 68%, white 32%);
 }
 
@@ -74,7 +62,7 @@ const highlightFirst = computed(() => stage.value >= 3);
   margin-top: 0.45rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.35rem;
   align-items: stretch;
 }
 
@@ -82,12 +70,12 @@ const highlightFirst = computed(() => stage.value >= 3);
   position: relative;
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 1.15rem;
-  padding: 1rem 1rem 0.9rem;
+  padding: 1.4rem 1.35rem;
   background: color-mix(in srgb, var(--fc-bg) 95%, #0b1220 5%);
   display: grid;
-  align-content: start;
-  gap: 0.5rem;
-  min-height: 14.5rem;
+  align-content: center;
+  gap: 0.85rem;
+  min-height: 16.5rem;
   opacity: 0;
   transform: translate3d(0, 0.7rem, 0);
   transition:
@@ -128,17 +116,17 @@ const highlightFirst = computed(() => stage.value >= 3);
 
 .challenge-index {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: color-mix(in srgb, currentColor 58%, white 42%);
 }
 
 .challenge-card h3 {
   margin: 0;
-  font-size: 1.1rem;
-  line-height: 1.18;
+  font-size: 2rem;
+  line-height: 1.14;
 }
 
 .challenge-copy {
@@ -148,12 +136,4 @@ const highlightFirst = computed(() => stage.value >= 3);
   color: color-mix(in srgb, currentColor 82%, white 18%);
 }
 
-.challenge-image {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: 0.75rem;
-  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  background: color-mix(in srgb, var(--fc-bg) 90%, transparent);
-}
 </style>

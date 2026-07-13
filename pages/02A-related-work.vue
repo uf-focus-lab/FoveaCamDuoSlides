@@ -21,19 +21,19 @@ type RelatedWorkPanel = {
 // Each panel supports optional image and optional centered text.
 const panels: RelatedWorkPanel[] = [
   {
-    title: "Active Illumination",
-    imageFile: "lidar.webp",
-    text: "Active IR Stereo [1]\nFlash LIDAR (ToF) [2]\nScanning LIDAR [3]",
+    title: "Policy-Driven Foveation",
+    imageFile: "segmentation.webp",
+    text: "Policy-based foveated imaging and perception [1]\nActive 3D scene exploration with foveated vision [5]",
   },
   {
-    title: "Motorized Vergence Stereo",
-    imageFile: "kismet.webp",
-    text: "Humanoid Robots [4], [5], [6], [7], [8]",
-  },
-  {
-    title: "Multi-Res. / Hybrid",
+    title: "Dynamic Optical Foveation",
     imageFile: "gigapixel.webp",
-    text: "Aware-2 [9]",
+    text: "Fovea stacking with localized aberration correction [2]\nMultiscale gigapixel imaging [6]",
+  },
+  {
+    title: "Vergence Stereo Systems",
+    imageFile: "kismet.webp",
+    text: "Real-time binocular smooth pursuit [3]\nConvergent active stereo [4]\nHumanoid vergence platforms [7], [8]",
   },
 ];
 
@@ -52,11 +52,14 @@ const panelImageSrc = (panel: RelatedWorkPanel) => {
 };
 
 const citations = [
-  "[1] Keselman et al., Intel RealSense stereoscopic depth cameras, CVPRW 2017. [2] Hansard et al., Time-of-Flight Cameras, Springer 2013. [3] Halterman and Bruch, Velodyne HDL-64E LiDAR, SPIE 2010.",
-  "[4] Breazeal, Emotion and sociable humanoid robots, IJHCS 2003. [5] Metta et al., The iCub humanoid robot, PerMIS 2008. [6] Bjorkman and Kragic, Active 3D scene exploration with foveated vision, ICRA 2002.",
-  "[7] Coombs and Brown, Real-time binocular smooth pursuit, IJCV 1993. [8] Chi, Convergent active stereo, Master's thesis, York University 2025. [9] Brady et al., Multiscale gigapixel photography, Nature 2012.",
-  "[10] Stevens and Merilaita, Animal camouflage: Current issues and new perspectives, Phil. Trans. R. Soc. B 2009.",
+  "[1] H. Xiao, J. Ackermann, B. Deng, and G. Wetzstein, Policy-based foveated imaging and perception, 2026. arXiv:2606.02565.",
+  "[2] S. Mao, Y. N. Mishra, and W. Heidrich, Fovea stacking: Imaging with dynamic localized aberration correction, ACM Trans. Graph., 44(6), 2025. doi:10.1145/3763278.",
+  "[3] Coombs and Brown, Real-time binocular smooth pursuit, IJCV 1993. [4] Chi, Convergent active stereo, Master's thesis, York University 2025.",
+  "[5] Bjorkman and Kragic, Active 3D scene exploration with foveated vision, ICRA 2002. [6] Brady et al., Multiscale gigapixel photography, Nature 2012.",
+  "[7] Breazeal, Emotion and sociable humanoid robots, IJHCS 2003. [8] Metta et al., The iCub humanoid robot, PerMIS 2008.",
 ];
+
+const citationParagraph = citations.join(" ");
 </script>
 
 <template>
@@ -82,9 +85,7 @@ const citations = [
     </div>
 
     <footer class="citation-footer" aria-label="Related work citations">
-      <p v-for="citation in citations" :key="citation" class="citation-line">
-        {{ citation }}
-      </p>
+      <p class="citation-line">{{ citationParagraph }}</p>
     </footer>
   </section>
 </template>
@@ -143,7 +144,7 @@ section.slide {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: .9rem;
   line-height: 1.45;
   text-align: center;
   white-space: pre-line;
@@ -157,8 +158,8 @@ section.slide {
   min-height: var(--footer-height);
   padding: 0.55rem 1.1rem 0.1rem;
   border-top: 1px solid rgb(255 255 255 / 0.14);
-  color: rgb(226 232 240 / 0.92);
-  font-size: 0.5rem;
+  color: rgb(178, 178, 178);
+  font-size: 0.6rem;
   line-height: 1.35;
 }
 
