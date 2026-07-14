@@ -65,14 +65,14 @@ import MechanicalChallenges from "pages/05-mechanical-challenges.vue";
 
 ---
 
-# Preview- Foveal Tracking
+# Preview — Foveated Detail
 
 <script setup lang="ts">
-import PreviewThreePanelPlaceholder from "components/PreviewThreePanelPlaceholder.vue";
+import PreviewFovealTracking from "pages/06-preview-foveal-tracking.vue";
 </script>
 
 <div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
-  <PreviewThreePanelPlaceholder />
+  <PreviewFovealTracking />
 </div>
 
 ---
@@ -93,7 +93,7 @@ import CrypsisSimulation from "pages/07-crypsis-simulation.vue";
 import { useStage } from "stores/stage";
 import GeometryMath from "pages/08A-geometry-math.vue";
 import GeometryChart from "pages/08-geometry.vue";
-const stage = useStage(6, { preview: -1 });
+const stage = useStage(11, { preview: -1 }).transient([1, 3, 5, 7, 10]);
 </script>
 
 <GeometryMath :stage="stage" />

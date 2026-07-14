@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import {
   computed,
-  inject,
   nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
   useAttrs,
   watch,
-  watchEffect,
 } from "vue";
-import { KatexKey } from "./katex-context";
+import { katexEmbedClass } from "./katex-context";
 
 defineOptions({ inheritAttrs: false });
 
@@ -41,6 +39,10 @@ const props = withDefaults(
     at?: string;
     /** Which occurrence of `at` to use when a glyph repeats (default 0). */
     atNth?: number;
+    /** Gap between the anchor point and the annotated element's bbox edge. */
+    spacing?: Length;
+    /** Render the label as HTML (in a <foreignObject>) so it can hold KaTeX etc. */
+    html?: boolean;
     label?: string;
     pin?: boolean;
     guideTo?: Point;
@@ -61,6 +63,8 @@ const props = withDefaults(
     align: undefined,
     at: undefined,
     atNth: 0,
+    spacing: 0,
+    html: false,
     label: "",
     pin: false,
     guideTo: undefined,
@@ -74,22 +78,69 @@ const root = ref<SVGSVGElement | null>(null);
 const fontPx = ref(16);
 let resizeObserver: ResizeObserver | undefined;
 
-// When `at` is set, resolve the matching KaTeX glyph and teleport onto it so
-// the guide anchors to the real letter instead of a hardcoded offset.
 const attrs = useAttrs();
 const forwardedAttrs = computed(() => {
   const { class: _class, style: _style, ...rest } = attrs;
   return rest;
 });
-const katex = inject(KatexKey, null);
-const target = computed(() => {
-  if (!props.at || !katex) return null;
-  void katex.ready.value;
-  return katex.resolve(props.at, props.atNth);
-});
-watchEffect(() => {
-  if (target.value) target.value.style.position = "relative";
-});
+
+// When `at` is set, a hidden locator renders in place inside the host <Katex>.
+// We find the matching glyph, then teleport the guide into the <Katex> wrapper
+// (a stable positioned box) and anchor it at the glyph's measured offset — an
+// inline glyph is too fragile to serve as the positioning context directly.
+const anchor = ref<HTMLElement | null>(null);
+const target = ref<HTMLElement | null>(null);
+const anchorPoint = ref<{ left: string; top: string } | null>(null);
+let hostObserver: ResizeObserver | undefined;
+
+function measure(host: HTMLElement, glyph: HTMLElement) {
+  const hr = host.getBoundingClientRect();
+  const gr = glyph.getBoundingClientRect();
+  const side = props.position.toUpperCase()[0];
+  const s = lengthToPx(props.spacing);
+  let x = gr.left - hr.left + gr.width / 2;
+  let y = gr.top - hr.top + gr.height / 2;
+  if (side === "T") y = gr.top - hr.top - s;
+  else if (side === "B") y = gr.top - hr.top + gr.height + s;
+  else if (side === "L") x = gr.left - hr.left - s;
+  else if (side === "R") x = gr.left - hr.left + gr.width + s;
+  anchorPoint.value = { left: `${round(x)}px`, top: `${round(y)}px` };
+}
+
+function locate() {
+  hostObserver?.disconnect();
+  target.value = null;
+  anchorPoint.value = null;
+  const host = props.at
+    ? anchor.value?.closest<HTMLElement>(`.${katexEmbedClass}`)
+    : null;
+  if (!host) return;
+  let glyph: HTMLElement | undefined;
+  let i = 0;
+  for (const span of host.querySelectorAll<HTMLElement>("span")) {
+    if (span.childElementCount === 0 && span.textContent === props.at) {
+      if (i++ === props.atNth) {
+        glyph = span;
+        break;
+      }
+    }
+  }
+  if (!glyph) return;
+  // host must be a positioning context; only force it when it's static so an
+  // already-absolute host (e.g. an equation positioned by its slide) is kept.
+  if (getComputedStyle(host).position === "static") host.style.position = "relative";
+  target.value = host;
+  measure(host, glyph);
+  if (typeof ResizeObserver !== "undefined") {
+    hostObserver = new ResizeObserver(() => measure(host, glyph!));
+    hostObserver.observe(host);
+  }
+}
+watch(
+  [anchor, () => props.at, () => props.atNth, () => props.position],
+  () => void nextTick(locate),
+  { immediate: true },
+);
 
 const parsedPosition = computed(() => {
   const raw = props.position.toUpperCase() as Position;
@@ -221,28 +272,48 @@ const labelGeometry = computed(() => {
 
   return text;
 });
-const svgStyle = computed(() => ({
-  ...anchorStyle.value,
-  "--label-x": `${round(labelGeometry.value.x)}px`,
-  "--label-y": `${round(labelGeometry.value.y)}px`,
-  "--label-hidden-x": `${round(labelGeometry.value.x + labelGeometry.value.enterX)}px`,
-  "--label-hidden-y": `${round(labelGeometry.value.y + labelGeometry.value.enterY)}px`,
-}));
+const svgStyle = computed(() => {
+  const g = labelGeometry.value;
+  const anchor = props.textAnchor ?? g.anchor;
+  const baseline = props.baseline ?? g.baseline;
+  return {
+    ...(anchorPoint.value ?? anchorStyle.value),
+    "--label-x": `${round(g.x)}px`,
+    "--label-y": `${round(g.y)}px`,
+    "--label-hidden-x": `${round(g.x + g.enterX)}px`,
+    "--label-hidden-y": `${round(g.y + g.enterY)}px`,
+    // How an HTML label aligns itself to the anchor point (SVG text does this
+    // via text-anchor/baseline; a <div> needs a translate percentage).
+    "--label-anchor-x":
+      anchor === "middle" ? "-50%" : anchor === "end" ? "-100%" : "0%",
+    "--label-anchor-y":
+      baseline === "middle" || baseline === "central"
+        ? "-50%"
+        : baseline === "text-after-edge" || baseline === "alphabetic"
+          ? "-100%"
+          : "0%",
+  };
+});
 const anchorStyle = computed(() => {
   if (props.pin) return {};
 
   const { side } = parsedPosition.value;
+  const edge = props.spacing ? `calc(100% + ${cssLength(props.spacing)})` : "100%";
   switch (side) {
     case "T":
-      return { bottom: "100%", right: "50%" };
+      return { bottom: edge, right: "50%" };
     case "B":
-      return { top: "100%", right: "50%" };
+      return { top: edge, right: "50%" };
     case "L":
-      return { top: "50%", right: "100%" };
+      return { top: "50%", right: edge };
     case "R":
-      return { top: "50%", left: "100%" };
+      return { top: "50%", left: edge };
   }
 });
+
+function cssLength(value: Length) {
+  return typeof value === "number" ? `${value}px` : value;
+}
 
 function lengthToPx(value: Length) {
   if (typeof value === "number") return value;
@@ -302,11 +373,15 @@ watch(
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
+  hostObserver?.disconnect();
   window.removeEventListener("resize", updateFontPx);
 });
 </script>
 
 <template>
+  <!-- `at`: an in-place, hidden locator used to find the host <Katex>. -->
+  <span v-if="at" ref="anchor" class="annotation-anchor" aria-hidden="true" />
+
   <!-- Default: render in place so the parent's scoped styles/attrs apply. -->
   <svg
     v-if="!at"
@@ -322,7 +397,11 @@ onBeforeUnmount(() => {
     aria-hidden="true"
   >
     <path class="guide" :d="route.path" pathLength="1" />
+    <foreignObject v-if="html" class="label-fo" x="0" y="0" width="1" height="1">
+      <div class="label-html"><slot>{{ props.label }}</slot></div>
+    </foreignObject>
     <text
+      v-else
       class="label"
       x="0"
       y="0"
@@ -348,7 +427,11 @@ onBeforeUnmount(() => {
       aria-hidden="true"
     >
       <path class="guide" :d="route.path" pathLength="1" />
+      <foreignObject v-if="html" class="label-fo" x="0" y="0" width="1" height="1">
+        <div class="label-html"><slot>{{ props.label }}</slot></div>
+      </foreignObject>
       <text
+        v-else
         class="label"
         x="0"
         y="0"
@@ -362,6 +445,10 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.annotation-anchor {
+  display: none;
+}
+
 .annotation {
   position: absolute;
   overflow: visible;
@@ -385,7 +472,10 @@ onBeforeUnmount(() => {
   transition-delay: var(--annotation-delay, 0ms);
 }
 
-.show .guide {
+/* Anchor to the annotation's own root: scoped CSS only tags the last selector,
+   so a bare `.show` would also match an ancestor (e.g. a `.block.show` the
+   annotation is teleported into) and leak its reveal state. */
+.annotation.show .guide {
   stroke-dashoffset: 0;
 }
 
@@ -400,8 +490,39 @@ onBeforeUnmount(() => {
   transition-delay: var(--annotation-delay, 0ms);
 }
 
-.show .label {
+.annotation.show .label {
   opacity: 1;
   transform: translate(var(--label-x), var(--label-y));
+}
+
+/* HTML label (foreignObject): positioned like the SVG text label, but a <div>
+   aligns to the anchor point via an extra translate percentage. */
+.label-fo {
+  overflow: visible;
+}
+
+.label-html {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  color: currentColor;
+  opacity: 0;
+  transform: translate(
+    calc(var(--label-hidden-x) + var(--label-anchor-x)),
+    calc(var(--label-hidden-y) + var(--label-anchor-y))
+  );
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+  transition-delay: var(--annotation-delay, 0ms);
+}
+
+.annotation.show .label-html {
+  opacity: 1;
+  transform: translate(
+    calc(var(--label-x) + var(--label-anchor-x)),
+    calc(var(--label-y) + var(--label-anchor-y))
+  );
 }
 </style>

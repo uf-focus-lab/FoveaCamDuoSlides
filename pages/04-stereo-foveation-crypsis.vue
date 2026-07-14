@@ -3,6 +3,8 @@
 
 import { computed } from "vue";
 import { useStage } from "stores/stage";
+import StereoSection from "./04A-stereo-section.vue";
+import FoveaSection from "./04B-fovea-section.vue";
 
 const assetUrls = import.meta.glob(
   "../assets/inspiration/*.{png,jpg,jpeg,webp,avif,gif}",
@@ -25,36 +27,13 @@ const stage = useStage(3, { preview: 2 });
 const showStereo = computed(() => stage.value >= 1);
 const showFovea = computed(() => stage.value >= 2);
 const showTextBox = computed(() => stage.value >= 3);
-
-const stereoBlurb = "Multiple eyes allow triangulation of objects in the world.";
-
-const foveationBlurb = "Concentrated photoreceptors provide details in regions of interest.";
 </script>
 
 <template>
   <section class="comparison-layout" :data-stage="stage">
     <div class="top-row">
-      <article class="topic-card stereo-card" :class="{ show: showStereo }">
-        <div class="topic-media">
-          <img v-if="stereoImage" :src="stereoImage" alt="Stereo vision reference" />
-        </div>
-
-        <div class="topic-copy">
-          <h2>Stereo Vision</h2>
-          <p class="topic-blurb">{{ stereoBlurb }}</p>
-        </div>
-      </article>
-
-      <article class="topic-card fovea-card" :class="{ show: showFovea }">
-        <div class="topic-media">
-          <img v-if="foveaImage" :src="foveaImage" alt="Foveation reference" />
-        </div>
-
-        <div class="topic-copy">
-          <h2>Foveation</h2>
-          <p class="topic-blurb">{{ foveationBlurb }}</p>
-        </div>
-      </article>
+      <StereoSection :show="showStereo" :image="stereoImage" />
+      <FoveaSection :show="showFovea" :image="foveaImage" />
     </div>
 
     <div class="bottom-row reveal" :class="{ show: showTextBox }">
@@ -82,78 +61,8 @@ const foveationBlurb = "Concentrated photoreceptors provide details in regions o
 .top-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.95rem;
+  gap: 0;
   align-items: stretch;
-}
-
-.topic-card {
-  display: grid;
-  grid-template-columns: var(--topic-media-width, 8.8rem) minmax(0, 1fr);
-  gap: 4rem;
-  align-items: stretch;
-  min-height: 14.8rem;
-  padding: 0.9rem;
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-  border-radius: 1.2rem;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-  opacity: 0;
-  transform: translate3d(0, 0.8rem, 0);
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
-}
-
-.topic-media {
-  aspect-ratio: 1 / 1.05;
-  overflow: hidden;
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, currentColor 8%, transparent);
-}
-
-.topic-card.show {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
-.stereo-card {
-  background: color-mix(in srgb, var(--fc-bg) 94%, var(--camera-left) 6%);
-}
-
-.fovea-card {
-  background: color-mix(in srgb, var(--fc-bg) 94%, var(--camera-center) 6%);
-}
-
-.topic-media img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.topic-copy {
-  display: grid;
-  padding: 0.15rem 0.35rem 0.15rem 0.15rem;
-  min-width: 0;
-  gap: 0.75rem;
-  align-content: center;
-  justify-items: center;
-  text-align: center;
-}
-
-.topic-copy h2 {
-  margin: 0;
-}
-
-.topic-copy h2 {
-  font-size: 1.65rem;
-}
-
-.topic-blurb {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.3;
-  max-width: 28ch;
-  text-wrap: balance;
 }
 
 .bottom-row {

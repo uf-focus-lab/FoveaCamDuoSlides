@@ -89,6 +89,15 @@ its slide is off-screen. Follow these rules:
   fallback, so mediabunny stays out of the initial main-thread chunk. Note that
   a worker has no `requestAnimationFrame` — pace with a timeout fallback there.
 
+## Crypsis Simulation
+
+- The crypsis simulation (slide 7) is the **`crypsis-simulation/` git submodule** (`uf-focus-lab/CrypsisSimulation`), compiled into the deck's Vite graph and imported **directly** — not loaded as a pre-built iframe. The old bundle under `public/crypsis-simulation/` is superseded and can be deleted once verified.
+- **Shim, not the app shell.** `pages/07C-crypsis-world.vue` mounts only the submodule's world canvas (`src/simulation.panel.vue`) and controls (`src/simulation.dialog.vue`) against one `new Simulation("mission")`, deliberately skipping the standalone `index.vue` shell (header, dialogs, popups, and its self-reload HMR guard). The controls sit behind an invisible top-left fold button (opaque only on hover). `pages/07B` wraps the shim in the themed `.crypsis-app` host. **Import submodule files from a deck shim by RELATIVE path** (`../crypsis-simulation/…`) — bare `lib/`/`src/` only resolve for importers *inside* the submodule.
+- **Setup after clone:** `git submodule update --init --recursive` (the submodule has a nested `vscode-icons` submodule that its `icons` module compiles from), then `pnpm install` (the submodule's runtime deps `d3` and `async-chain-list` are declared in this project's `package.json`).
+- **Data:** the submodule fetches its map from `/data/mission.svg`; `public/data` is a **symlink** to `crypsis-simulation/public/data`, so the deck serves it single-source (dev and build).
+- **Vite wiring:** `scripts/crypsis-simulation.ts` (registered in `vite.config.ts` with the submodule's absolute root) provides: a **pre-plugin** remapping the submodule's bare `lib/`/`src/` specifiers to its dirs (only for submodule importers); an **`icons` virtual module** compiled from `vscode-icons` (the deck never imports `icons`, so it is served globally); and `crypsisComponentsAlias`, an **importer-aware `components` alias** — Vite's alias plugin runs before user `pre` plugins, so submodule-vs-deck `components/` forwarding has to live in the alias itself. The root is passed explicitly (not from `import.meta.url`, which Vite's config bundling would rewrite).
+- **Colorscheme / caveats:** the submodule's global utility CSS (`.button`, `.icon`, `.mono`, …, originally in its `index.html`) is reproduced **scoped** under `.crypsis-app` in `07B`, and its single `--color` token is bound to `--fc-fg` as the colorscheme hook. Deeper per-surface recoloring is still open. Popup-triggering control buttons (range chart, loop scan) are inert in the shim since the popup host isn't mounted.
+
 ## Code Hygiene
 
 - Slide visuals accrete tweaks quickly. Every few iterations, stop and refactor for conciseness and readability before adding more: collapse duplicated left/right (or per-item) blocks with `v-for` over a small data array, hoist repeated inline expressions into helpers (e.g. `pathStyle(d)`), delete dead code (unused imports/vars/CSS, vestigial reactive state), and prefer short, non-wordy names.

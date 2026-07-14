@@ -32,8 +32,8 @@ const SENSOR_HALF = FOCAL_BASE * Math.tan((FOV_BASE / 2) * DEG);
 //       new keyed rays are staged outside the FoV, then squeezed into view.
 // Focal doubling is kept but gated past the last stage, so it stays off for now
 // (lower the threshold / add a stage to re-enable it later).
-const boundary = computed(() => props.stage >= 3);
-const res = computed(() => (props.stage >= 6 ? RES * 2 : RES));
+const boundary = computed(() => props.stage >= 6);
+const res = computed(() => (props.stage >= 11 ? RES * 2 : RES));
 const focal = computed(() => (FOCAL_BASE));
 const fov = computed(
   () => (2 * Math.atan(SENSOR_HALF / focal.value)) / DEG, // covariant with focal

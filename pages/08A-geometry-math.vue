@@ -14,7 +14,7 @@ const stage = computed(() => props.stage);
 config.autoAddCss = false;
 
 const calloutStyle = {
-  color: "color-mix(in srgb, var(--camera-center) 72%, white)",
+  color: "color-mix(in srgb, var(--camera-center) 70%, black)",
   fontSize: "1.2rem",
 };
 </script>
@@ -22,67 +22,99 @@ const calloutStyle = {
 <template>
   <section class="math">
     <!-- Depth -->
-    <article class="block" :class="{ show: stage >= 1 }" :style="{ left: '0', top: '1.4em' }">
-      <div
-        class="intro"
-        :class="{ hide: stage >= 2 }"
-        v-html="renderInline('Depth $Z$ from disparity $d$ (px):')"
-      />
-      <Katex class="equation" tex="Z=\frac{f \cdot b}{d}" display>
-        <Annotation :show="stage >= 1" at="Z" position="B" :style="calloutStyle">Depth</Annotation>
-        <Annotation :show="stage >= 1" at="b" position="TR" :style="calloutStyle">Baseline</Annotation>
-        <Annotation :show="stage >= 1" at="f" position="TL" :style="calloutStyle">Focal Length</Annotation>
-      </Katex>
-    </article>
+    <div
+      class="intro"
+      :class="{ show: stage >= 1, hide: stage >= 3 }"
+      :style="{ left: '0', top: '1.2em' }"
+      v-html="renderInline('Depth $Z$ from disparity $d$ (px):')"
+    />
+    <Katex
+      class="equation"
+      :class="{ show: stage >= 1 }"
+      :style="{
+        left: stage < 4 ? '4em' : '0',
+        top: stage < 4 ? '6em' : '1.2em',
+      }"
+      tex="Z = \frac{f \cdot b}{d}"
+      display
+    >
+      <Annotation :show="stage === 2" at="Z" position="B" :style="calloutStyle"
+        >Depth</Annotation
+      >
+      <Annotation :show="stage === 2" at="b" position="TR" :style="calloutStyle"
+        >Baseline</Annotation
+      >
+      <Annotation :show="stage === 2" at="f" position="TL" :style="calloutStyle"
+        >Focal Length</Annotation
+      >
+    </Katex>
 
     <!-- Derivative -->
-    <article
-      class="block block-deriv"
-      :class="{ show: stage >= 2 }"
-      :style="{ left: stage >= 3 ? '7.7em' : '0', top: stage >= 3 ? '1.4em' : '4.6em' }"
-    >
-      <div
-        class="intro"
-        :class="{ hide: stage >= 3 }"
-        v-html="renderInline('Differentiate with respect to disparity:')"
-      />
-      <Katex class="equation" tex="\frac{\delta Z}{\delta d} = - \frac{f \cdot b}{d^2}" display />
-    </article>
+    <div
+      class="intro"
+      :class="{ show: stage >= 4, hide: stage >= 5 }"
+      :style="{ left: '0', top: '4.8em' }"
+      v-html="renderInline('Differentiate with respect to disparity:')"
+    />
+    <Katex
+      class="equation"
+      :class="{ show: stage >= 4 }"
+      :style="{
+        left: stage < 6 ? '4em' : '6em',
+        top: stage < 6 ? '8.4em' : '1.2em',
+      }"
+      tex="\frac{\delta Z}{\delta d} = - \frac{f \cdot b}{d^2}"
+      display
+    />
 
-    <!-- Resolution -->
-    <article
-      class="block"
-      :class="{ show: stage >= 3 }"
-      :style="{ left: '0', top: stage >= 6 ? '2.6em' : '4.2em' }"
+    <!-- Resolution (substitution is a callout attached to d) -->
+    <div
+      class="intro"
+      :class="{ show: stage >= 6, hide: stage >= 9 }"
+      :style="{ left: '0', top: '4.8em' }"
+      v-html="
+        renderInline(
+          'Depth resolution $\\Delta Z$ per $\\Delta d = 1~\\text{px}$',
+        )
+      "
+    />
+    <Katex
+      class="equation"
+      :class="{ show: stage >= 6 }"
+      :style="{
+        left: 0,
+        top: stage < 10 ? '8.4em' : '6.2em',
+      }"
+      tex="|\Delta Z| ~=~ \frac{f \cdot b}{d^2}"
+      display
     >
-      <div class="intro-stack">
-        <div
-          class="intro"
-          :class="{ hide: stage >= 4 }"
-          v-html="renderInline('Depth resolution $\\Delta Z$ per pixel step: $\\delta d = 1$')"
-        />
-        <div
-          class="intro"
-          :class="{ hide: stage < 4 || stage >= 5 }"
-          v-html="renderInline('Substitute $d = \\frac{f \\cdot b}{Z}$:')"
-        />
-      </div>
-      <Katex class="equation" tex="|\delta Z| ~=~ \frac{f \cdot b}{d^2}" display />
-    </article>
+      <Annotation :show="stage === 8" at="d" position="B" html :style="calloutStyle">
+        <Katex tex="d = \frac{f \cdot b}{Z}" />
+      </Annotation>
+    </Katex>
 
     <!-- Substitute -->
-    <article
-      class="block"
-      :class="{ show: stage >= 4 }"
-      :style="{ left: '7.7em', top: stage >= 6 ? '5.8em' : '7.4em' }"
-    >
-      <Katex class="equation" tex="|\delta Z| ~=~ \frac{Z ^ 2}{f \cdot b}" display />
-    </article>
+    <Katex
+      class="equation"
+      :class="{ show: stage >= 8 }"
+      :style="{
+        left: '7.7em',
+        top: stage < 10 ? '8.4em' : '6.2em',
+      }"
+      tex="=~ \frac{Z ^ 2}{f \cdot b}"
+      display
+    />
 
     <!-- Question -->
-    <div class="question" :class="{ show: stage >= 6 }" :style="{ left: '0', top: '8.8em' }">
-      <FontAwesomeIcon :icon="faLightbulb" />
-      How about increasing resolution?
+    <div
+      class="question"
+      :class="{ show: stage >= 10 }"
+      :style="{ left: '0', top: '10.4em' }"
+    >
+      <span class="question-pill">
+        <FontAwesomeIcon :icon="faLightbulb" />
+        How about increasing resolution?
+      </span>
     </div>
   </section>
 </template>
@@ -90,11 +122,11 @@ const calloutStyle = {
 <style scoped lang="scss">
 .math {
   position: absolute;
-  top: calc(50% + 50px);
+  top: calc(50% + 45px);
   left: 40px;
-  height: 12em;
+  height: 14em;
   width: max-content;
-  font-size: 2rem;
+  font-size: 1.8rem;
   text-align: left;
   transform: translateY(-50%);
 }
@@ -114,68 +146,71 @@ const calloutStyle = {
   font-family: "KaTeX_Math", "Times New Roman", serif;
 }
 
-// Absolutely-positioned equation block; movement + reveal both animate on
-// top/left/opacity so no wrapper reflow is needed.
-.block {
+/* Every equation is an absolutely-positioned direct child of the section;
+   movement + reveal both animate on top/left/opacity. */
+.equation {
   position: absolute;
   width: max-content;
   opacity: 0;
+  /* Anchored on the mid-left of its bbox (top = vertical center); the 40px is
+     the enter-from-below offset. */
+  transform: translateY(calc(-50% + 40px));
   transition:
     top var(--transition-duration) var(--transition-curve),
     left var(--transition-duration) var(--transition-curve),
-    opacity var(--transition-duration) var(--transition-curve);
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
 }
 
-.block.show {
+.equation.show {
   opacity: 1;
+  transform: translateY(-50%);
 }
 
-.equation {
-  width: max-content;
-}
-
-// Align the derivative fraction with the depth fraction once side by side.
-.block-deriv .equation {
-  padding-top: 0.85em;
-}
-
-// Collapsing intro line above an equation.
+/* Intro line, positioned directly above its equation. It enters fading in from
+   below (40px) and exits fading out to the left (40px). */
 .intro {
+  position: absolute;
   display: block;
-  max-height: 2.3em;
-  margin-bottom: 0.45em;
-  overflow: hidden;
   white-space: nowrap;
-  opacity: 1;
+  opacity: 0;
+  /* Mid-left anchored (top = vertical center); 40px is the enter-from-below offset. */
+  transform: translate(0, calc(-50% + 40px));
   transition:
-    max-height var(--transition-duration) var(--transition-curve),
-    margin-bottom var(--transition-duration) var(--transition-curve),
-    opacity var(--transition-duration) var(--transition-curve);
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.intro.show {
+  opacity: 1;
+  transform: translate(0, -50%);
 }
 
 .intro.hide {
-  max-height: 0;
-  margin-bottom: 0;
   opacity: 0;
-}
-
-// Two intros that swap in place above the resolution equation.
-.intro-stack {
-  position: relative;
-  height: 3.2em;
-}
-
-.intro-stack .intro {
-  position: absolute;
-  top: 0;
-  left: 0;
+  transform: translate(-40px, -50%);
 }
 
 .question {
   position: absolute;
+  opacity: 0;
+  transform: translateY(calc(-50% + 40px));
+  transition:
+    top var(--transition-duration) var(--transition-curve),
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.question.show {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+.question-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
+  white-space: nowrap;
   padding: 0.35em 0.75em;
   box-sizing: border-box;
   border: 2px solid color-mix(in srgb, var(--blue-1) 22%, transparent);
@@ -185,17 +220,9 @@ const calloutStyle = {
   font-size: 1.6rem;
   font-style: italic;
   font-weight: 600;
-  opacity: 0;
-  transition:
-    top var(--transition-duration) var(--transition-curve),
-    opacity var(--transition-duration) var(--transition-curve);
 }
 
-.question.show {
-  opacity: 1;
-}
-
-.question :deep(svg) {
+.question-pill :deep(svg) {
   height: 1em;
   margin: 0;
 }

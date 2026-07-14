@@ -15,6 +15,8 @@
     "@slidev/theme-default": "^0.25.0",
     "@types/qrcode": "^1.5.6",
     "@zhangyx1998/svg-loader": "^0.0.1",
+    "async-chain-list": "^0.0.3",
+    "d3": "^7.9.0",
     "geometry-core": "^0.0.0",
     "mediabunny": "^1.49.0",
     "node-html-parser": "^7.1.0",
@@ -23,6 +25,7 @@
     "vue": "^3.5.33"
   },
   "devDependencies": {
+    "@types/d3": "^7.4.3",
     "@types/jsdom": "^28.0.3",
     "jsdom": "^29.1.1"
   }
