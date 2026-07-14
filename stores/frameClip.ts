@@ -18,6 +18,15 @@ export interface Segment {
 }
 
 /**
+ * A 2D context on either an on-screen canvas or an {@link OffscreenCanvas}, so
+ * the same clip logic can run on the main thread or inside a worker that owns a
+ * transferred OffscreenCanvas.
+ */
+export type Canvas2D =
+  | CanvasRenderingContext2D
+  | OffscreenCanvasRenderingContext2D;
+
+/**
  * Frame-accurate playback of a VP9/WebM clip onto a 2D canvas via WebCodecs.
  *
  * mediabunny's {@link CanvasSink} owns a `VideoDecoder` internally: it demuxes
@@ -101,7 +110,7 @@ export class FrameClip {
   }
 
   /** Decode and paint exactly `frame` (1-based), then leave it on screen. */
-  drawFrame(ctx: CanvasRenderingContext2D, frame: number) {
+  drawFrame(ctx: Canvas2D, frame: number) {
     return this.run(async (signal) => {
       // Sample mid-frame so getCanvas (last frame ≤ t) lands unambiguously.
       const t = this.frameTime(frame) + 0.5 / this.fps;
@@ -115,14 +124,19 @@ export class FrameClip {
    * wall-clock moment. The final frame is left on screen. Resolves when the
    * segment finishes or is aborted.
    */
-  playSegment(ctx: CanvasRenderingContext2D, segment: Segment) {
-    return this.run((signal) => this.playLoop(ctx, segment, signal));
+  playSegment(
+    ctx: Canvas2D,
+    segment: Segment,
+    onFrame?: (frame: number) => void,
+  ) {
+    return this.run((signal) => this.playLoop(ctx, segment, signal, onFrame));
   }
 
   private async playLoop(
-    ctx: CanvasRenderingContext2D,
+    ctx: Canvas2D,
     { startFrame, endFrame }: Segment,
     signal: AbortSignal,
+    onFrame?: (frame: number) => void,
   ) {
     // Half-open [start, end) over frame-start timestamps, nudged by ±half a
     // frame so frames startFrame..endFrame are yielded inclusively despite
@@ -143,11 +157,14 @@ export class FrameClip {
       await waitUntil(clockStart + (timestamp - firstTs) * 1000, signal);
       if (signal.aborted) return;
       this.blit(ctx, canvas);
+      // Report the frame just painted so callers can sync UI (e.g. opacity) to
+      // the actually-visible frame rather than a wall-clock estimate.
+      onFrame?.(Math.round(timestamp * this.fps) + 1);
     }
   }
 
   private blit(
-    ctx: CanvasRenderingContext2D,
+    ctx: Canvas2D,
     source: HTMLCanvasElement | OffscreenCanvas,
   ) {
     if (ctx.canvas.width !== source.width || ctx.canvas.height !== source.height) {
@@ -159,8 +176,19 @@ export class FrameClip {
 }
 
 /**
- * Resolve once `performance.now()` reaches `targetMs`, pacing on rAF so the
- * paint lands on a display refresh; returns early if `signal` aborts.
+ * Schedule `cb` for the next paint opportunity. On the main thread that is a
+ * display refresh (`requestAnimationFrame`); inside a worker — where rAF does
+ * not exist — it falls back to a short timeout, which is fine because the
+ * OffscreenCanvas is composited by the browser independently of this timer.
+ */
+function scheduleTick(cb: () => void) {
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => cb());
+  else setTimeout(cb, 8);
+}
+
+/**
+ * Resolve once `performance.now()` reaches `targetMs`, pacing on the paint clock
+ * so the blit lands on a refresh; returns early if `signal` aborts.
  */
 function waitUntil(targetMs: number, signal: AbortSignal) {
   return new Promise<void>((resolve) => {
@@ -169,8 +197,8 @@ function waitUntil(targetMs: number, signal: AbortSignal) {
         resolve();
         return;
       }
-      requestAnimationFrame(tick);
+      scheduleTick(tick);
     };
-    requestAnimationFrame(tick);
+    scheduleTick(tick);
   });
 }

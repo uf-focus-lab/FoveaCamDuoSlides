@@ -4,7 +4,7 @@ import { useStage } from "stores/stage";
 import DistortedView from "components/DistortedView.vue";
 import GridLines from "components/GridLines.vue";
 import Marker from "components/Marker.vue";
-import CalibrationIntrinsicEquation from "pages/10A-calibration-intrinsic-equation.vue";
+import CalibrationIntrinsicEquation from "pages/B2A-calibration-intrinsic-equation.vue";
 
 // Stage plan:
 //   1  Raw distorted fovea views, marker fully visible.

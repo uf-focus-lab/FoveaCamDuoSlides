@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import {
   computed,
+  inject,
   nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
+  useAttrs,
   watch,
+  watchEffect,
 } from "vue";
+import { KatexKey } from "./katex-context";
+
+defineOptions({ inheritAttrs: false });
 
 type Position =
   | "T"
@@ -30,6 +36,11 @@ const props = withDefaults(
     show?: boolean;
     position?: Position;
     offset?: Offset;
+    align?: "left" | "right";
+    /** Teleport onto the KaTeX glyph with this textContent (needs a <Katex> ancestor). */
+    at?: string;
+    /** Which occurrence of `at` to use when a glyph repeats (default 0). */
+    atNth?: number;
     label?: string;
     pin?: boolean;
     guideTo?: Point;
@@ -47,6 +58,9 @@ const props = withDefaults(
     show: true,
     position: "B",
     offset: undefined,
+    align: undefined,
+    at: undefined,
+    atNth: 0,
     label: "",
     pin: false,
     guideTo: undefined,
@@ -59,6 +73,23 @@ const props = withDefaults(
 const root = ref<SVGSVGElement | null>(null);
 const fontPx = ref(16);
 let resizeObserver: ResizeObserver | undefined;
+
+// When `at` is set, resolve the matching KaTeX glyph and teleport onto it so
+// the guide anchors to the real letter instead of a hardcoded offset.
+const attrs = useAttrs();
+const forwardedAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs;
+  return rest;
+});
+const katex = inject(KatexKey, null);
+const target = computed(() => {
+  if (!props.at || !katex) return null;
+  void katex.ready.value;
+  return katex.resolve(props.at, props.atNth);
+});
+watchEffect(() => {
+  if (target.value) target.value.style.position = "relative";
+});
 
 const parsedPosition = computed(() => {
   const raw = props.position.toUpperCase() as Position;
@@ -162,6 +193,15 @@ const labelGeometry = computed(() => {
       text.x += align === "L" ? -gap : gap;
       text.anchor = align === "L" ? "end" : "start";
       text.enterX = align === "L" ? -fontPx.value * 0.45 : fontPx.value * 0.45;
+    } else if (props.align) {
+      // Straight vertical callout whose line meets the center of the first
+      // (left-aligned) or last (right-aligned) letter of the label.
+      const charHalf = fontPx.value * 0.3;
+      text.y += side === "T" ? -gap : gap;
+      text.baseline = side === "T" ? "text-after-edge" : "hanging";
+      text.enterY = side === "T" ? -fontPx.value * 0.45 : fontPx.value * 0.45;
+      text.anchor = props.align === "left" ? "start" : "end";
+      text.x += props.align === "left" ? -charHalf : charHalf;
     } else {
       text.y += side === "T" ? -gap : gap;
       text.baseline = side === "T" ? "text-after-edge" : "hanging";
@@ -237,14 +277,23 @@ function round(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-onMounted(() => {
-  void nextTick(updateFontPx);
-  if (root.value && typeof ResizeObserver !== "undefined") {
-    resizeObserver = new ResizeObserver(updateFontPx);
-    resizeObserver.observe(root.value);
-  }
-  window.addEventListener("resize", updateFontPx);
-});
+// Re-measure whenever the <svg> (re)mounts — it may teleport into a glyph well
+// after the component itself has mounted.
+watch(
+  root,
+  (el) => {
+    resizeObserver?.disconnect();
+    if (!el) return;
+    void nextTick(updateFontPx);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateFontPx);
+      resizeObserver.observe(el);
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(() => window.addEventListener("resize", updateFontPx));
 
 watch(
   () => [props.offset, props.position],
@@ -258,22 +307,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- Default: render in place so the parent's scoped styles/attrs apply. -->
   <svg
+    v-if="!at"
     ref="root"
+    v-bind="forwardedAttrs"
     class="annotation"
-    :class="{ show }"
-    :style="svgStyle"
+    :class="[attrs.class, { show }]"
+    :style="[attrs.style, svgStyle]"
     width="1"
     height="1"
     viewBox="0 0 1 1"
     overflow="visible"
     aria-hidden="true"
   >
-    <path
-      class="guide"
-      :d="route.path"
-      pathLength="1"
-    />
+    <path class="guide" :d="route.path" pathLength="1" />
     <text
       class="label"
       x="0"
@@ -284,6 +332,33 @@ onBeforeUnmount(() => {
       <slot>{{ props.label }}</slot>
     </text>
   </svg>
+
+  <!-- `at`: teleport onto the resolved KaTeX glyph so the guide anchors to it. -->
+  <Teleport v-else-if="target" :to="target">
+    <svg
+      ref="root"
+      v-bind="forwardedAttrs"
+      class="annotation"
+      :class="[attrs.class, { show }]"
+      :style="[attrs.style, svgStyle]"
+      width="1"
+      height="1"
+      viewBox="0 0 1 1"
+      overflow="visible"
+      aria-hidden="true"
+    >
+      <path class="guide" :d="route.path" pathLength="1" />
+      <text
+        class="label"
+        x="0"
+        y="0"
+        :text-anchor="(props.textAnchor ?? labelGeometry.anchor) as any"
+        :dominant-baseline="(props.baseline ?? labelGeometry.baseline) as any"
+      >
+        <slot>{{ props.label }}</slot>
+      </text>
+    </svg>
+  </Teleport>
 </template>
 
 <style scoped>

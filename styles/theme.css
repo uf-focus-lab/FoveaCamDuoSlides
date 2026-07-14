@@ -94,7 +94,12 @@
   --fc-border: var(--border);
   --fc-contrast: var(--black);
 
-  --blend: plus-darker;
+  /* Accumulation blend for overlapping translucent accents (e.g. CameraRay
+     cones). `multiply`/`screen` are the standard, GPU-accelerated analogs of
+     WebKit's plus-darker/plus-lighter — same darken/lighten-on-overlap look but
+     without the framebuffer glitches, and plus-darker isn't even valid in
+     Chrome (it silently falls back to normal). */
+  --blend: multiply;
   --slidev-theme-primary: var(--brand-1);
   --slidev-code-radius: 6px;
   --slidev-code-background: var(--code-bg);
@@ -160,5 +165,7 @@ html.dark {
   --code-bg: #161a21;
 
   --fc-contrast: var(--white);
-  --blend: plus-lighter;
+  /* Dark theme lightens on overlap; `screen` is the standard analog of
+     plus-lighter (see the light-theme note above). */
+  --blend: screen;
 }

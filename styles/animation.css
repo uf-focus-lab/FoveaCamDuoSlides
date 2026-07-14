@@ -15,13 +15,6 @@
   --transition-curve: ease-in-out;
 }
 
-/* Helper: ease every animatable property with the shared timing/curve. Put it on
-   an element instead of writing per-property `transition` rules; a parent can
-   still override the vars on its subtree (e.g. `--transition-duration: 0s`). */
-.transition {
-  transition: all var(--transition-duration) var(--transition-curve);
-}
-
 /* Snappy-out curve with a slightly eased (less abrupt) start. Slidev hardcodes
    `ease` in its built-in transitions.css, so only the curve is overridden;
    duration stays on --slidev-transition-duration above. */

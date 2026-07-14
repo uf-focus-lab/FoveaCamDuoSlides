@@ -28,13 +28,14 @@ The project uses **pnpm**; see `pnpm-workspace.yaml`. Install dependencies with 
 - `components/*.vue` are auto-imported as global components and can be used in any slide by tag name with no import. `components.d.ts` is generated and should not be hand-edited.
 - Components in `pages/` should be named with the slide index prefix, such as `01-cover.vue` where `01` is the slide index. If a slide needs multiple page components, suffix the index with letters: `01A-...vue`, `01B-...vue`, etc.
 - When inserting, deleting, or moving slides in `slides.md`, check all subsequent imports from `pages/` and rename/reindex affected page components so their numeric prefixes still match their slide positions.
+- Backup / appendix slides that live after the closing "Thank You" slide use a `B`-prefix (`B1-`, `B2-`, …, with letter-suffixed sub-components like `B2A-`) instead of a numeric position prefix. This keeps the appendix ordered by its own logic and stops main-deck reordering from churning those files. Number the main line by physical deck position; number the appendix by `B`-order.
 - The last HTML comment (`<!-- ... -->`) on a slide becomes the presenter-mode speaker notes.
 - The first stage of every slide should contain useful visible information. Do not design a slide that animates in as an empty or nearly empty canvas and only becomes meaningful after the first stage/reveal.
 - Styling is UnoCSS utility classes inline in Markdown plus Slidev built-in classes such as `abs-br` and `slidev-icon-btn`.
 - Do not use screen-size media queries in slides or slide components. The deck should look identical on every platform and viewport; size visuals from the slide canvas or component/container geometry instead of branching on `@media`, `window.innerWidth`, or similar platform-specific breakpoints.
 - Camera identity colors must come from `styles/theme.css`: use `--camera-left`, `--camera-center`, and `--camera-right` instead of hardcoded per-camera red/green/blue values.
 - Graphical components should use CSS `currentColor` as their default accent color for frame boundaries, annotation lines, and related strokes/fills. Allow explicit bypass with a `color` or `fill` attribute/prop when a caller needs to override the inherited accent.
-- Coordinated element transitions (e.g. a chart's moving point, its rays and dimension lines) share `--transition-duration` and `--transition-curve`, defaulted in `styles/animation.css` (`0.7s` / `ease-in-out`). Write them as `transition: <prop> var(--transition-duration) var(--transition-curve)` rather than hardcoding a duration/curve, so subcomponents stay in sync; a parent can override either on its subtree (e.g. `.dragging { --transition-duration: 0s }` for instant tracking). The `.transition` helper class (in `animation.css`) applies this to *all* animatable properties — add it to an element instead of writing a per-property `transition` when you want everything eased on the shared timing. These are distinct from Slidev's slide-to-slide `--slidev-transition-duration` (also in `animation.css`). When a value is animated by these transitions but a JS computation needs its live mid-transition position (e.g. a highlight that must follow the eased motion), read it from the DOM per frame with `getScreenCTM()` — the SVG `transform`/`d` attributes and `getCTM()` don't reflect in-flight CSS transitions.
+- Coordinated element transitions (e.g. a chart's moving point, its rays and dimension lines) share `--transition-duration` and `--transition-curve`, defaulted in `styles/animation.css` (`0.7s` / `ease-in-out`). Write them as `transition: <prop> var(--transition-duration) var(--transition-curve)` rather than hardcoding a duration/curve, so subcomponents stay in sync; a parent can override either on its subtree (e.g. `.dragging { --transition-duration: 0s }` for instant tracking). Always list the specific properties you animate — never `transition: all` (see Performance below). These are distinct from Slidev's slide-to-slide `--slidev-transition-duration` (also in `animation.css`). When a value is animated by these transitions but a JS computation needs its live mid-transition position (e.g. a highlight that must follow the eased motion), read it from the DOM per frame with `getScreenCTM()` — the SVG `transform`/`d` attributes and `getCTM()` don't reflect in-flight CSS transitions.
 
 ## Stage API
 
@@ -51,6 +52,42 @@ The project uses **pnpm**; see `pnpm-workspace.yaml`. Install dependencies with 
 - `advanceActiveStage(fallback?)` and `retreatActiveStage(fallback?)` operate on the currently active `useStage` controller and return `true` when they handled the request. The optional fallback runs only when the request reaches beyond the last/first stage; if the stage is busy, the fallback is queued with the surviving direction and can run after `busy` clears. Use these helpers for autoplay or custom controls that should drive the active slide's stage.
 - Set `stage.busy = true` while async transitions or media segments are running. Additional Left/Right requests are queued as a signed delta; queued Space / Shift+Space requests can also carry their slide-navigation fallback. Set `stage.busy = false` when the animation can accept the next step.
 - Use `onAfterLast` / `onBeforeFirst` when reaching beyond the last or first stage should trigger custom behavior such as slide navigation.
+
+## Performance
+
+The deck runs heavy per-slide animation and must stay at 60fps. Slidev keeps
+neighbouring slides mounted, so anything that runs continuously runs even when
+its slide is off-screen. Follow these rules:
+
+- **Gate continuous work on `useIsSlideActive()`.** Any `requestAnimationFrame`
+  loop, `setInterval`, or global event listener (`window` `mousemove`/`resize`,
+  etc.) must stop when the slide is inactive and restart on activation. A never-
+  ending rAF that calls `getScreenCTM()`/`getBoundingClientRect()` per frame is
+  the worst offender — it thrashes layout for the whole session. See
+  `pages/08-geometry.vue` (sampler gated on active) and
+  `pages/09B-our-solution-diagram.vue` (loop only runs while hovering).
+- **Isolate blend/filter groups and keep the DOM node count stable during an
+  animation.** Any element using `mix-blend-mode` (`var(--blend)`), `filter`, or
+  `backdrop-filter` must sit on its own compositing boundary via
+  `isolation: isolate`. Inserting/removing SVG or DOM nodes inside a
+  non-isolated blended/filtered subtree *while it animates* makes Chrome rebuild
+  the group against the page backdrop and flashes the framebuffer. Prefer a
+  fixed pool of nodes toggled by opacity over inserting/removing mid-transition.
+  See `components/CameraRay.vue` (`.camera-ray-root { isolation: isolate }`).
+- **Never animate `box-shadow`, `filter`, or other blur/raster properties.**
+  Their blur is re-rasterized every frame. Put the shadow on a pseudo-element
+  and cross-fade `opacity` (a compositor-only property) instead. See
+  `components/CoverFlow.vue` (`::before`/`::after` shadow layers).
+- **Never write `transition: all`.** It observes every property and eases things
+  you did not intend (often expensive ones). List the exact properties. Prefer
+  transform/opacity — they are GPU-composited. `transition: d` (SVG path morph)
+  and geometry props are CPU-only; keep the animated element count bounded.
+- **Decode/blit video off the main thread.** Frame-accurate clip playback runs
+  in an `OffscreenCanvas` worker (`stores/frameClip.worker.ts` +
+  `stores/turntablePlayer.ts`); `stores/frameClip.ts` (which pulls in mediabunny)
+  is imported only by the worker or via dynamic `import()` in the main-thread
+  fallback, so mediabunny stays out of the initial main-thread chunk. Note that
+  a worker has no `requestAnimationFrame` — pace with a timeout fallback there.
 
 ## Code Hygiene
 

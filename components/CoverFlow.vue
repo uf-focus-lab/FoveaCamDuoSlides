@@ -360,9 +360,37 @@ const normalizedItems = computed<NormalizedItem[]>(() =>
   top: 50%;
   left: 50%;
   transform-origin: center center;
-  transition:
-    transform var(--transition-duration) var(--transition-curve),
-    box-shadow var(--transition-duration) var(--transition-curve);
+  transition: transform var(--transition-duration) var(--transition-curve);
+}
+
+/*
+ * Shadows live on pseudo-elements and cross-fade via opacity (a compositor-only
+ * property) instead of animating box-shadow, whose blur is re-rasterized every
+ * frame. The base shadow stays lit; the larger active shadow fades in over it.
+ * z-index:-1 tucks both behind the frame within the card's stacking context.
+ */
+.cover-flow-card::before,
+.cover-flow-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--cover-flow-radius);
+  pointer-events: none;
+}
+
+.cover-flow-card::before {
+  box-shadow: var(--cover-flow-shadow);
+}
+
+.cover-flow-card::after {
+  box-shadow: var(--cover-flow-active-shadow);
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.cover-flow-card.active::after {
+  opacity: 1;
 }
 
 .image-frame {
@@ -374,11 +402,6 @@ const normalizedItems = computed<NormalizedItem[]>(() =>
   border: var(--cover-flow-border);
   border-radius: var(--cover-flow-radius);
   background: var(--cover-flow-background);
-  box-shadow: var(--cover-flow-shadow);
-}
-
-.cover-flow-card.active .image-frame {
-  box-shadow: var(--cover-flow-active-shadow);
 }
 
 .image-frame img {

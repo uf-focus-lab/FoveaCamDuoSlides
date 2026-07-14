@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onScopeDispose, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
+import { useIsSlideActive } from "@slidev/client";
 import CameraRay from "components/CameraRay.vue";
 import DimAnnotation from "components/DimAnnotation.vue";
 
@@ -121,22 +122,38 @@ function samplePointer() {
       pointer.value = { x: p.x, y: p.y };
     }
   }
-  raf = requestAnimationFrame(samplePointer);
+  // Reschedule only while the slide is active so this per-frame getScreenCTM
+  // reflow never runs in the background on off-screen slides.
+  raf = isActive.value ? requestAnimationFrame(samplePointer) : 0;
 }
 
-onMounted(() => {
-  stepTimer = setInterval(() => {
-    if (dragging.value) return;
-    goal = (goal + 1) % keypoints.length;
-    target.value = { ...keypoints[goal] };
-  }, KEYPOINT_MS);
-  raf = requestAnimationFrame(samplePointer);
+// Slidev keeps neighbouring slides mounted; without this gate the sampler and
+// keypoint stepper would thrash layout for the whole session, not just here.
+const isActive = useIsSlideActive();
+
+function startLoops() {
+  if (stepTimer === undefined) {
+    stepTimer = setInterval(() => {
+      if (dragging.value) return;
+      goal = (goal + 1) % keypoints.length;
+      target.value = { ...keypoints[goal] };
+    }, KEYPOINT_MS);
+  }
+  if (!raf) raf = requestAnimationFrame(samplePointer);
+}
+
+function stopLoops() {
+  clearInterval(stepTimer);
+  stepTimer = undefined;
+  cancelAnimationFrame(raf);
+  raf = 0;
+}
+
+watch(isActive, (active) => (active ? startLoops() : stopLoops()), {
+  immediate: true,
 });
 
-onScopeDispose(() => {
-  clearInterval(stepTimer);
-  cancelAnimationFrame(raf);
-});
+onScopeDispose(stopLoops);
 
 // Pinhole projection of the target into a camera (optical center `cx, CAM_Y`,
 // axis up): the sensor projection x (disparity end), whether the target is in

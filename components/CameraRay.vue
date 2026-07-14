@@ -536,7 +536,7 @@ watch(
     ref="root"
     v-bind="splitAttrs.groupAttrs"
     :style="splitAttrs.groupStyle"
-    :class="{ 'is-staging': staging }"
+    :class="['camera-ray-root', { 'is-staging': staging }]"
   >
     <path
       v-for="(cone, index) in cones"
@@ -578,3 +578,14 @@ watch(
     />
   </g>
 </template>
+
+<style scoped>
+/* The cones composite with mix-blend-mode (var(--blend): multiply/screen).
+   Without an isolation boundary, every ENTERING/EXITING <path> inserted
+   mid-transition forces Chrome to rebuild the blend group against the page
+   backdrop, which flashes the framebuffer. `isolation: isolate` confines the
+   blend to this group so node insertion repaints only locally. */
+.camera-ray-root {
+  isolation: isolate;
+}
+</style>

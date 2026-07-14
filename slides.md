@@ -37,7 +37,7 @@ In our work, we focus on redesigning sensors and cameras for new functions. To d
 # Related Work
 
 <script setup lang="ts">
-import RelatedWork from "pages/02A-related-work.vue";
+import RelatedWork from "pages/03-related-work.vue";
 </script>
 
 <RelatedWork />
@@ -45,7 +45,7 @@ import RelatedWork from "pages/02A-related-work.vue";
 ---
 
 <script setup lang="ts">
-import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
+import StereoFoveationCrypsis from "pages/04-stereo-foveation-crypsis.vue";
 </script>
 
 # Stereo and Foveation
@@ -58,7 +58,7 @@ import StereoFoveationCrypsis from "pages/02B-stereo-foveation-crypsis.vue";
 # Engineering Foveation
 
 <script setup lang="ts">
-import MechanicalChallenges from "pages/02D-mechanical-challenges.vue";
+import MechanicalChallenges from "pages/05-mechanical-challenges.vue";
 </script>
 
 <MechanicalChallenges />
@@ -80,7 +80,7 @@ import PreviewThreePanelPlaceholder from "components/PreviewThreePanelPlaceholde
 # Crypsis
 
 <script setup lang="ts">
-import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
+import CrypsisSimulation from "pages/07-crypsis-simulation.vue";
 </script>
 
 <CrypsisSimulation />
@@ -91,8 +91,8 @@ import CrypsisSimulation from "pages/02C-crypsis-simulation.vue";
 
 <script setup lang="ts">
 import { useStage } from "stores/stage";
-import GeometryMath from "pages/03-geometery.md";
-import GeometryChart from "pages/03-geometry.vue";
+import GeometryMath from "pages/08A-geometry-math.vue";
+import GeometryChart from "pages/08-geometry.vue";
 const stage = useStage(6, { preview: -1 });
 </script>
 
@@ -116,8 +116,8 @@ layout: two-cols
 
 <script setup lang="ts">
 import { computed } from "vue";
-import OurSolutionPoints from "pages/04A-our-solution-points.vue";
-import OurSolutionDiagram from "pages/04B-our-solution-diagram.vue";
+import OurSolutionPoints from "pages/09A-our-solution-points.vue";
+import OurSolutionDiagram from "pages/09B-our-solution-diagram.vue";
 import { useStage } from "stores/stage";
 const stage = useStage(9, { preview: -1 }).transient([2, 4, 6]);
 const diagramStage = computed(() => Math.min(4, Math.ceil(stage.value / 2)));
@@ -146,7 +146,7 @@ layout: none
 ---
 
 <script setup lang="ts">
-import CameraTurntable from "pages/05-camera-turntable.vue";
+import CameraTurntable from "pages/10-camera-turntable.vue";
 </script>
 
 <CameraTurntable />
@@ -156,7 +156,7 @@ import CameraTurntable from "pages/05-camera-turntable.vue";
 # System Design - Technical Details
 
 <script setup lang="ts">
-import TechnicalDetails from "pages/06-technical-details.vue";
+import TechnicalDetails from "pages/11-technical-details.vue";
 </script>
 
 <TechnicalDetails />
@@ -166,7 +166,7 @@ import TechnicalDetails from "pages/06-technical-details.vue";
 # Calibration - Setup
 
 <script setup lang="ts">
-import CalibrationSetup from "pages/07-calibration-setup.vue";
+import CalibrationSetup from "pages/12-calibration-setup.vue";
 </script>
 
 <CalibrationSetup />
@@ -177,7 +177,7 @@ title: Calibration - Process
 ---
 
 <script setup lang="ts">
-import CalibrationProcess from "pages/08-calibration-process.vue";
+import CalibrationProcess from "pages/13-calibration-process.vue";
 </script>
 
 <CalibrationProcess />
@@ -198,7 +198,7 @@ import CalibrationProcess from "pages/08-calibration-process.vue";
 - Visualization of the data projected to the wide context view -->
 
 <script setup lang="ts">
-import DataCollection from "pages/14-data-collection.vue";
+import DataCollection from "pages/16-data-collection.vue";
 </script>
 
 <div style="margin-top: 1.25rem; width: 100%;">
@@ -208,7 +208,7 @@ import DataCollection from "pages/14-data-collection.vue";
 ---
 
 <script setup lang="ts">
-import ConvergentStereoAnimation from "pages/15-convergent-stereo.vue";
+import ConvergentStereoAnimation from "pages/17-convergent-stereo.vue";
 </script>
 
 # Convergent Stereo
@@ -222,7 +222,7 @@ import ConvergentStereoAnimation from "pages/15-convergent-stereo.vue";
 # Example Walkthrough
 
 <script setup lang="ts">
-import ExampleWalkthrough from "pages/16-example-walkthrough.vue";
+import ExampleWalkthrough from "pages/18-example-walkthrough.vue";
 </script>
 
 <div style="width: 100%; margin-top: 0.5rem;">
@@ -386,7 +386,7 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 # Calibration - Extrinsic
 
 <script setup lang="ts">
-import CalibrationExtrinsic from "pages/09-calibration-extrinsic.vue";
+import CalibrationExtrinsic from "pages/B1-calibration-extrinsic.vue";
 </script>
 
 <CalibrationExtrinsic />
@@ -396,7 +396,7 @@ import CalibrationExtrinsic from "pages/09-calibration-extrinsic.vue";
 # Calibration - Intrinsic
 
 <script setup lang="ts">
-import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
+import CalibrationIntrinsic from "pages/B2-calibration-intrinsic.vue";
 </script>
 
 <CalibrationIntrinsic />
@@ -407,7 +407,7 @@ import CalibrationIntrinsic from "pages/10-calibration-intrinsic.vue";
 
 <script setup lang="ts">
 import { useStage } from "stores/stage";
-import DriftTranslational from "pages/11-drift-translational.vue";
+import DriftTranslational from "pages/B3-drift-translational.vue";
 const stage = useStage(5, { preview: -1 });
 </script>
 
@@ -421,7 +421,7 @@ const stage = useStage(5, { preview: -1 });
 
 <script setup lang="ts">
 import { useStage } from "stores/stage";
-import DriftRotational from "pages/12-drift-rotational.vue";
+import DriftRotational from "pages/B4-drift-rotational.vue";
 const stage = useStage(7, { preview: -1 });
 </script>
 
