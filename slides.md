@@ -186,9 +186,9 @@ import CalibrationProcess from "pages/13-calibration-process.vue";
 
 # Calibration - Reprojection Error
 
----
+<!-- --- -->
 
-# <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking
+<!-- # <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking -->
 
 ---
 
@@ -369,17 +369,17 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 
 --- 
 
-# Recap
+<!-- # Recap -->
 
-<div style="width: 70%; margin: 0.25rem auto 0;">
+<div style="width: 96%; margin: 0.25rem auto 0;">
   <RecapTiles :crypsis-zoom="3" :crypsis-crop-x="-40" :crypsis-crop-y="-40" />
 </div>
 
 
---- 
+<!-- ---  -->
 
-# Thank You
-
+<!-- # Thank You
+ -->
 
 ---
 
