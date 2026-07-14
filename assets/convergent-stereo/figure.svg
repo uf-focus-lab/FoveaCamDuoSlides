@@ -276,7 +276,7 @@
   </g>
 
   <!-- Step 2: Depth Anything -->
-  <g data-step="2">
+  <g data-step="1">
     <path
       class="arrow"
       style="--duration: 0.8s"
@@ -316,7 +316,7 @@
   </g>
 
   <!-- Step 3: Positional Encoding -->
-  <g data-step="3">
+  <g data-step="1">
     <rect
       class="line-draw"
       fill="url(/patterns.svg#latent-mosaic-5x5)"
@@ -379,7 +379,7 @@
   </g>
 
   <!-- Step 4: Prior Stream -->
-  <g data-step="4">
+  <g data-step="2">
     <path class="arrow" d="M 452 150 l 55 0" style="--duration: 0.4s" />
     <g class="animate fade from-left" style="--arrow-duration: 0.4s">
       <g class="box" transform="translate(520, 100)">
@@ -448,7 +448,7 @@
   </g>
 
   <!-- Step 7: Fusion -->
-  <g data-step="7">
+  <g data-step="4">
     <path class="arrow" d="M 620 150 l 176 0" style="--duration: 1.2s" />
     <path
       class="arrow"
@@ -478,8 +478,8 @@
     </text>
   </g>
 
-  <!-- Step 5: Left/Right Streams + Cross Attention -->
-  <g data-step="5">
+  <!-- Step 4: Left/Right Streams + Cross Attention -->
+  <g data-step="3">
     <polygon
       class="normalize animate line-draw"
       points="14,4 14,12 28,0 14,-12 14,-4 -14,-4 -14,-12 -28,0 -14,12 -14,4"
@@ -491,8 +491,8 @@
     </g>
   </g>
 
-  <!-- Step 6: Gated Cross Attention -->
-  <g data-step="6">
+  <!-- Step 5: Gated Cross Attention -->
+  <g data-step="3">
     <polygon
       class="gated-cross animate line-draw"
       points="22,4 22,12 36,0 22,-12 22,-4 -22,-4 -22,-12 -36,0 -22,12 -22,4"
@@ -522,7 +522,7 @@
   </g>
 
   <!-- Step 8: Upsample -->
-  <g data-step="8" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
+  <g data-step="4" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
     <path class="arrow" d="M 950 150 l 18 0" />
     <g class="animate fade from-left" style="--delay: 0.2s">
       <path
@@ -535,7 +535,7 @@
   </g>
 
   <!-- Step 9: Final Disparity -->
-  <g data-step="9" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
+  <g data-step="5" transform="translate(-60, 0)" style="--arrow-duration: 0.8s">
     <path class="arrow" d="M 1060 150 l 18 0" />
     <g class="animate fade from-left" style="--delay: 0.2s">
       <g class="box" transform="translate(1090, 85)">
