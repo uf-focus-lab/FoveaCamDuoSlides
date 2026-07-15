@@ -64,8 +64,8 @@ import MechanicalChallenges from "pages/05-mechanical-challenges.vue";
 <MechanicalChallenges />
 
 ---
-
-## layout: none
+layout: none
+---
 
 <script setup lang="ts">
 import CameraTurntable from "pages/10-camera-turntable.vue";
