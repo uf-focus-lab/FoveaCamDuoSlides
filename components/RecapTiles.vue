@@ -35,6 +35,7 @@ const isActive = useIsSlideActive();
 const runId = ref(0);
 const stage = useStage(4, { preview: -1 });
 const sim = new Simulation("mission");
+const thanks = computed(() => stage.value === 4);
 
 const crypsisUrls = import.meta.glob(
   "../assets/crypsis/*.{png,jpg,jpeg,webp,avif,gif}",
@@ -65,14 +66,16 @@ const driftUrls = import.meta.glob(
 
 const driftAsset = (name: string) => driftUrls[`../assets/drift/${name}`] ?? "";
 
-const crypsisAsset = (name: string) => crypsisUrls[`../assets/crypsis/${name}`] ?? "";
-const structureAsset = (name: string) => structureUrls[`../assets/structure/${name}`] ?? "";
+const crypsisAsset = (name: string) =>
+  crypsisUrls[`../assets/crypsis/${name}`] ?? "";
+const structureAsset = (name: string) =>
+  structureUrls[`../assets/structure/${name}`] ?? "";
 const algAsset = (name: string) =>
-  import.meta.glob("../assets/alg_example/*.{png,jpg,jpeg,webp,avif,gif}", {
+  (import.meta.glob("../assets/alg_example/*.{png,jpg,jpeg,webp,avif,gif}", {
     eager: true,
     import: "default",
     query: "?url",
-  })[`../assets/alg_example/${name}`] as string ?? "";
+  })[`../assets/alg_example/${name}`] as string) ?? "";
 
 const cameraImplementationImage = driftAsset("on-tripod.webp");
 const wideSample = algAsset("fovea-left.webp");
@@ -93,8 +96,12 @@ const clampCenterForZoom = (value: number, zoomFactor: number) => {
   const max = 100 - min;
   return Math.min(max, Math.max(min, value));
 };
-const centerX = computed(() => clampCenterForZoom(props.crypsisCenterX, zoom.value));
-const centerY = computed(() => clampCenterForZoom(props.crypsisCenterY, zoom.value));
+const centerX = computed(() =>
+  clampCenterForZoom(props.crypsisCenterX, zoom.value),
+);
+const centerY = computed(() =>
+  clampCenterForZoom(props.crypsisCenterY, zoom.value),
+);
 
 const frameStyle = computed(() => ({
   width: `${zoom.value * 100}%`,
@@ -128,12 +135,26 @@ const showThankYou = computed(() => stage.value >= 4);
 </script>
 
 <template>
-  <section class="recap-shell">
-    <div class="recap-grid" :class="{ fade: showThankYou }" aria-label="Recap image tiles">
-      <article class="recap-tile" :class="{ revealed: stage >= 1, dimmed: stage >= 1 && stage < 4 && stage !== tiles[0].stage }">
-        <div class="tile-crypsis-viewport" :aria-label="tiles[0].alt" role="img">
+  <section class="recap-shell" :class="{ thanks }">
+    <div class="recap-grid" aria-label="Recap image tiles">
+      <article
+        class="recap-tile"
+        :class="{
+          revealed: stage >= 1,
+          dimmed: stage >= 1 && stage < 4 && stage !== tiles[0].stage,
+        }"
+      >
+        <div
+          class="tile-crypsis-viewport"
+          :aria-label="tiles[0].alt"
+          role="img"
+        >
           <div :key="runId" class="tile-frame" :style="frameStyle">
-            <CrypsisSimulationFrame :sim="sim" :stage="stage" style="--frame-left: 0%;" />
+            <CrypsisSimulationFrame
+              :sim="sim"
+              :stage="stage"
+              style="--frame-left: 0%"
+            />
           </div>
         </div>
         <p class="tile-label">{{ tiles[0].label }}</p>
@@ -141,7 +162,13 @@ const showThankYou = computed(() => stage.value >= 4);
 
       <div class="v-divider" aria-hidden="true"></div>
 
-      <article class="recap-tile stacked-column" :class="{ revealed: stage >= 1, dimmed: stage >= 1 && stage < 4 && stage !== tiles[1].stage }">
+      <article
+        class="recap-tile stacked-column"
+        :class="{
+          revealed: stage >= 1,
+          dimmed: stage >= 1 && stage < 4 && stage !== tiles[1].stage,
+        }"
+      >
         <div class="stack-top">
           <img :src="tiles[1].src" :alt="tiles[1].alt" class="tile-image" />
         </div>
@@ -153,42 +180,77 @@ const showThankYou = computed(() => stage.value >= 4);
 
       <div class="v-divider" aria-hidden="true"></div>
 
-      <article class="recap-tile stacked-column" :class="{ revealed: stage >= 1, dimmed: stage >= 1 && stage < 4 && stage !== tiles[2].stage }">
-        <div class="stack-top pipeline-preview" role="img" :aria-label="tiles[2].alt">
+      <article
+        class="recap-tile stacked-column"
+        :class="{
+          revealed: stage >= 1,
+          dimmed: stage >= 1 && stage < 4 && stage !== tiles[2].stage,
+        }"
+      >
+        <div
+          class="stack-top pipeline-preview"
+          role="img"
+          :aria-label="tiles[2].alt"
+        >
           <FigureSvg class="pipeline-svg" />
         </div>
         <div class="stack-bottom images-row">
           <img :src="wideSample" alt="Wide stereo sample" class="half-image" />
-          <img :src="disparitySample" alt="Disparity sample" class="half-image" />
+          <img
+            :src="disparitySample"
+            alt="Disparity sample"
+            class="half-image"
+          />
         </div>
         <p class="tile-label">{{ tiles[2].label }}</p>
       </article>
     </div>
 
-    <div class="thanks-overlay" :class="{ show: showThankYou }" aria-live="polite">
-      <h2 class="thanks-title">Thank You</h2>
-      <div class="thanks-logos" aria-label="FOCUS and UF ECE logos">
-        <a
-          href="https://z-yx.cc/FOCUS"
-          class="focus-lab-logo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Focus role="img" aria-label="FOCUS Lab" />
-          <span class="focus-lab-suffix">Lab</span>
-        </a>
-        <div class="h-div" aria-hidden="true"></div>
-        <img :src="ufEceLogo" alt="University of Florida ECE" class="uf-ece-logo" />
+    <h2 class="thanks-title">Thank You</h2>
+    <div class="thanks-logos" aria-label="FOCUS and UF ECE logos">
+      <div class="focus-lab-logo">
+        <Focus role="img" aria-label="FOCUS Lab" />
+        <span class="focus-lab-suffix">Lab</span>
       </div>
+      <div class="h-div" aria-hidden="true"></div>
+      <img
+        :src="ufEceLogo"
+        alt="University of Florida ECE"
+        class="uf-ece-logo"
+      />
     </div>
   </section>
 </template>
 
 <style scoped>
 .recap-shell {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 60px;
+  left: 40px;
+  right: 40px;
+  bottom: 60px;
+  overflow: visible;
+  transition:
+    top var(--transition-duration) var(--transition-curve),
+    left var(--transition-duration) var(--transition-curve),
+    right var(--transition-duration) var(--transition-curve),
+    bottom var(--transition-duration) var(--transition-curve);
+}
+
+.recap-shell .thanks-title,
+.recap-shell .thanks-logos {
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.recap-shell.thanks .thanks-title,
+.recap-shell.thanks .thanks-logos {
+  opacity: 1;
+}
+
+.recap-shell.thanks {
+  top: 120px;
+  bottom: 120px;
 }
 
 .recap-grid {
@@ -199,13 +261,10 @@ const showThankYou = computed(() => stage.value >= 4);
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 0 1rem;
   transition:
+    -webkit-filter var(--transition-duration) var(--transition-curve),
+    filter var(--transition-duration) var(--transition-curve),
     opacity var(--transition-duration) var(--transition-curve),
     transform var(--transition-duration) var(--transition-curve);
-}
-
-.recap-grid.fade {
-  opacity: 0.13;
-  transform: scale(0.99);
 }
 
 .recap-tile {
@@ -217,10 +276,10 @@ const showThankYou = computed(() => stage.value >= 4);
   box-shadow: none;
   height: 100%;
   opacity: 0;
-  transform: translateY(10px) scale(0.985);
+  transform: translateY(10px) scale(0.8);
   transition:
-    opacity 0.5s var(--transition-curve),
-    transform 0.5s var(--transition-curve);
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
 }
 
 .recap-tile.revealed {
@@ -228,12 +287,13 @@ const showThankYou = computed(() => stage.value >= 4);
   transform: translateY(0) scale(1);
 }
 
-.recap-tile.revealed.dimmed {
-  opacity: 0.2;
+.recap-tile.dimmed {
+  opacity: 0.42;
+  filter: blur(4px);
 }
 
 .v-divider {
-  width: 1px;
+  width: 2px;
   align-self: stretch;
   background: rgba(248, 250, 252, 0.12);
 }
@@ -332,7 +392,11 @@ const showThankYou = computed(() => stage.value >= 4);
   bottom: 0;
   margin: 0;
   padding: 0.55rem 0.75rem;
-  background: linear-gradient(to top, rgba(2, 6, 23, 0.92), rgba(2, 6, 23, 0.08));
+  background: linear-gradient(
+    to top,
+    rgba(2, 6, 23, 0.92),
+    rgba(2, 6, 23, 0.08)
+  );
   color: #f8fafc;
   font-size: 0.95rem;
   font-weight: 600;
@@ -361,20 +425,25 @@ const showThankYou = computed(() => stage.value >= 4);
 }
 
 .thanks-title {
-  margin: 0;
-  font-size: clamp(2.4rem, 5.5vw, 3.9rem);
+  font-size: 2em;
   font-weight: 650;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, currentColor 92%, white 8%);
   text-align: center;
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translate(-50%, -100%);
 }
 
 .thanks-logos {
+  position: absolute;
+  left: 50%;
+  bottom: -120px;
+  transform: translate(-50%, -100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: clamp(2rem, 5.2vw, 3.6rem);
+  font-size: 1.2em;
   color: currentColor;
 }
 
@@ -400,15 +469,15 @@ const showThankYou = computed(() => stage.value >= 4);
 }
 
 .h-div {
-  width: 1px;
+  width: 2px;
   height: 1.4em;
   background: var(--fc-fg);
-  margin: 0 10px;
+  margin: 0 20px;
 }
 
 .uf-ece-logo {
   filter: brightness(0) invert(1);
-  height: 1.2em;
+  height: 1em;
   width: auto;
   transform: translateY(2px);
 }

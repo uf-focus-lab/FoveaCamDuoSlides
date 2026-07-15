@@ -81,19 +81,23 @@ const activeIndex = computed(() =>
 const citations = [
   {
     key: "spidercam",
-    text: "M. A. Ferreira, T. Li, J. Mamish, J. Hester, Y. Sangar, Q. Guo, and E. Alexander. SpiderCam: Low-Power Snapshot Depth from Differential Defocus. CVPR (2026).",
+    html: "M. A. Ferreira, T. Li, J. Mamish, J. Hester, Y. Sangar, Q. Guo, and <strong>Emma Alexander</strong>. SpiderCam: Low-Power Snapshot Depth from Differential Defocus. CVPR (2026).",
   },
   {
-    key: "vision",
-    text: "Y.-C. Hung, Q. Guo, and E. Alexander. Bio-Inspired Computational Imaging: Components, Algorithms, and Systems. Annu. Rev. Vis. Sci. (2025).",
+    key: "review",
+    html: "Y.-C. Hung, Q. Guo, and <strong>Emma Alexander</strong>. Bio-Inspired Computational Imaging: Components, Algorithms, and Systems. Annu. Rev. Vis. Sci. (2025).",
+  },
+  {
+    key: "ramesh",
+    html: "Kushagra Tiwary, Aaron Young, Zaid Tasneem, Tzofi Klinghoffer, Akshat Dave, Tomaso Poggio, Dan-Eric Nilsson, Brian Cheung, and <strong>Ramesh Raskar</strong>, “What if eye…? Computationally recreating vision evolution,” Science Advances (2025).",
   },
 ] as const;
 
-const activeCitation = computed(() =>
-  tiles[activeIndex.value]?.file === "jumping-spider.webp"
-    ? "spidercam"
-    : "vision",
-);
+const activeCitation = computed(() => {
+  if (stage.value <= 2) return "spidercam";
+  if (stage.value === 3) return "review";
+  return "ramesh";
+});
 </script>
 
 <template>
@@ -113,9 +117,8 @@ const activeCitation = computed(() =>
         :key="c.key"
         class="citation-line"
         :class="{ show: activeCitation === c.key }"
-      >
-        {{ c.text }}
-      </p>
+        v-html="c.html"
+      ></p>
     </footer>
   </section>
 </template>
@@ -162,15 +165,18 @@ section.slide {
   position: absolute;
   inset: 0;
   margin: 0;
-  padding: 0.7rem 1.4rem 0.4rem calc(1.4rem + 2.5ch);
-  text-indent: -2.5ch;
+  padding: 0.7rem 1.4rem;
   font-family: "Times New Roman", Times, serif;
-  font-size: 0.8rem;
+  font-size: 0.6em;
   line-height: 1.4;
-  color: color-mix(in srgb, var(--fc-fg) 68%, transparent);
+  color: color-mix(in srgb, var(--fc-fg) 80%, transparent);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.citation-line :deep(strong) {
+  text-decoration: underline;
 }
 
 .citation-line.show {

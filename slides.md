@@ -21,6 +21,7 @@ import Cover from "pages/01-cover.vue";
 ---
 
 # How Nature Engineers Vision
+
 <script setup lang="ts">
 import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 </script>
@@ -32,7 +33,7 @@ import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 In our work, we focus on redesigning sensors and cameras for new functions. To discover what new functions are possible, we look at biological systems. Evolution has produced a wide range of eyes, suited for different environments and different purposes, and there's a lot to learn from these biological systems when creating mechanical systems.
 -->
 
---- 
+---
 
 <script setup lang="ts">
 import StereoFoveationCrypsis from "pages/03-stereo-foveation-crypsis.vue";
@@ -52,7 +53,6 @@ import RelatedWork from "pages/04-related-work.vue";
 
 <RelatedWork />
 
-
 ---
 
 # Engineering Foveation
@@ -62,6 +62,16 @@ import MechanicalChallenges from "pages/05-mechanical-challenges.vue";
 </script>
 
 <MechanicalChallenges />
+
+---
+
+## layout: none
+
+<script setup lang="ts">
+import CameraTurntable from "pages/10-camera-turntable.vue";
+</script>
+
+<CameraTurntable />
 
 ---
 
@@ -109,8 +119,8 @@ Makes it extremely easy to convert disparity into depth, it's easier to create r
 -->
 
 ---
-layout: two-cols
----
+
+## layout: two-cols
 
 <script setup lang="ts">
 import { computed } from "vue";
@@ -140,8 +150,8 @@ If the object is far enough that it doesn't have any disparity, the information 
 -->
 
 ---
-layout: none
----
+
+## layout: none
 
 <script setup lang="ts">
 import CameraTurntable from "pages/10-camera-turntable.vue";
@@ -170,8 +180,10 @@ import CalibrationSetup from "pages/12-calibration-setup.vue";
 <CalibrationSetup />
 
 ---
+
 layout: none
 title: Calibration - Process
+
 ---
 
 <script setup lang="ts">
@@ -217,7 +229,7 @@ import ConvergentStereoAnimation from "pages/17-convergent-stereo.vue";
   <ConvergentStereoAnimation :delay="500" />
 </div>
 
---- 
+---
 
 # Example Walkthrough
 
@@ -378,14 +390,9 @@ import LipReadingPreview from "pages/21-lip-reading-preview.vue";
 <div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
   <LipReadingPreview />
 </div>
---- 
+---
 
-# Recap
-
-<div style="width: 100%; margin: 0.25rem auto 0;">
-  <RecapTiles :crypsis-zoom="3" :crypsis-center-x="65" :crypsis-center-y="55" />
-</div>
-
+<RecapTiles :crypsis-zoom="3" :crypsis-center-x="65" :crypsis-center-y="55" />
 
 <!-- ---  -->
 
