@@ -119,8 +119,8 @@ Makes it extremely easy to convert disparity into depth, it's easier to create r
 -->
 
 ---
-
-## layout: two-cols
+layout: two-cols
+---
 
 <script setup lang="ts">
 import { computed } from "vue";
@@ -150,8 +150,8 @@ If the object is far enough that it doesn't have any disparity, the information 
 -->
 
 ---
-
-## layout: none
+layout: none
+---
 
 <script setup lang="ts">
 import CameraTurntable from "pages/10-camera-turntable.vue";
@@ -180,10 +180,8 @@ import CalibrationSetup from "pages/12-calibration-setup.vue";
 <CalibrationSetup />
 
 ---
-
 layout: none
 title: Calibration - Process
-
 ---
 
 <script setup lang="ts">
