@@ -4,14 +4,20 @@
 // See AGENTS.md → "Crypsis Simulation".
 import CrypsisWorld from "./07C-crypsis-world.vue";
 
-defineProps<{
-  stage: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    stage: number;
+    left?: string;
+  }>(),
+  {
+    left: "50%",
+  },
+);
 </script>
 
 <template>
-  <div class="frame-shell">
-    <div class="crypsis-app" :class="{ 'grow-feasible-region': stage >= 4 }">
+  <div class="frame-shell" :style="{ '--frame-left': props.left }">
+    <div class="crypsis-app grow-feasible-region">
       <CrypsisWorld />
     </div>
   </div>
@@ -23,7 +29,7 @@ defineProps<{
   top: 0;
   right: 0;
   bottom: 0;
-  left: 50%;
+  left: var(--frame-left, 50%);
   border: none;
   overflow: hidden;
 }

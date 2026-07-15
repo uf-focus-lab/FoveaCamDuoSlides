@@ -186,13 +186,13 @@ import CalibrationProcess from "pages/13-calibration-process.vue";
 
 # Calibration - Reprojection Error
 
-<!-- --- -->
 
-<!-- # <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking -->
 
 ---
 
-# Data Collection
+# <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking
+
+---
 
 <!-- - Samples of the data collected by raster scan
 - Visualization of the data projected to the wide context view -->
@@ -201,9 +201,7 @@ import CalibrationProcess from "pages/13-calibration-process.vue";
 import DataCollection from "pages/16-data-collection.vue";
 </script>
 
-<div style="margin-top: 1.25rem; width: 100%;">
-  <DataCollection />
-</div>
+<DataCollection />
 
 ---
 
@@ -367,12 +365,23 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
   <DepthPhotometricErrorTable />
 </div>
 
+---
+
+# Lip Reading
+
+<script setup lang="ts">
+import LipReadingPreview from "pages/14-lip-reading-preview.vue";
+</script>
+
+<div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
+  <LipReadingPreview />
+</div>
 --- 
 
-<!-- # Recap -->
+# Recap
 
-<div style="width: 96%; margin: 0.25rem auto 0;">
-  <RecapTiles :crypsis-zoom="3" :crypsis-crop-x="-40" :crypsis-crop-y="-40" />
+<div style="width: 100%; margin: 0.25rem auto 0;">
+  <RecapTiles :crypsis-zoom="3" :crypsis-center-x="65" :crypsis-center-y="55" />
 </div>
 
 

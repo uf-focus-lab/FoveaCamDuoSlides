@@ -17,7 +17,7 @@ const highlightFirst = computed(() => stage.value >= 3);
     <div class="challenge-grid">
       <article class="challenge-card" :class="{ show: showFirst, primary: highlightFirst }">
         <p class="challenge-index">Challenge 1</p>
-        <h3>Build a mechanical system capable of foveation</h3>
+        <h3>Build a system capable of foveation</h3>
         <!-- <p class="challenge-copy">
           Realize controllable foveated sensing hardware that can reliably execute the desired gaze behavior.
         </p> -->
