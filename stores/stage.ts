@@ -196,10 +196,13 @@ async function waitForSlideContentAnimations() {
   }
 }
 
-// Resolve once the slide transition has settled, i.e. the outgoing slide has
-// finished animating away and is no longer visible. Used to defer a slide's
-// stage reset so its revealed content isn't seen collapsing on the way out.
-async function waitForSlideHidden() {
+// Resolve once the current slide transition has settled — the finite animations
+// under #slideshow have finished. Slidev runs the slide transition on the
+// SlideWrapper (an ancestor of #slide-content), so it is observed here, not
+// under #slide-content. Used both to hold `busy` through a slide's entrance and
+// to defer its stage reset so revealed content isn't seen collapsing on the way
+// out.
+async function waitForSlideTransition() {
   await nextTick();
   await nextFrame();
   await nextFrame();
@@ -222,10 +225,11 @@ async function waitForSlideHidden() {
  * Once active, it is 1-indexed and clamped to `[1, n]`: stage `1` is the
  * initial view, stage `2` the first reveal, and so on. Right increments, Left
  * decrements. The active slide's stage is reflected in `location.hash` (`#2`),
- * which also restores it on reload / deep link. Set `stage.busy = true` while
- * an animation runs to queue further arrow changes; queued Left/Right inputs
- * cancel each other through a signed counter. A queued request can carry a
- * boundary fallback, so Space can still navigate after the stage queue settles.
+ * which also restores it on reload / deep link. Set `stage.busy = true` while an
+ * animation runs; Left/Right/Space that arrive while `busy` is dropped, not
+ * queued, so a rapid keypress can't skip past a mid-transition stage. The
+ * entrance (inactive -> initial stage) is itself held `busy` until the slide has
+ * animated in, so `0 -> 1` is uninterruptable.
  * Optional boundary callbacks can handle navigation after the first/last stage.
  *
  * The listeners live in an {@link effectScope} attached to the calling
@@ -250,9 +254,6 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
   const isPreview = computed(() => $renderContext.value === "overview");
   const busy = ref(false);
   const transientStages = new Set<number>();
-  let pendingDelta = 0;
-  let pendingForwardFallback: StageBoundaryFallback | undefined;
-  let pendingBackwardFallback: StageBoundaryFallback | undefined;
   // Bumped on every (de)activation; a deferred reset only fires if its token is
   // still current, so navigating back before the slide hides cancels it.
   let resetRun = 0;
@@ -268,9 +269,6 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
   });
 
   const clearSuspendedState = () => {
-    pendingDelta = 0;
-    pendingForwardFallback = undefined;
-    pendingBackwardFallback = undefined;
     busy.value = false;
   };
 
@@ -292,62 +290,11 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
     }
   };
 
-  const queueStep = (delta: -1 | 1, fallback?: StageBoundaryFallback) => {
-    pendingDelta += delta;
-    if (delta > 0) {
-      pendingForwardFallback = fallback;
-    } else {
-      pendingBackwardFallback = fallback;
-    }
-
-    if (pendingDelta === 0) {
-      pendingForwardFallback = undefined;
-      pendingBackwardFallback = undefined;
-    } else if (pendingDelta > 0) {
-      pendingBackwardFallback = undefined;
-    } else {
-      pendingForwardFallback = undefined;
-    }
-  };
-
-  const flushQueuedStep = () => {
-    if (busy.value || pendingDelta === 0 || !isActive.value) return;
-
-    const delta = Math.sign(pendingDelta) as -1 | 1;
-    pendingDelta -= delta;
-    const fallback =
-      delta > 0 ? pendingForwardFallback : pendingBackwardFallback;
-
-    if (delta > 0 && pendingDelta <= 0) {
-      pendingForwardFallback = undefined;
-    } else if (delta < 0 && pendingDelta >= 0) {
-      pendingBackwardFallback = undefined;
-    }
-
-    const handled = applyStep(delta);
-    if (!handled) {
-      if (delta > 0 && pendingDelta > 0) {
-        pendingDelta = 0;
-        pendingForwardFallback = undefined;
-      }
-      if (delta < 0 && pendingDelta < 0) {
-        pendingDelta = 0;
-        pendingBackwardFallback = undefined;
-      }
-      void fallback?.();
-      return;
-    }
-
-    if (pendingDelta !== 0 && !busy.value && isActive.value) {
-      queueMicrotask(flushQueuedStep);
-    }
-  };
-
+  // While a transition is running the stage is `busy`; drop the incoming step so
+  // rapid key/space presses can't skip past a (transient) stage mid-animation.
+  // Return `true` so a Space boundary fallback treats the input as consumed.
   const requestStep = (delta: -1 | 1, fallback?: StageBoundaryFallback) => {
-    if (busy.value) {
-      queueStep(delta, fallback);
-      return true;
-    }
+    if (busy.value) return true;
 
     const handled = applyStep(delta);
     if (!handled && fallback) {
@@ -387,6 +334,20 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
           } else {
             stage.value = 1;
           }
+
+          // Make the entrance (inactive 0 -> initial stage) uninterruptable: hold
+          // `busy` while the slide animates in so mashing keys can't skip past the
+          // initial view before it has settled. A transient initial stage already
+          // owns `busy` via its sync watch (fired on the assignment above) and
+          // drives its own pass-through, so skip the hold then. Guarded by the
+          // activation token (resetRun) so a quick exit cancels the pending clear.
+          if (!transientStages.has(raw.value)) {
+            const token = resetRun; // already bumped at the top of this branch
+            busy.value = true;
+            void waitForSlideTransition().finally(() => {
+              if (token === resetRun && isActive.value) busy.value = false;
+            });
+          }
         } else {
           if (activeStageController === controller) activeStageController = null;
           clearSuspendedState();
@@ -398,7 +359,7 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
             // backward re-entry to restore. Defer until the slide has animated
             // away so the revealed content isn't seen collapsing on the way out.
             const token = ++resetRun;
-            void waitForSlideHidden().then(() => {
+            void waitForSlideTransition().then(() => {
               if (token === resetRun && !isActive.value) stage.value = 0;
             });
           }
@@ -447,7 +408,6 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
     get: () => busy.value,
     set: (value: boolean) => {
       busy.value = value;
-      if (!value) queueMicrotask(flushQueuedStep);
     },
   });
 
@@ -502,7 +462,9 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
           }
         })();
       },
-      { immediate: true },
+      // `flush: "sync"` so landing on a transient stage sets `busy` in the same
+      // tick as the stage change — before any queued/rapid key can be handled.
+      { immediate: true, flush: "sync" },
     );
 
     const stopActiveWatch = watch(isActive, (active) => {

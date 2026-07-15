@@ -12,11 +12,6 @@ const props = defineProps<{ stage: number }>();
 const stage = computed(() => props.stage);
 
 config.autoAddCss = false;
-
-const calloutStyle = {
-  color: "color-mix(in srgb, var(--camera-center) 70%, black)",
-  fontSize: "1.2rem",
-};
 </script>
 
 <template>
@@ -38,15 +33,15 @@ const calloutStyle = {
       tex="Z = \frac{f \cdot b}{d}"
       display
     >
-      <Annotation :show="stage === 2" at="Z" position="B" :style="calloutStyle"
-        >Depth</Annotation
-      >
-      <Annotation :show="stage === 2" at="b" position="TR" :style="calloutStyle"
-        >Baseline</Annotation
-      >
-      <Annotation :show="stage === 2" at="f" position="TL" :style="calloutStyle"
-        >Focal Length</Annotation
-      >
+      <Annotation :show="stage === 2" at="Z" position="B" spacing="0.2em">
+        Depth
+      </Annotation>
+      <Annotation :show="stage === 2" at="b" position="TR" spacing="0.5em">
+        Baseline
+      </Annotation>
+      <Annotation :show="stage === 2" at="f" position="TL" spacing="0.5em">
+        Focal Length
+      </Annotation>
     </Katex>
 
     <!-- Derivative -->
@@ -88,14 +83,20 @@ const calloutStyle = {
       tex="|\Delta Z| ~=~ \frac{f \cdot b}{d^2}"
       display
     >
-      <Annotation :show="stage === 8" at="d" position="B" html :style="calloutStyle">
+      <Annotation
+        :show="stage >= 7 && stage <= 8"
+        at="d"
+        position="B"
+        spacing="0.5em"
+        html
+      >
         <Katex tex="d = \frac{f \cdot b}{Z}" />
       </Annotation>
     </Katex>
 
-    <!-- Substitute -->
+    <!-- Substitute (2nd segment; enters from the right) -->
     <Katex
-      class="equation"
+      class="equation from-right"
       :class="{ show: stage >= 8 }"
       :style="{
         left: '7.7em',
@@ -129,6 +130,14 @@ const calloutStyle = {
   font-size: 1.8rem;
   text-align: left;
   transform: translateY(-50%);
+}
+
+/* Math content — the intro prose and equations — stays entirely in the math
+   serif, never mixed with the deck's sans-serif body font. (The decorative
+   .question-pill is not math and keeps the deck sans-serif.) */
+.intro,
+.equation {
+  font-family: "Times New Roman", serif;
 }
 
 .math :deep(.katex-display) {
@@ -165,6 +174,15 @@ const calloutStyle = {
 .equation.show {
   opacity: 1;
   transform: translateY(-50%);
+}
+
+/* Special case: enter fading in from the right (40px) instead of from below. */
+.equation.from-right {
+  transform: translate(40px, -50%);
+}
+
+.equation.from-right.show {
+  transform: translate(0, -50%);
 }
 
 /* Intro line, positioned directly above its equation. It enters fading in from

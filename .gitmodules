@@ -1,3 +1,4 @@
 [submodule "crypsis-simulation"]
 	path = crypsis-simulation
 	url = https://github.com/uf-focus-lab/CrypsisSimulation.git
+	branch = slideshow

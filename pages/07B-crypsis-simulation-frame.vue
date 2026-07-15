@@ -1,24 +1,19 @@
 <script setup lang="ts">
-// The simulation is embedded via a thin shim (pages/07C) that mounts only the
-// submodule's world canvas + controls overlay — not its standalone app shell.
-// See AGENTS.md → "Crypsis Simulation".
+// Right-half world canvas. The controls live separately (pages/07D) on the left
+// half so they never obscure the simulation. See AGENTS.md → "Crypsis Simulation".
+import type Simulation from "../crypsis-simulation/lib/simulation";
 import CrypsisWorld from "./07C-crypsis-world.vue";
 
-const props = withDefaults(
-  defineProps<{
-    stage: number;
-    left?: string;
-  }>(),
-  {
-    left: "50%",
-  },
-);
+defineProps<{
+  sim: Simulation;
+  stage: number;
+}>();
 </script>
 
 <template>
-  <div class="frame-shell" :style="{ '--frame-left': props.left }">
-    <div class="crypsis-app grow-feasible-region">
-      <CrypsisWorld />
+  <div class="frame-shell">
+    <div class="crypsis-app" :class="{ 'grow-feasible-region': stage >= 4 }">
+      <CrypsisWorld :sim="sim" />
     </div>
   </div>
 </template>
@@ -32,110 +27,27 @@ const props = withDefaults(
   left: var(--frame-left, 50%);
   border: none;
   overflow: hidden;
+  font-size: 0.5em;
 }
 
-/*
- * Themed host for the embedded simulation. `--color` is the app's single text/
- * icon color token (it was hardcoded to `white` in the standalone index.html);
- * binding it to the deck's foreground is the first step of matching this
- * project's colorscheme. Finer per-surface recoloring (header, badges, logo
- * gradient) is left for follow-up customization.
- */
 .crypsis-app {
   --color: var(--fc-fg, #fff);
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   color: var(--color);
   background: var(--fc-bg, #0a1420);
-  font-family: inherit;
-  user-select: none;
 }
 
-/* Global utility classes the app's components rely on, reproduced here (they
-   previously lived in the standalone index.html <style>) and scoped to the host
-   so they don't leak into the deck. */
-.crypsis-app :deep(.mono) {
-  font-family: "Cascadia Code", "Courier New", Courier, monospace;
+/* Stage-driven feasible-region reveal. The world canvas clips the feasible
+   regions with an SVG circle centered on the entity bbox; growing its radius
+   from 0 to `--feasible-reveal-r` (supplied by the canvas) reveals them radially
+   from that center. Hidden (r:0) until the deck sets `.grow-feasible-region`. */
+.crypsis-app :deep(circle.feasible-reveal) {
+  r: 0;
+  transition: r 900ms var(--transition-curve, ease-in-out);
 }
-
-.crypsis-app :deep(.reactive:hover) {
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
-}
-.crypsis-app :deep(.reactive:active) {
-  background-color: color-mix(in srgb, currentColor 14%, transparent);
-}
-
-.crypsis-app :deep(.button) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  margin: 0;
-  padding: 0.6em 0.4em;
-  cursor: pointer;
-  background-color: transparent;
-  border: none;
-  outline: none;
-}
-.crypsis-app :deep(.button:hover) {
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
-}
-.crypsis-app :deep(.button:active) {
-  background-color: color-mix(in srgb, currentColor 14%, transparent);
-}
-.crypsis-app :deep(.button > svg) {
-  transform: scale(1.2);
-}
-
-.crypsis-app :deep(.icon path) {
-  fill: var(--color) !important;
-}
-.crypsis-app :deep(.icon.bold path) {
-  stroke-width: 0.4 !important;
-  stroke: var(--color) !important;
-}
-
-.crypsis-app :deep(.invisible-scrollbar) {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.crypsis-app :deep(.invisible-scrollbar::-webkit-scrollbar) {
-  display: none;
-}
-
-.crypsis-app :deep(input:not([type])),
-.crypsis-app :deep(input[type="text"]) {
-  border: none;
-  background-color: transparent;
-  color: var(--color);
-  font-size: 1em;
-  padding: 0;
-  outline: none;
-  font-family: unset;
-}
-
-.crypsis-app :deep(.underline) {
-  padding-top: 0.2em;
-  padding-bottom: 0.2em;
-  border-top: 2px solid transparent;
-  border-bottom: 2px solid transparent;
-}
-.crypsis-app :deep(.underline:focus),
-.crypsis-app :deep(.underline:focus-within) {
-  border-bottom: 2px solid color-mix(in srgb, currentColor 60%, transparent);
-}
-
-/* Stage-driven feasible-region reveal, formerly injected into the iframe
-   document; now a scoped rule piercing into the embedded app. */
-.crypsis-app :deep(svg.simulation-world .annotations.feasible-regions) {
-  clip-path: circle(6% at 50% 50%);
-  transition: clip-path 900ms var(--transition-curve, ease-in-out);
-}
-.crypsis-app.grow-feasible-region
-  :deep(svg.simulation-world .annotations.feasible-regions) {
-  clip-path: circle(46% at 50% 50%);
+.crypsis-app.grow-feasible-region :deep(circle.feasible-reveal) {
+  r: var(--feasible-reveal-r, 0);
 }
 </style>
