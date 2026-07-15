@@ -8,15 +8,11 @@ defineProps<{
 }>();
 
 const eq7 = "D_i \\triangleq \\|A-T_i\\|_2 < D_{\\max}";
-const eq8 = "D_{\\max} \\triangleq \\frac{S_t}{2\\tan(\\theta_T / 2)} \\approx \\frac{S_t}{\\theta_T}";
+const eq8 =
+  "D_{\\max} \\triangleq \\frac{S_t}{2\\tan(\\theta_T / 2)} \\approx \\frac{S_t}{\\theta_T}";
 const feasibleRegion = "\\{ A \\mid D_{\\min} < \\|A-T_i\\|_2 < D_{\\max} \\}";
 const eq12 =
   "\\frac{dP_{\\mathrm{succ}}}{dD_{\\max}} = \\frac{2\\pi D_{\\max}}{|\\Omega|}(1-p)^{\\mathcal{A}_{\\mathrm{blk}}(D_{\\max})} \\ge 0";
-
-const calloutStyle = {
-  color: "rgb(255, 172, 172)",
-  fontSize: "0.85rem",
-};
 </script>
 
 <template>
@@ -26,13 +22,36 @@ const calloutStyle = {
         <div
           class="equation-explainer reveal-disappear"
           :class="{ hide: stage >= 2, show: stage >= 1 }"
-          v-html="renderInline('To observe target $i$, observer $A$ must be close enough to resolve it.')"
+          v-html="
+            renderInline(
+              'To observe target $i$, observer $A$ must be close enough to resolve it.',
+            )
+          "
         />
-        <Katex class="equation-line equation-eq7" :tex="eq7" display>
-          <Annotation :show="stage === 1" at="A" position="TL" :style="calloutStyle">Observer</Annotation>
-          <Annotation :show="stage === 1" at="T" position="TR" :style="calloutStyle">Target</Annotation>
-          <Annotation :show="stage === 1" at="−" position="B" :style="calloutStyle">Range</Annotation>
-          <Annotation :show="stage === 1" at="D" :at-nth="1" position="R" :style="calloutStyle">Resolvable limit</Annotation>
+        <Katex
+          class="equation-line"
+          :class="{ 'has-callout': stage === 1 }"
+          :tex="eq7"
+          display
+        >
+          <Annotation :show="stage === 1" at="A" spacing="0.6em" position="TL"
+            >Observer</Annotation
+          >
+          <Annotation :show="stage === 1" at="T" spacing="0.6em" position="TR"
+            >Target</Annotation
+          >
+          <Annotation :show="stage === 1" at="−" spacing="0.4em" position="B"
+            >Range</Annotation
+          >
+          <Annotation
+            :show="stage === 1"
+            at="D"
+            spacing="0.4em"
+            :at-nth="1"
+            position="B"
+            align="left"
+            >Resolvable limit</Annotation
+          >
         </Katex>
       </article>
 
@@ -40,7 +59,11 @@ const calloutStyle = {
         <div
           class="equation-explainer reveal-disappear"
           :class="{ hide: stage >= 3, show: stage >= 2 }"
-          v-html="renderInline('This range limit is set by target size $S_t$ and angular resolution $\\theta_T$.')"
+          v-html="
+            renderInline(
+              'This range limit is set by target size $S_t$ and angular resolution $\\theta_T$.',
+            )
+          "
         />
         <Katex class="equation-line" :tex="eq8" display />
       </article>
@@ -49,7 +72,11 @@ const calloutStyle = {
         <div
           class="equation-explainer reveal-disappear"
           :class="{ hide: stage >= 4, show: stage >= 3 }"
-          v-html="renderInline('Crypsis is feasible only in this band: far enough to stay unseen, close enough to still see.')"
+          v-html="
+            renderInline(
+              'Crypsis is feasible only in this band: far enough to stay unseen, close enough to still see.',
+            )
+          "
         />
         <Katex class="equation-line" :tex="feasibleRegion" display />
       </article>
@@ -58,7 +85,11 @@ const calloutStyle = {
         <div
           class="equation-explainer reveal-disappear"
           :class="{ hide: stage >= 5, show: stage >= 4 }"
-          v-html="renderInline('As $D_{\\max}$ increases, the feasible crypsis region expands and success becomes more likely.')"
+          v-html="
+            renderInline(
+              'As $D_{\\max}$ increases, the feasible crypsis region expands and success becomes more likely.',
+            )
+          "
         />
         <Katex class="equation-line" :tex="eq12" display />
       </article>
@@ -70,10 +101,19 @@ const calloutStyle = {
 .info-panel {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.7rem;
   border: none;
   padding: 0;
   padding-right: 1rem;
+  overflow: visible;
+  font-family: "Times New Roman", serif;
+}
+
+/* Force KaTeX ordinary symbols onto the math serif too (matches pages/08A). */
+.info-panel :deep(.mord),
+.info-panel :deep(.mord.mathnormal) {
+  font-family: "KaTeX_Math", "Times New Roman", serif;
 }
 
 .equation-panel {
@@ -83,19 +123,11 @@ const calloutStyle = {
 
 .math-block {
   opacity: 0;
-  transform: translateX(20px);
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
-}
-
-.math-block + .math-block {
-  margin-top: 0.9rem;
+  transition: opacity var(--transition-duration) var(--transition-curve);
 }
 
 .math-block.show {
   opacity: 1;
-  transform: translateX(0);
 }
 
 .reveal-disappear {
@@ -107,36 +139,33 @@ const calloutStyle = {
   transition:
     max-height var(--transition-duration) var(--transition-curve),
     margin var(--transition-duration) var(--transition-curve),
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
-  transform: translateX(-40px);
+    opacity var(--transition-duration) var(--transition-curve);
 }
 
 .reveal-disappear.show {
   max-height: 3.2em;
-  margin: 0.25rem 0 0.25rem;
   opacity: 1;
-  transform: translateX(0);
 }
 
 .reveal-disappear.hide {
   max-height: 0;
   margin: 0;
   opacity: 0;
-  transform: translateX(-40px);
 }
 
-/* Extra headroom for eq7's "Observer"/"Target" callouts, which point upward. */
-.equation-line.equation-eq7 {
-  margin-top: 2.8em;
+.equation-line.has-callout {
+  margin-top: 2.4em;
+  margin-bottom: 2.4em;
 }
 
 .equation-line {
-  margin: 0;
-  font-size: 1.18rem;
+  margin-top: 0.6em;
+  margin-bottom: 0.6em;
+  color: inherit;
+  font-size: 1.4rem;
   line-height: 1.34;
-  color: #f3f8ff;
   font-family: "Times New Roman", serif;
+  transition: margin var(--transition-duration) var(--transition-curve);
 }
 
 .equation-line :deep(.katex-display) {
@@ -149,9 +178,15 @@ const calloutStyle = {
 }
 
 .equation-explainer {
-  margin: 0;
-  font-size: 1.1rem;
+  margin-top: 1.2em;
+  margin-bottom: 1.2em;
+  font-size: 1.4rem;
   line-height: 1.36;
-  color: #d9e7f7;
+  color: inherit;
+}
+
+.equation-line,
+.equation-explainer {
+  overflow: visible;
 }
 </style>

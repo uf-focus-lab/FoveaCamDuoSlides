@@ -375,26 +375,4 @@ const labelOutputs = computed(() => stage.value >= 4);
   opacity: 1;
   transform: translateX(0);
 }
-
-@media (max-width: 900px) {
-  .walkthrough {
-    --stack-tile-height: 7rem;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    min-height: 0;
-  }
-
-  .wide-panel,
-  .fovea-panel {
-    max-height: 14rem;
-  }
-
-  .flow {
-    justify-self: stretch;
-  }
-
-  .outputs {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 </style>

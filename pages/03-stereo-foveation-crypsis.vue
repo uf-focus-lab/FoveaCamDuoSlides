@@ -3,8 +3,8 @@
 
 import { computed } from "vue";
 import { useStage } from "stores/stage";
-import StereoSection from "./04A-stereo-section.vue";
-import FoveaSection from "./04B-fovea-section.vue";
+import StereoSection from "./03A-stereo-section.vue";
+import FoveaSection from "./03B-fovea-section.vue";
 
 const assetUrls = import.meta.glob(
   "../assets/inspiration/*.{png,jpg,jpeg,webp,avif,gif}",

@@ -20,7 +20,7 @@ import Cover from "pages/01-cover.vue";
 
 ---
 
-# Biological Inspiration
+# How Nature Engineers Vision
 <script setup lang="ts">
 import BiologicalInspiration from "pages/02-biological-inspiration.vue";
 </script>
@@ -34,23 +34,23 @@ In our work, we focus on redesigning sensors and cameras for new functions. To d
 
 --- 
 
-# Related Work
-
 <script setup lang="ts">
-import RelatedWork from "pages/03-related-work.vue";
-</script>
-
-<RelatedWork />
-
----
-
-<script setup lang="ts">
-import StereoFoveationCrypsis from "pages/04-stereo-foveation-crypsis.vue";
+import StereoFoveationCrypsis from "pages/03-stereo-foveation-crypsis.vue";
 </script>
 
 # Stereo and Foveation
 
 <StereoFoveationCrypsis />
+
+---
+
+# Related Work
+
+<script setup lang="ts">
+import RelatedWork from "pages/04-related-work.vue";
+</script>
+
+<RelatedWork />
 
 
 ---
@@ -65,13 +65,11 @@ import MechanicalChallenges from "pages/05-mechanical-challenges.vue";
 
 ---
 
-# Preview — Foveated Detail
-
 <script setup lang="ts">
 import PreviewFovealTracking from "pages/06-preview-foveal-tracking.vue";
 </script>
 
-<div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
+<div style="width: 100%; height: 100%;">
   <PreviewFovealTracking />
 </div>
 
@@ -93,7 +91,7 @@ import CrypsisSimulation from "pages/07-crypsis-simulation.vue";
 import { useStage } from "stores/stage";
 import GeometryMath from "pages/08A-geometry-math.vue";
 import GeometryChart from "pages/08-geometry.vue";
-const stage = useStage(11, { preview: -1 }).transient([1, 3, 5, 7, 10]);
+const stage = useStage(11, { preview: -1 }).transient([1, 3, 5, 7, 9]);
 </script>
 
 <GeometryMath :stage="stage" />

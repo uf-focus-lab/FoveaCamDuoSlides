@@ -74,7 +74,11 @@ const markPhotoFailed = (name: string) => {
           class="author-photo"
           @error="markPhotoFailed(author.name)"
         />
-        <div v-else class="author-photo author-photo-fallback" aria-hidden="true">
+        <div
+          v-else
+          class="author-photo author-photo-fallback"
+          aria-hidden="true"
+        >
           {{ author.initials }}
         </div>
         <figcaption class="author-name">{{ author.name }}</figcaption>
@@ -85,15 +89,10 @@ const markPhotoFailed = (name: string) => {
   <p class="attribution">*equal contribution</p>
 
   <div class="footer">
-    <a
-      href="https://z-yx.cc/FOCUS"
-      class="focus-lab-logo"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <div class="focus-lab-logo">
       <Focus role="img" aria-label="FOCUS Lab" />
       <span class="focus-lab-suffix">Lab</span>
-    </a>
+    </div>
     <div class="h-div"></div>
     <img
       src="assets/logos/uf-ece.webp"
@@ -136,7 +135,7 @@ const markPhotoFailed = (name: string) => {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-size: 30px;
+  font-size: 24px;
 }
 h1 {
   font-size: 3.5rem;
@@ -162,12 +161,13 @@ h1 {
   gap: 0.55rem;
 }
 .author-photo {
-  width: clamp(84px, 11vw, 120px);
+  width: clamp(60px, 8vw, 100px);
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--fc-fg) 35%, transparent);
+  border: 2px solid color-mix(in srgb, var(--fc-fg) 20%, transparent);
   box-shadow: 0 8px 20px color-mix(in srgb, #000 26%, transparent);
+  margin: 0 4em;
 }
 .author-photo-fallback {
   display: grid;
@@ -181,7 +181,7 @@ h1 {
 }
 .author-name {
   font-family: "Times New Roman", serif;
-  font-size: .6rem;
+  font-size: 0.8rem;
   line-height: 1.2;
   opacity: 0.93;
   text-align: center;

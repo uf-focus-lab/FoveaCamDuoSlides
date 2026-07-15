@@ -8,7 +8,7 @@ import {
   useAttrs,
   watch,
 } from "vue";
-import { katexEmbedClass } from "./katex-context";
+import { useKatexSnap, type SnapSide } from "./snap";
 
 defineOptions({ inheritAttrs: false });
 
@@ -84,63 +84,15 @@ const forwardedAttrs = computed(() => {
   return rest;
 });
 
-// When `at` is set, a hidden locator renders in place inside the host <Katex>.
-// We find the matching glyph, then teleport the guide into the <Katex> wrapper
-// (a stable positioned box) and anchor it at the glyph's measured offset — an
-// inline glyph is too fragile to serve as the positioning context directly.
+// When `at` is set, a hidden locator renders in place inside the host <Katex>;
+// snapping (glyph lookup + scale-corrected anchor point) lives in snap.ts.
 const anchor = ref<HTMLElement | null>(null);
-const target = ref<HTMLElement | null>(null);
-const anchorPoint = ref<{ left: string; top: string } | null>(null);
-let hostObserver: ResizeObserver | undefined;
-
-function measure(host: HTMLElement, glyph: HTMLElement) {
-  const hr = host.getBoundingClientRect();
-  const gr = glyph.getBoundingClientRect();
-  const side = props.position.toUpperCase()[0];
-  const s = lengthToPx(props.spacing);
-  let x = gr.left - hr.left + gr.width / 2;
-  let y = gr.top - hr.top + gr.height / 2;
-  if (side === "T") y = gr.top - hr.top - s;
-  else if (side === "B") y = gr.top - hr.top + gr.height + s;
-  else if (side === "L") x = gr.left - hr.left - s;
-  else if (side === "R") x = gr.left - hr.left + gr.width + s;
-  anchorPoint.value = { left: `${round(x)}px`, top: `${round(y)}px` };
-}
-
-function locate() {
-  hostObserver?.disconnect();
-  target.value = null;
-  anchorPoint.value = null;
-  const host = props.at
-    ? anchor.value?.closest<HTMLElement>(`.${katexEmbedClass}`)
-    : null;
-  if (!host) return;
-  let glyph: HTMLElement | undefined;
-  let i = 0;
-  for (const span of host.querySelectorAll<HTMLElement>("span")) {
-    if (span.childElementCount === 0 && span.textContent === props.at) {
-      if (i++ === props.atNth) {
-        glyph = span;
-        break;
-      }
-    }
-  }
-  if (!glyph) return;
-  // host must be a positioning context; only force it when it's static so an
-  // already-absolute host (e.g. an equation positioned by its slide) is kept.
-  if (getComputedStyle(host).position === "static") host.style.position = "relative";
-  target.value = host;
-  measure(host, glyph);
-  if (typeof ResizeObserver !== "undefined") {
-    hostObserver = new ResizeObserver(() => measure(host, glyph!));
-    hostObserver.observe(host);
-  }
-}
-watch(
-  [anchor, () => props.at, () => props.atNth, () => props.position],
-  () => void nextTick(locate),
-  { immediate: true },
-);
+const { target, point: anchorPoint } = useKatexSnap(anchor, () => ({
+  at: props.at,
+  nth: props.atNth,
+  side: props.position.toUpperCase()[0] as SnapSide,
+  spacing: lengthToPx(props.spacing),
+}));
 
 const parsedPosition = computed(() => {
   const raw = props.position.toUpperCase() as Position;
@@ -373,7 +325,6 @@ watch(
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
-  hostObserver?.disconnect();
   window.removeEventListener("resize", updateFontPx);
 });
 </script>
