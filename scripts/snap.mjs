@@ -47,7 +47,10 @@ for (const stage of stages) {
   const url = `http://localhost:${opts.port}/${slide}${hash}`;
   // Full reload per stage so useStage's hash deep-linking takes effect.
   // (networkidle never settles under the dev server's HMR socket, so use
-  // "load" plus the fixed --wait delay.)
+  // "load" plus the fixed --wait delay.) Changing only the hash would be a
+  // same-document navigation that never re-reads the stage, so blank the page
+  // between stages to force a real reload.
+  await page.goto("about:blank");
   await page.goto(url, { waitUntil: "load" }).catch((err) => {
     console.error(`goto ${url} failed: ${err.message}`);
     process.exit(1);

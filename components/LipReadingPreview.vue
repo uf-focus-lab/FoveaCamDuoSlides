@@ -42,12 +42,12 @@ const props = withDefaults(
 
 const transcriptSource: Record<Side, { gt: string; predicted: string }> = {
   left: {
-    gt: "Yeah, I just arrived in today, its been a lot of fun, the hotel is super nice, yeah definitey, super beautiful, the courtyard is amazing, theres a lot of plants, I think a lot of them are real, which is really awesome. And theres even real birds flying around, like, alive birds.",
+    gt: "Yeah, I just arrived in today, it's been a lot of fun, the hotel is super nice, yeah definitely, super beautiful, the courtyard is amazing, there's a lot of plants, I think a lot of them are real, which is really awesome. And there's even real birds flying around, like, alive birds.",
     predicted:
       "I JUST DO WHAT I'VE DONE TODAY IT'S BEEN A LOT OF FUN THE HOTEL IS SUPER NICE YEAH DEFINITELY SUPER BEAUTIFUL THE COURTYARD IS AMAZING THERE'S A LOT OF PLANTS AND A LOT OF THEM ARE REAL WHICH IS REALLY AWESOME AND THERE'S EVEN REAL BIRDS FLYING AROUND LIKE A LOT OF BIRDS",
   },
   right: {
-    gt: "Oh my god oh my go- what? On fire? How am I gonna get my paper in now?! Thats okay, reviewer number two already rejected it, ill try again next year.",
+    gt: "Oh my god, oh my go- what? On fire? How am I gonna get my paper in now?! That's okay, reviewer number two already rejected it, I'll try again next year.",
     predicted:
       "OH MY GOD WHAT ON FIRE HOW AM I GOING TO DEAL WITH MY PAPER IN THE HOUSE THAT'S OK AND MY VIEWING NUMBERS ARE ALREADY REJECTED NOW I'LL TRY IT AGAIN NEXT YEAR",
   },
@@ -432,10 +432,6 @@ const syncPlayback = () => {
   for (const side of sides) {
     split[side].setPlaying(splitPlaying);
     zoom[side].setPlaying(zoomPlaying);
-    // FoveaCam clips carry the conversation audio; the face-track overlays
-    // play muted in lockstep purely for the stage-6 crossfade.
-    const foveaEl = fovea[side].el.value;
-    if (foveaEl) foveaEl.muted = !foveaPlaying;
     fovea[side].setPlaying(foveaPlaying);
     track[side].setPlaying(foveaPlaying);
   }
@@ -591,7 +587,7 @@ onBeforeUnmount(() => {
 .lip-reading {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 0.8rem;
+  gap: 10px;
   width: 100%;
   height: 100%;
 }
@@ -611,12 +607,14 @@ onBeforeUnmount(() => {
   max-width: 100%;
   max-height: 100%;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   background: #000;
   isolation: isolate;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-duration) var(--transition-curve);
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    max-width var(--transition-duration) var(--transition-curve);
 }
 
 .wide-frame {
@@ -630,6 +628,19 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   margin: auto;
+}
+
+/* Stage 6 squeezes the stage area (transcripts push in), so narrow the panels
+   a touch to trade width for visible video height — the face-track legend
+   lives in the top of the 4:3 clips and would otherwise be cropped away. */
+.lip-reading[data-stage="6"] .multi-frame {
+  max-width: 84%;
+}
+
+/* Keep the top strip (tracking legend + confidence score) of the 4:3 fovea
+   clips visible; the crop is taken from the torso at the bottom instead. */
+.fovea-layer .media-video {
+  object-position: 50% 12%;
 }
 
 .wide-frame.active,
@@ -758,16 +769,16 @@ onBeforeUnmount(() => {
 
 .transition-label {
   position: absolute;
-  top: 0.55rem;
+  top: 9px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
-  padding: 0.18rem 0.6rem;
+  padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(5, 12, 18, 0.72);
   color: rgba(241, 245, 249, 0.92);
-  font-size: 0.65rem;
+  font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -786,13 +797,13 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: start;
-  gap: 0.8rem;
+  gap: 13px;
   width: 100%;
   max-height: 0;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(0.6rem);
+  transform: translateY(10px);
   transition:
     opacity var(--transition-duration) var(--transition-curve),
     transform var(--transition-duration) var(--transition-curve),
@@ -800,7 +811,7 @@ onBeforeUnmount(() => {
 }
 
 .transcript-grid.show {
-  max-height: 20rem;
+  max-height: 340px;
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -810,30 +821,30 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-rows: auto auto auto;
   align-content: start;
-  gap: 0.35rem;
+  gap: 6px;
   min-width: 0;
 }
 
 .conversation-label {
-  font-size: 0.66rem;
+  font-size: 10.5px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   opacity: 0.85;
-  padding-left: 0.42rem;
+  padding-left: 7px;
   border-left: 3px solid var(--roi-color, currentColor);
 }
 
 .transcript-box {
   width: 100%;
-  padding: 0.4rem 0.6rem;
+  padding: 6px 10px;
   border: 1px solid var(--border);
-  border-radius: 0.45rem;
+  border-radius: 7px;
   background: var(--bg-soft);
 }
 
 .transcript-label {
-  margin-bottom: 0.12rem;
-  font-size: 0.6rem;
+  margin-bottom: 2px;
+  font-size: 9.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -841,7 +852,7 @@ onBeforeUnmount(() => {
 
 .transcript-box p {
   margin: 0;
-  font-size: 0.62rem;
+  font-size: 10px;
   line-height: 1.35;
 }
 
@@ -849,7 +860,7 @@ onBeforeUnmount(() => {
   /* inline-block restores soft-wrap points: Vue condenses the template
      whitespace between the token spans away entirely. */
   display: inline-block;
-  margin-right: 0.26rem;
+  margin-right: 4px;
   color: var(--text-1);
   opacity: 0;
   transition: opacity 0.3s var(--transition-curve);
@@ -862,8 +873,8 @@ onBeforeUnmount(() => {
 .token.correct {
   color: var(--green-1);
   background: var(--green-soft);
-  border-radius: 0.2rem;
-  padding: 0.02rem 0.14rem;
+  border-radius: 3px;
+  padding: 0 2px;
 }
 
 .gt-box {
@@ -872,5 +883,6 @@ onBeforeUnmount(() => {
 
 .gt-text {
   color: var(--text-2);
+  font-size: 12px;
 }
 </style>

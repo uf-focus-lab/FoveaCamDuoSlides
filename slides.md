@@ -202,7 +202,15 @@ import CalibrationReprojection from "pages/14-calibration-reprojection.vue";
 
 ---
 
-# <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking
+# Multi-fovea Stereo Tracking
+
+<script setup lang="ts">
+import DualFoveaTracking from "pages/15-dual-fovea-tracking.vue";
+</script>
+
+<div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
+  <DualFoveaTracking />
+</div>
 
 ---
 
@@ -385,7 +393,7 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 import LipReadingPreview from "pages/21-lip-reading-preview.vue";
 </script>
 
-<div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
+<div style="width: 100%; height: calc(100% - 52px); margin-top: 8px;">
   <LipReadingPreview />
 </div>
 ---
