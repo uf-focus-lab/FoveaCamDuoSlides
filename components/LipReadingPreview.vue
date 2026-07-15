@@ -12,8 +12,8 @@ import widePoster from "assets/results-upfront/wide.webp";
 import wideVideo from "assets/liptracking/0002.fcap-center.webm";
 import splitLeftVideo from "assets/liptracking/0002.fcap-center.webm";
 import splitRightVideo from "assets/liptracking/0002.fcap-center.webm";
-import enhancedLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
-import enhancedRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
+import enhancedLeftVideo from "assets/liptracking/0002centerleft_cropped.mp4";
+import enhancedRightVideo from "assets/liptracking/0002centerright_cropped.mp4";
 import foveaLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
 import foveaRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
 
@@ -28,14 +28,10 @@ type RoiTracksInput = Partial<Record<"left" | "right", RoiFrameInput[]>>;
 
 const props = withDefaults(
   defineProps<{
-    wideVideoScale?: number;
-    wideVideoStartScale?: number;
     clipWindows?: Partial<Record<VideoKey, ClipWindowInput>>;
     roiTracks?: RoiTracksInput;
   }>(),
   {
-    wideVideoScale: 1.2,
-    wideVideoStartScale: 1.45,
     clipWindows: () => ({}),
     roiTracks: () => ({}),
   },
@@ -143,8 +139,6 @@ const sampleRoiTrack = (track: RoiFrame[], time: number): RoiFrame => {
 const activeLeftRoi = computed(() => sampleRoiTrack(roiTracks.value.left, roiTimeLeft.value));
 const activeRightRoi = computed(() => sampleRoiTrack(roiTracks.value.right, roiTimeRight.value));
 
-const wideVideoScale = computed(() => (stage.value <= 1 ? Math.max(1, props.wideVideoStartScale) : Math.max(1, props.wideVideoScale)));
-
 const wideVideoEl = ref<HTMLVideoElement>();
 const splitLeftVideoEl = ref<HTMLVideoElement>();
 const splitRightVideoEl = ref<HTMLVideoElement>();
@@ -159,8 +153,6 @@ const enhancedLeftFinished = ref(false);
 const enhancedRightFinished = ref(false);
 const foveaLeftFinished = ref(false);
 const foveaRightFinished = ref(false);
-const leftFreezeSrc = ref("");
-const rightFreezeSrc = ref("");
 
 const getClipStop = (video: HTMLVideoElement | undefined, clip: ClipWindow): number | null => {
   if (!video) return clip.stop;
@@ -185,9 +177,18 @@ function resetVideo(video: HTMLVideoElement | undefined, finished: { value: bool
   video.currentTime = clip.start;
 }
 
-const onWideEnded = () => freezeAtEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
-const onSplitLeftEnded = () => freezeAtEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
-const onSplitRightEnded = () => freezeAtEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+const onWideEnded = () => {
+  freezeAtEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
+  advanceAfterWide();
+};
+const onSplitLeftEnded = () => {
+  freezeAtEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
+  advanceAfterSplit();
+};
+const onSplitRightEnded = () => {
+  freezeAtEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+  advanceAfterSplit();
+};
 const onEnhancedLeftEnded = () => freezeAtEnd(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
 const onEnhancedRightEnded = () => freezeAtEnd(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
 const onFoveaLeftEnded = () => freezeAtEnd(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
@@ -201,6 +202,7 @@ const stopAtClipEnd = (video: HTMLVideoElement | undefined, finished: { value: b
 
 const onWideTimeUpdate = () => {
   stopAtClipEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
+  advanceAfterWide();
   const t = wideVideoEl.value?.currentTime;
   if (typeof t === "number") {
     roiTimeLeft.value = t;
@@ -209,11 +211,13 @@ const onWideTimeUpdate = () => {
 };
 const onSplitLeftTimeUpdate = () => {
   stopAtClipEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
+  advanceAfterSplit();
   const t = splitLeftVideoEl.value?.currentTime;
   if (typeof t === "number") roiTimeLeft.value = t;
 };
 const onSplitRightTimeUpdate = () => {
   stopAtClipEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+  advanceAfterSplit();
   const t = splitRightVideoEl.value?.currentTime;
   if (typeof t === "number") roiTimeRight.value = t;
 };
@@ -237,73 +241,24 @@ const onEnhancedRightLoadedMetadata = () => syncToClipStart(enhancedRightVideoEl
 const onFoveaLeftLoadedMetadata = () => syncToClipStart(foveaLeftVideoEl.value, clipWindows.value.foveaLeft);
 const onFoveaRightLoadedMetadata = () => syncToClipStart(foveaRightVideoEl.value, clipWindows.value.foveaRight);
 
-function captureVideoFrame(video: HTMLVideoElement | undefined) {
-  if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return "";
+const stage = useStage(5, { preview: 3 }).transient(3);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const context = canvas.getContext("2d");
-  if (!context) return "";
-
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/png");
+function advanceAfterWide() {
+  if (!isActive.value || stage.value !== 1 || !wideFinished.value) return;
+  stage.busy = false;
+  stage.value = 2;
 }
 
-function captureZoomFreezeFrames() {
-  const leftFrame = captureVideoFrame(splitLeftVideoEl.value);
-  if (leftFrame) leftFreezeSrc.value = leftFrame;
-
-  const rightFrame = captureVideoFrame(splitRightVideoEl.value);
-  if (rightFrame) rightFreezeSrc.value = rightFrame;
+function advanceAfterSplit() {
+  if (!isActive.value || stage.value !== 2 || !splitLeftFinished.value || !splitRightFinished.value) return;
+  stage.busy = false;
+  stage.value = 3;
 }
 
-async function finishWideTransition() {
-  const video = wideVideoEl.value;
-  if (!video) return;
-  const clip = clipWindows.value.wide;
-
-  wideFinished.value = false;
-  video.loop = false;
-  if (video.currentTime < clip.start) video.currentTime = clip.start;
-
-  const stop = getClipStop(video, clip);
-  const remaining = stop != null ? stop - video.currentTime : Number.POSITIVE_INFINITY;
-  if (stop != null && remaining <= 0.05) return freezeAtEnd(video, wideFinished, clip);
-
-  await video.play().catch(() => {});
-
-  await new Promise<void>((resolve) => {
-    let finished = false;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-    const complete = () => {
-      if (finished) return;
-      finished = true;
-      video.removeEventListener("ended", complete);
-      video.removeEventListener("pause", onPause);
-      if (timeoutId) clearTimeout(timeoutId);
-      freezeAtEnd(video, wideFinished, clip);
-      resolve();
-    };
-
-    const onPause = () => {
-      const currentStop = getClipStop(video, clip);
-      if (video.ended || (currentStop != null && currentStop - video.currentTime <= 0.05)) complete();
-    };
-
-    video.addEventListener("ended", complete, { once: true });
-    video.addEventListener("pause", onPause);
-
-    if (Number.isFinite(remaining) && remaining > 0) timeoutId = setTimeout(complete, remaining * 1000 + 120);
-  });
-}
-
-const stage = useStage(6, { preview: 3 }).transient(2, finishWideTransition);
 watch(
   [clipWindows, stage],
   () => {
-    if (stage.value <= 2) {
+    if (stage.value === 1) {
       const t = Math.max(0, clipWindows.value.wide.start);
       roiTimeLeft.value = t;
       roiTimeRight.value = t;
@@ -315,15 +270,15 @@ watch(
   },
   { immediate: true },
 );
-const showSplit = computed(() => stage.value >= 3);
-const zoomed = computed(() => stage.value >= 4);
+const showSplit = computed(() => stage.value >= 2);
+const zoomed = computed(() => stage.value >= 3);
 const showTranscript = computed(() => stage.value >= 4);
-const showEnhanced = computed(() => stage.value >= 5);
-const showFovea = computed(() => stage.value >= 6);
-const wideActive = computed(() => stage.value <= 2);
-const splitActive = computed(() => stage.value >= 3 && stage.value < 5);
-const enhancedActive = computed(() => stage.value === 5);
-const foveaActive = computed(() => stage.value >= 6);
+const showEnhanced = computed(() => stage.value >= 4);
+const showFovea = computed(() => stage.value >= 5);
+const wideActive = computed(() => stage.value === 1);
+const splitActive = computed(() => stage.value >= 2 && stage.value <= 4);
+const enhancedActive = computed(() => stage.value === 4);
+const foveaActive = computed(() => stage.value >= 5);
 
 const zoomScale = 9;
 
@@ -437,22 +392,16 @@ const syncPlayback = () => {
 
   const active = isActive.value;
   const currentStage = stage.value;
-  const freezeZoom = currentStage === 4;
-
   if (wideVideoEl.value) wideVideoEl.value.loop = false;
 
-  if (currentStage === 1 && wideFinished.value) {
-    setPlaying(wideVideoEl.value, false, wideFinished, clipWindows.value.wide);
-  } else {
-    setPlaying(wideVideoEl.value, active && currentStage <= 2, wideFinished, clipWindows.value.wide);
-  }
+  setPlaying(wideVideoEl.value, active && currentStage === 1, wideFinished, clipWindows.value.wide);
 
-  setPlaying(splitLeftVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitLeftFinished, clipWindows.value.splitLeft);
-  setPlaying(splitRightVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitRightFinished, clipWindows.value.splitRight);
-  setPlaying(enhancedLeftVideoEl.value, active && currentStage === 5, enhancedLeftFinished, clipWindows.value.enhancedLeft);
-  setPlaying(enhancedRightVideoEl.value, active && currentStage === 5, enhancedRightFinished, clipWindows.value.enhancedRight);
-  setPlaying(foveaLeftVideoEl.value, active && currentStage >= 6, foveaLeftFinished, clipWindows.value.foveaLeft);
-  setPlaying(foveaRightVideoEl.value, active && currentStage >= 6, foveaRightFinished, clipWindows.value.foveaRight);
+  setPlaying(splitLeftVideoEl.value, active && currentStage === 2, splitLeftFinished, clipWindows.value.splitLeft);
+  setPlaying(splitRightVideoEl.value, active && currentStage === 2, splitRightFinished, clipWindows.value.splitRight);
+  setPlaying(enhancedLeftVideoEl.value, active && currentStage === 4, enhancedLeftFinished, clipWindows.value.enhancedLeft);
+  setPlaying(enhancedRightVideoEl.value, active && currentStage === 4, enhancedRightFinished, clipWindows.value.enhancedRight);
+  setPlaying(foveaLeftVideoEl.value, active && currentStage >= 5, foveaLeftFinished, clipWindows.value.foveaLeft);
+  setPlaying(foveaRightVideoEl.value, active && currentStage >= 5, foveaRightFinished, clipWindows.value.foveaRight);
 };
 
 watch(
@@ -466,11 +415,11 @@ watch(
       resetVideo(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
       resetVideo(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
       resetVideo(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
-      leftFreezeSrc.value = "";
-      rightFreezeSrc.value = "";
     }
 
-    if (currentStage === 4 && active) captureZoomFreezeFrames();
+    if (active && currentStage <= 2) {
+      stage.busy = true;
+    }
   },
   { immediate: true },
 );
@@ -504,7 +453,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="lip-reading" :data-stage="stage" :style="{ '--wide-video-scale': String(wideVideoScale) }">
+  <div class="lip-reading" :class="{ 'has-transcript': showTranscript }" :data-stage="stage">
     <div class="stage-area">
       <div class="wide-frame" :class="{ active: !showSplit }">
         <div class="wide-layer">
@@ -528,7 +477,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="multi-frame" :class="{ active: showSplit }">
-        <div class="split-layer" :class="{ show: showSplit }">
+        <div class="split-layer" :class="{ show: showSplit, fading: showEnhanced }">
           <div class="panel panel-left">
             <div class="panel-media">
               <div class="panel-zoom" :style="{ transform: zoomed ? leftZoomTransform : undefined }">
@@ -545,13 +494,6 @@ onBeforeUnmount(() => {
                   @loadedmetadata="onSplitLeftLoadedMetadata"
                   @ended="onSplitLeftEnded"
                   @timeupdate="onSplitLeftTimeUpdate"
-                />
-                <img
-                  class="panel-freeze"
-                  :class="{ show: zoomed && !!leftFreezeSrc }"
-                  :src="leftFreezeSrc || undefined"
-                  alt=""
-                  aria-hidden="true"
                 />
                 <div class="panel-roi roi-blue" :style="panelLeftRoi" />
               </div>
@@ -573,13 +515,6 @@ onBeforeUnmount(() => {
                   @loadedmetadata="onSplitRightLoadedMetadata"
                   @ended="onSplitRightEnded"
                   @timeupdate="onSplitRightTimeUpdate"
-                />
-                <img
-                  class="panel-freeze"
-                  :class="{ show: zoomed && !!rightFreezeSrc }"
-                  :src="rightFreezeSrc || undefined"
-                  alt=""
-                  aria-hidden="true"
                 />
                 <div class="panel-roi roi-red" :style="panelRightRoi" />
               </div>
@@ -657,9 +592,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="transition-label" :class="{ show: showEnhanced || showFovea }">
-          {{ showFovea ? "Enhanced -> Fovea" : "Zoom -> Enhanced" }}
-        </div>
+        <div class="transition-label" :class="{ show: showFovea }">Enhanced -> Fovea</div>
       </div>
     </div>
 
@@ -720,10 +653,14 @@ onBeforeUnmount(() => {
 <style scoped>
 .lip-reading {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) 0;
   gap: 1rem;
   width: 100%;
   height: 100%;
+}
+
+.lip-reading.has-transcript {
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .stage-area {
@@ -747,8 +684,9 @@ onBeforeUnmount(() => {
 }
 
 .wide-frame {
+  width: auto;
   height: 100%;
-  aspect-ratio: 3/ 2;
+  aspect-ratio: 4 / 3;
 }
 
 .multi-frame {
@@ -825,21 +763,6 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-.panel-freeze {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.15s linear;
-}
-
-.panel-freeze.show {
-  opacity: 1;
-}
-
 .roi {
   position: absolute;
   outline: 2px solid var(--camera-left);
@@ -888,6 +811,10 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
+.split-layer.fading {
+  opacity: 0;
+}
+
 .panel {
   position: relative;
   display: grid;
@@ -915,25 +842,23 @@ onBeforeUnmount(() => {
   transition: transform 0.9s cubic-bezier(0.6, 0, 0.2, 1);
 }
 
-.wide-video,
 .panel-video {
   aspect-ratio: 4 / 3;
 }
 
 .wide-video {
-  transform: scale(var(--wide-video-scale, 2));
-  transform-origin: center;
+  aspect-ratio: 4 / 3;
 }
 
 .swap-layer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.85s cubic-bezier(0.6, 0, 0.2, 1);
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-curve);
 }
 
 .swap-layer.show {
-  clip-path: inset(0);
+  opacity: 1;
 }
 
 .fovea-layer {
@@ -952,6 +877,8 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   gap: 0.8rem;
   width: 100%;
+  min-height: 0;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--transition-duration) var(--transition-curve);
