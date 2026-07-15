@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import CoverFlow, { type CoverFlowItem } from "components/CoverFlow.vue";
+import { useStage } from "stores/stage";
+
 const assetUrls = import.meta.glob(
   "../assets/inspiration/*.{png,jpg,jpeg,webp,avif,gif}",
   {
@@ -12,88 +16,99 @@ const assetsByName = Object.fromEntries(
   Object.entries(assetUrls).map(([path, src]) => [path.split("/").pop(), src]),
 ) as Record<string, string>;
 
-type RelatedWorkPanel = {
+type RelatedField = {
   title: string;
-  imageFile?: string;
-  text?: string;
+  imageFile: string;
+  // Citations for this field, shown in the reserved footer while its tile is
+  // the highlighted (centered) one in the cover flow.
+  citations: string[];
 };
 
-// Each panel supports optional image and optional centered text.
-const panels: RelatedWorkPanel[] = [
+// One cover-flow tile per related field. Swap `imageFile` for a more symbolic
+// picture per category (drop the WebP into assets/inspiration/).
+const fields: RelatedField[] = [
   {
     title: "Policy-Driven Foveation",
     imageFile: "segmentation.webp",
-    text: "Policy-based foveated imaging and perception [1]\nActive 3D scene exploration with foveated vision [5]",
+    citations: [
+      "H. Xiao, J. Ackermann, B. Deng, and G. Wetzstein. Policy-based foveated imaging and perception. arXiv (2026).",
+      "M. Björkman and D. Kragic. Active 3D scene exploration with foveated vision. ICRA (2002).",
+    ],
   },
   {
     title: "Dynamic Optical Foveation",
     imageFile: "gigapixel.webp",
-    text: "Fovea stacking with localized aberration correction [2]\nMultiscale gigapixel imaging [6]",
+    citations: [
+      "S. Mao, Y. N. Mishra, and W. Heidrich. Fovea stacking: imaging with dynamic localized aberration correction. ACM Trans. Graph. (2025).",
+      "D. J. Brady, M. E. Gehm, R. A. Stack, et al. Multiscale gigapixel photography. Nature (2012).",
+    ],
   },
   {
     title: "Vergence Stereo Systems",
     imageFile: "kismet.webp",
-    text: "Real-time binocular smooth pursuit [3]\nConvergent active stereo [4]\nHumanoid vergence platforms [7], [8]",
+    citations: [
+      "D. Coombs and C. Brown. Real-time binocular smooth pursuit. Int. J. Comput. Vis. (1993).",
+      "R. Chi. Convergent active stereo. Master's thesis, York University (2025).",
+      "C. Breazeal. Emotion and sociable humanoid robots. Int. J. Hum.-Comput. Stud. (2003).",
+      "G. Metta, G. Sandini, D. Vernon, et al. The iCub humanoid robot. PerMIS (2008).",
+    ],
   },
 ];
 
-const panelImageSrc = (panel: RelatedWorkPanel) => {
-  if (!panel.imageFile) {
-    return "";
-  }
-  const src = assetsByName[panel.imageFile];
-  if (!src) {
-    console.warn(
-      `[02A-related-work] Missing related work image: ${panel.imageFile}`,
-    );
-    return "";
-  }
-  return src;
-};
+const items = computed<CoverFlowItem[]>(() =>
+  fields.flatMap((field) => {
+    const src = assetsByName[field.imageFile];
+    if (!src) {
+      console.warn(
+        `[04-related-work] Missing related work image: ${field.imageFile}`,
+      );
+      return [];
+    }
+    return [{ src, caption: field.title, key: field.imageFile }];
+  }),
+);
 
-const citations = [
-  "[1] H. Xiao, J. Ackermann, B. Deng, and G. Wetzstein, Policy-based foveated imaging and perception, 2026. arXiv:2606.02565.",
-  "[2] S. Mao, Y. N. Mishra, and W. Heidrich, Fovea stacking: Imaging with dynamic localized aberration correction, ACM Trans. Graph., 44(6), 2025. doi:10.1145/3763278.",
-  "[3] Coombs and Brown, Real-time binocular smooth pursuit, IJCV 1993. [4] Chi, Convergent active stereo, Master's thesis, York University 2025.",
-  "[5] Bjorkman and Kragic, Active 3D scene exploration with foveated vision, ICRA 2002. [6] Brady et al., Multiscale gigapixel photography, Nature 2012.",
-  "[7] Breazeal, Emotion and sociable humanoid robots, IJHCS 2003. [8] Metta et al., The iCub humanoid robot, PerMIS 2008.",
-];
+// One stage per field; the cover flow steps through them and the footer follows.
+const stage = useStage(fields.length, { preview: 1 });
 
-const citationParagraph = citations.join(" ");
+const activeIndex = computed(() =>
+  Math.min(Math.max(stage.value - 1, 0), fields.length - 1),
+);
 </script>
 
 <template>
   <section class="slide">
-    <div class="panel-grid" role="list" aria-label="Related work categories">
-      <article
-        v-for="panel in panels"
-        :key="panel.title"
-        class="category-panel"
-        role="listitem"
-      >
-        <h3 class="panel-title">{{ panel.title }}</h3>
-
-        <img
-          v-if="panelImageSrc(panel)"
-          :src="panelImageSrc(panel)"
-          :alt="`${panel.title} example`"
-          class="panel-image"
-        />
-
-        <p v-if="panel.text" class="panel-text">{{ panel.text }}</p>
-      </article>
+    <div class="cover-flow-region">
+      <CoverFlow
+        :items="items"
+        :active-index="activeIndex"
+        :aspect-ratio="2 / 1"
+        class="related-cover-flow"
+      />
     </div>
 
-    <footer class="citation-footer" aria-label="Related work citations">
-      <p class="citation-line">{{ citationParagraph }}</p>
+    <footer
+      class="citation-footer"
+      aria-label="Citations for highlighted field"
+    >
+      <div
+        v-for="(field, index) in fields"
+        :key="field.title"
+        class="citation-block"
+        :class="{ show: stage === index + 1 }"
+      >
+        <p v-for="cite in field.citations" :key="cite" class="citation-line">
+          {{ cite }}
+        </p>
+      </div>
     </footer>
   </section>
 </template>
 
 <style scoped>
 section.slide {
-  --footer-height: 100px;
-  --footer-gap: 30px;
+  --footer-height: 110px;
+  --footer-gap: 24px;
   position: absolute;
   top: 100px;
   left: 0;
@@ -102,52 +117,23 @@ section.slide {
   overflow: visible;
 }
 
-.panel-grid {
+.cover-flow-region {
   position: absolute;
-  inset: 0 2.2rem calc(var(--footer-height) + var(--footer-gap));
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.1rem;
+  inset: 0 0 calc(var(--footer-height) + var(--footer-gap));
+  overflow: visible;
+  height: 260px;
 }
 
-.category-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  padding: 0.95rem;
-  border: 1px solid rgb(255 255 255 / 0.15);
-  border-radius: 0.7rem;
-  background: rgb(10 14 20 / 0.35);
-  min-height: 0;
+.related-cover-flow {
+  inset: 0;
+  z-index: 2;
+  overflow: visible;
 }
 
-.panel-title {
-  margin: 0;
-  font-size: 1.2rem;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  text-align: center;
-}
-
-.panel-image {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: 0.45rem;
-  border: 1px solid rgb(255 255 255 / 0.14);
-  background: rgb(0 0 0 / 0.3);
-}
-
-.panel-text {
-  margin: 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: .9rem;
-  line-height: 1.45;
-  text-align: center;
-  white-space: pre-line;
+.related-cover-flow :deep(.cover-flow-caption) {
+  color: var(--fc-fg);
+  letter-spacing: 0.03em;
+  font-size: 1em;
 }
 
 .citation-footer {
@@ -156,14 +142,35 @@ section.slide {
   right: 0;
   bottom: 0;
   min-height: var(--footer-height);
-  padding: 0.55rem 1.1rem 0.1rem;
-  border-top: 1px solid rgb(255 255 255 / 0.14);
-  color: rgb(178, 178, 178);
-  font-size: 0.6rem;
-  line-height: 1.35;
+  border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* All fields' citation blocks are stacked in the reserved footer; only the one
+   matching the current stage fades in (opacity), the rest stay hidden. */
+.citation-block {
+  position: absolute;
+  inset: 0;
+  padding: 0.7rem 1.4rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.citation-block.show {
+  opacity: 1;
 }
 
 .citation-line {
-  margin: 0.12rem 0;
+  margin: 0;
+  /* Set explicitly — `layout: none` slides don't inherit `.slidev-layout`'s font. */
+  font-family: "Times New Roman", Times, serif;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--fc-fg) 68%, transparent);
+  padding-left: 2.5ch;
+  text-indent: -2.5ch;
 }
 </style>

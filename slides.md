@@ -117,7 +117,7 @@ import { computed } from "vue";
 import OurSolutionPoints from "pages/09A-our-solution-points.vue";
 import OurSolutionDiagram from "pages/09B-our-solution-diagram.vue";
 import { useStage } from "stores/stage";
-const stage = useStage(9, { preview: -1 }).transient([2, 4, 6]);
+const stage = useStage(8, { preview: -1 }).transient([2, 4, 6]);
 const diagramStage = computed(() => Math.min(4, Math.ceil(stage.value / 2)));
 </script>
 
@@ -182,11 +182,13 @@ import CalibrationProcess from "pages/13-calibration-process.vue";
 
 ---
 
-# Calibration - Reprojection Error
+# Calibration Results
 
-<!-- --- -->
+<script setup lang="ts">
+import CalibrationReprojection from "pages/14-calibration-reprojection.vue";
+</script>
 
-<!-- # <span style="color: red">New Results</span>: Multi-fovea Stereo Tracking -->
+<CalibrationReprojection />
 
 ---
 
@@ -378,16 +380,6 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 
 <!-- # Thank You
  -->
-
----
-
-# Calibration - Extrinsic
-
-<script setup lang="ts">
-import CalibrationExtrinsic from "pages/B1-calibration-extrinsic.vue";
-</script>
-
-<CalibrationExtrinsic />
 
 ---
 

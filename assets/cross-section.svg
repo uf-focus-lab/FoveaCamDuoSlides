@@ -163,12 +163,13 @@
         fill: currentColor;
       }
 
-      html.dark image {
-        filter: brightness(0.8);
+      html.dark image.cross-section-image {
+        filter: brightness(0.6) saturate(2);
       }
     </style>
   </defs>
   <image
+    class="cross-section-image"
     width="2177"
     height="1061"
     transform="translate(15.7 219.7) scale(.92)"

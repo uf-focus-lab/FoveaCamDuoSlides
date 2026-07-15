@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import CrossSection from "assets/cross-section.svg";
+
+// Spec values mirror the poster's Technical Details cell.
+const specs = [
+  { label: "Wide FoV", value: "25.6° × 19.4°" },
+  { label: "Fovea FoV", value: "2.86° × 2.15°" },
+  { label: "Wide Angular Res.", value: "~55 px/°" },
+  { label: "Fovea Angular Res.", value: "~502 px/°" },
+  { label: "Actuation Range", value: "20° × 20°" },
+  { label: "Extended FoV", value: "22.9° × 22.2°" },
+];
 </script>
 
 <template>
@@ -7,27 +17,10 @@ import CrossSection from "assets/cross-section.svg";
     <CrossSection class="section-view" />
 
     <section class="key-parameters">
-      <h2>Key Parameters</h2>
       <dl>
-        <div>
-          <dt>Left / right fovea</dt>
-          <dd>100 mm focal length</dd>
-        </div>
-        <div>
-          <dt>Fovea separation</dt>
-          <dd>100 mm</dd>
-        </div>
-        <div>
-          <dt>Center wide camera</dt>
-          <dd>Approx. 12 mm focal length</dd>
-        </div>
-        <div>
-          <dt>Steering</dt>
-          <dd>MEMS mirror with frame sync</dd>
-        </div>
-        <div>
-          <dt>Optical path</dt>
-          <dd>Front lens / cover, static mirror, backend lens, image sensor</dd>
+        <div v-for="spec in specs" :key="spec.label">
+          <dt>{{ spec.label }}</dt>
+          <dd>{{ spec.value }}</dd>
         </div>
       </dl>
     </section>
@@ -57,38 +50,35 @@ import CrossSection from "assets/cross-section.svg";
   justify-content: center;
 }
 
-.key-parameters h2 {
-  margin: 0 0 18px;
-  font-size: 1.35rem;
-  font-weight: 650;
-}
-
 .key-parameters dl {
   display: grid;
-  gap: 0;
   margin: 0;
 }
 
 .key-parameters div {
-  padding: 14px 0;
-  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 12px 0;
+  border-top: 1px solid var(--divider);
 }
 
 .key-parameters div:last-child {
-  border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-bottom: 1px solid var(--divider);
 }
 
 .key-parameters dt {
-  margin-bottom: 4px;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  opacity: 0.62;
+  font-size: 0.98rem;
+  color: var(--text-2);
 }
 
 .key-parameters dd {
   margin: 0;
-  font-size: 1.08rem;
-  line-height: 1.25;
+  font-size: 1.18rem;
+  font-weight: 650;
+  color: var(--blue-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 </style>

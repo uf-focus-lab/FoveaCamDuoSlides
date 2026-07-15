@@ -19,60 +19,125 @@ const assetsByName = Object.fromEntries(
 type AnimalSlide = {
   file: string;
   label: string;
+  // Class attached to this tile's <img>; its focus-zoom transform lives in this
+  // slide's scoped CSS (the `.zoom-*` :deep rules below), so CoverFlow itself
+  // brokers no transform CSS. Tune each transform there.
+  imageClass: string;
 };
 
 // Choose which inspiration images appear in the cover flow, their order, and
 // the label shown at the bottom of the slide.
 const selectedImageNames: AnimalSlide[] = [
-  // { file: "fovea.webp", label: "Fovea" },
-  { file: "gecko.webp", label: "Mossy New Caledonian Gecko" },
-  // { file: "hawk.webp", label: "Hawk" },
-  { file: "nurse_shark.webp", label: "Atlantic Nurse Shark" },
-  { file: "octopus.webp", label: "Giant Pacific Octopus" },
-  { file: "tokay_gecko.webp", label: "Tokay Gecko" },
-  // { file: "kismet.webp", label: "Kismet" },
+  {
+    file: "jumping-spider.webp",
+    label: "Jumping Spider (Salticidae)",
+    imageClass: "zoom-spider",
+  },
+  {
+    file: "gecko.webp",
+    label: "Madagascar Day Gecko",
+    imageClass: "zoom-gecko",
+  },
+  {
+    file: "owl.webp",
+    label: "Spotted Eagle-Owl",
+    imageClass: "zoom-owl",
+  },
 ];
 
-const slides = selectedImageNames.flatMap<CoverFlowItem>(({ file, label }) => {
-  const src = assetsByName[file];
+const tiles = selectedImageNames.flatMap((animal) => {
+  const src = assetsByName[animal.file];
   if (!src) {
-    console.warn(`[02-biological-inspiration] Missing inspiration image: ${file}`);
+    console.warn(
+      `[02-biological-inspiration] Missing inspiration image: ${animal.file}`,
+    );
     return [];
   }
-  return [{ src, caption: label, key: file }];
+  return [{ ...animal, src }];
 });
 
-const stage = useStage(Math.max(slides.length, 1), {
-  preview: Math.floor(slides.length / 2),
-});
+const items = tiles.map<CoverFlowItem>(({ src, label, file, imageClass }) => ({
+  src,
+  caption: label,
+  key: file,
+  imageClass,
+}));
 
-const activeIndex = computed(() => {
-  const length = slides.length;
-  if (!length) {
-    return 0;
-  }
-  return Math.min(stage.value - 1, length - 1);
-});
+// Stage 1 is a transient entrance: the first tile shows zoomed out (cover) while
+// the slide animates in, then passes through to stage 2, which flips `.active`
+// on and drives the first tile's (delayed) zoom-in. Stages 2..n+1 then step the
+// cover flow across the tiles.
+const stage = useStage(tiles.length + 1, { preview: 2 });
+
+const containerActive = computed(() => stage.value >= 2);
+
+const activeIndex = computed(() =>
+  Math.min(Math.max(stage.value - 2, 0), Math.max(tiles.length - 1, 0)),
+);
+
+// Dynamic citation footer: the spider tile cites SpiderCam; every other stage
+// cites the vision-science review. Both lines are always rendered and cross-fade
+// by opacity (fixed node pool) as the centered tile changes.
+const citations = [
+  {
+    key: "spidercam",
+    text: "M. A. Ferreira, T. Li, J. Mamish, J. Hester, Y. Sangar, Q. Guo, and E. Alexander. SpiderCam: Low-Power Snapshot Depth from Differential Defocus. CVPR (2026).",
+  },
+  {
+    key: "vision",
+    text: "Y.-C. Hung, Q. Guo, and E. Alexander. Bio-Inspired Computational Imaging: Components, Algorithms, and Systems. Annu. Rev. Vis. Sci. (2025).",
+  },
+] as const;
+
+const activeCitation = computed(() =>
+  tiles[activeIndex.value]?.file === "jumping-spider.webp"
+    ? "spidercam"
+    : "vision",
+);
 </script>
 
 <template>
-  <section class="slide">
-    <CoverFlow
-      :items="slides"
-      :active-index="activeIndex"
-      class="inspiration-cover-flow"
-    />
+  <section class="slide" :class="{ active: containerActive }">
+    <div class="cover-flow-region">
+      <CoverFlow
+        :items="items"
+        :active-index="activeIndex"
+        :aspect-ratio="3 / 2"
+        class="inspiration-cover-flow"
+      />
+    </div>
+
+    <footer class="citation-footer" aria-live="polite">
+      <p
+        v-for="c in citations"
+        :key="c.key"
+        class="citation-line"
+        :class="{ show: activeCitation === c.key }"
+      >
+        {{ c.text }}
+      </p>
+    </footer>
   </section>
 </template>
 
 <style scoped>
 section.slide {
   position: absolute;
-  top: 160px;
+  top: 140px;
   left: 0;
   right: 0;
-  bottom: 80px;
+  bottom: 0;
   overflow: visible;
+}
+
+/* Reserve the footer band (plus a gap for the tile caption) so neither the cover
+   flow nor its caption overlaps the citation. */
+.cover-flow-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 160px;
 }
 .inspiration-cover-flow {
   inset: 0;
@@ -80,8 +145,83 @@ section.slide {
   overflow: visible;
 }
 
+.citation-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80px;
+  border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* Matches slide 04's citation style: small, muted, hanging indent so wrapped
+   lines align. Both lines share the footer and only the active one fades in
+   (opacity is compositor-only). Font is set explicitly because these
+   `layout: none` slides don't inherit `.slidev-layout`'s font. */
+.citation-line {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0.7rem 1.4rem 0.4rem calc(1.4rem + 2.5ch);
+  text-indent: -2.5ch;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--fc-fg) 68%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.citation-line.show {
+  opacity: 1;
+}
+
 .inspiration-cover-flow :deep(.cover-flow-caption) {
   color: var(--fc-fg);
   letter-spacing: 0.04em;
+}
+
+/*
+ * Focus zoom (this slide only — CoverFlow brokers no transform CSS). Every tile
+ * starts zoomed out to cover its frame; transform is GPU-composited so the zoom
+ * stays cheap. Per-tile zoom targets are the `.zoom-*` rules below, matched via
+ * the `imageClass` each item hands to CoverFlow's <img>.
+ *
+ * The base transform must mirror the target list — `scale() translate()`, same
+ * order — so the transition interpolates scale and translate component-wise. A
+ * bare `scale(1)` mismatches the two-function targets and forces CSS into matrix
+ * interpolation, which slides scale and translate out of sync.
+ */
+.inspiration-cover-flow :deep(.image-frame img) {
+  transform: scale(1) translate(0%, 0%);
+  transform-origin: center center;
+  transition: transform 0.8s var(--transition-curve); /* PLACEHOLDER duration */
+  transition-delay: 0s; /* zoom out: immediate */
+}
+
+.slide.active
+  .inspiration-cover-flow
+  :deep(.cover-flow-card.focused .image-frame img) {
+  transition-delay: 0.6s;
+  transition-duration: 1.2s;
+}
+
+/* Per-tile zoom targets — PLACEHOLDER transforms, tune each to frame the eyes.
+   `scale()` sets the zoom, `translate(x%, y%)` recenters onto the detail. */
+.slide.active
+  .inspiration-cover-flow
+  :deep(.cover-flow-card.focused .zoom-spider) {
+  transform: scale(4) translate(-1%, 12%);
+}
+.slide.active
+  .inspiration-cover-flow
+  :deep(.cover-flow-card.focused .zoom-gecko) {
+  transform: scale(4) translate(0%, 22%);
+}
+.slide.active
+  .inspiration-cover-flow
+  :deep(.cover-flow-card.focused .zoom-owl) {
+  transform: scale(2.8) translate(-3%, 30%);
 }
 </style>

@@ -247,12 +247,19 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
   // Whether the last stage is stored for a later restore (true + back both do).
   const persistsValue = persistMode !== false;
   const previewStage = normalizePreviewStage(options.preview ?? 1, n);
-  const { navDirection } = useNav();
+  // `next`/`prev` are the same adjacent-slide nav the Space boundary fallback
+  // uses (setup/shortcuts.ts), so a transient boundary crosses slides uniformly.
+  const { currentSlideNo, next: goNext, prev: goPrev } = useNav();
   const { $page, $renderContext } = useSlideContext();
   const slideNo = $page.value;
   const isActive = useIsSlideActive();
   const isPreview = computed(() => $renderContext.value === "overview");
   const busy = ref(false);
+  // Resolves when the slide's current entering transition has settled. Set at
+  // activation (before the stage is assigned) and awaited by transient stages, so
+  // a transient initial stage doesn't step through until the slide has animated
+  // in. Stays resolved between entrances, so mid-slide transients await nothing.
+  let entering: Promise<void> = Promise.resolve();
   const transientStages = new Set<number>();
   // Bumped on every (de)activation; a deferred reset only fires if its token is
   // still current, so navigating back before the slide hides cancels it.
@@ -312,15 +319,33 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
 
   const scope = effectScope();
   scope.run(() => {
+    // Watch `currentSlideNo` (not `isActive`) so the entry direction can be read
+    // from the transition's own `to`/`from`. A shared `navDirection` ref lags a
+    // navigation behind by the time this watcher runs, which would flip `back`
+    // persistence (a forward re-entry would wrongly restore the saved stage).
     watch(
-      isActive,
-      (active) => {
+      currentSlideNo,
+      (to, from) => {
+        const active = to === slideNo;
+        const wasActive = from === slideNo;
+        if (active === wasActive) return; // this slide's activity is unchanged
+
         if (active) {
           activeStageController = controller;
           resetRun += 1; // cancel any reset still pending from a prior exit
           clearSuspendedState();
-          // `navDirection` is < 0 when this slide was reached by going backward.
-          const enteredBackward = navDirection.value < 0;
+          // Start of the slide switch: hold `busy` at once so keys drop from the
+          // `0 -> 1` entrance on, and capture the entering-transition settle
+          // promise *before* assigning the stage — a transient initial stage's
+          // hold awaits `entering`, so its `1 -> 2` pass-through can't fire until
+          // the slide has finished animating in.
+          busy.value = true;
+          const token = resetRun; // already bumped at the top of this branch
+          entering = waitForSlideTransition();
+
+          // Backward entry = arriving from a later slide. `back` restores only
+          // then; a forward entry (from an earlier slide, or first load) restarts.
+          const enteredBackward = from !== undefined && to < from;
           if (!initialHashConsumed) {
             // The slide active at load restores its stage from the hash.
             initialHashConsumed = true;
@@ -335,16 +360,12 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
             stage.value = 1;
           }
 
-          // Make the entrance (inactive 0 -> initial stage) uninterruptable: hold
-          // `busy` while the slide animates in so mashing keys can't skip past the
-          // initial view before it has settled. A transient initial stage already
-          // owns `busy` via its sync watch (fired on the assignment above) and
-          // drives its own pass-through, so skip the hold then. Guarded by the
-          // activation token (resetRun) so a quick exit cancels the pending clear.
+          // A transient initial stage owns `busy` and steps itself once `entering`
+          // settles (via its hold); otherwise release `busy` when the entrance
+          // transition ends, keeping `0 -> 1` uninterruptable until the slide has
+          // animated in. Guarded by the activation token so a quick exit cancels.
           if (!transientStages.has(raw.value)) {
-            const token = resetRun; // already bumped at the top of this branch
-            busy.value = true;
-            void waitForSlideTransition().finally(() => {
+            void entering.finally(() => {
               if (token === resetRun && isActive.value) busy.value = false;
             });
           }
@@ -426,7 +447,11 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
       run += 1;
     };
 
-    const hold = () => {
+    const hold = async () => {
+      // Wait out any in-progress slide-entrance transition first, so a transient
+      // initial stage doesn't step through before the slide has finished entering
+      // (mid-slide steps see an already-resolved `entering`, so this is a no-op).
+      await entering;
       if (typeof param === "number") return wait(param);
       if (typeof param === "function") return Promise.resolve(param());
       return waitForSlideContentAnimations();
@@ -458,7 +483,20 @@ export function useStage(n: number, options: UseStageOptions = {}): StageRef {
             const stillTransient =
               stage.value === transientStage && isActive.value && !isPreview.value;
             exposed.busy = false;
-            if (stillTransient) stage.value = transientStage + direction;
+            if (stillTransient) {
+              // Pass through to the next stage in the entry direction. When that
+              // target falls outside `[1, n]` — a transient first stage stepped
+              // backward, or a transient last stage stepped forward — there is no
+              // stage to land on, so cross to the adjacent slide instead.
+              const target = transientStage + direction;
+              if (target < 1) {
+                void goPrev();
+              } else if (target > n) {
+                void goNext();
+              } else {
+                stage.value = target;
+              }
+            }
           }
         })();
       },

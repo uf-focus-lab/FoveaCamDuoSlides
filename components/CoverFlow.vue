@@ -13,6 +13,10 @@ type CoverFlowImageItem = {
   src: string;
   caption?: string;
   key?: string | number;
+  // Extra class(es) attached to this tile's <img>. CoverFlow brokers no
+  // transform/zoom CSS itself; a caller uses this class with a `:deep()` rule to
+  // style/transition the image (e.g. a focus zoom on the centered tile).
+  imageClass?: string;
 };
 type CoverFlowComponentItem = {
   component: Component;
@@ -270,6 +274,7 @@ type NormalizedItem = {
   component?: Component;
   componentProps?: Record<string, unknown>;
   caption?: string;
+  imageClass?: string;
   key: string | number;
 };
 
@@ -293,6 +298,7 @@ const normalizedItems = computed<NormalizedItem[]>(() =>
       kind: "image",
       src: item.src,
       caption: item.caption,
+      imageClass: item.imageClass,
       key: item.key ?? `${item.src}-${index}`,
     };
   }),
@@ -306,7 +312,7 @@ const normalizedItems = computed<NormalizedItem[]>(() =>
         v-for="(item, index) in normalizedItems"
         :key="item.key"
         class="cover-flow-card"
-        :class="{ active: index === activeIndex }"
+        :class="{ active: index === activeIndex, focused: index === activeIndex }"
         :style="cardStyle(index)"
       >
         <div class="image-frame">
@@ -314,6 +320,7 @@ const normalizedItems = computed<NormalizedItem[]>(() =>
             v-if="item.kind === 'image'"
             :src="item.src"
             :alt="imageAlt(item.src ?? '', index)"
+            :class="item.imageClass"
             :style="{
               objectFit: props.objectFit,
               objectPosition: props.objectPosition,

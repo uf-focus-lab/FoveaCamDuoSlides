@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import RegressionChart from "components/RegressionChart.vue";
 import { regressionPanels } from "assets/calibration/extrinsic/regression-data";
+
+// `stacked` lays the two error halves out as two rows (for a narrow column)
+// instead of side by side; used when embedded in the reprojection-error slide.
+defineProps<{ stacked?: boolean }>();
 </script>
 
 <template>
-  <div class="extrinsic-regression">
+  <div class="extrinsic-regression" :class="{ stacked }">
     <div class="charts">
       <div class="half">
         <h3 class="half-title">Voltage Reprojection Error</h3>
@@ -38,26 +42,6 @@ import { regressionPanels } from "assets/calibration/extrinsic/regression-data";
         </div>
       </div>
     </div>
-    <div class="legend">
-      <span class="item">
-        <svg class="marker" viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r="13" class="ring" />
-        </svg>
-        Measurement (Ground Truth)
-      </span>
-      <span class="item">
-        <svg class="marker" viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r="9" class="dot-volt" />
-        </svg>
-        Voltage Reprojection
-      </span>
-      <span class="item">
-        <svg class="marker" viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r="9" class="dot-angle" />
-        </svg>
-        Angle Reprojection
-      </span>
-    </div>
   </div>
 </template>
 
@@ -69,33 +53,6 @@ import { regressionPanels } from "assets/calibration/extrinsic/regression-data";
   gap: 1rem;
   height: calc(100% - 78px);
   color: var(--fc-fg);
-}
-.legend {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1.5rem;
-  font-size: 1rem;
-}
-.legend .item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.legend .marker {
-  width: 1.1em;
-  height: 1.1em;
-}
-.legend .ring {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 4;
-}
-.legend .dot-volt {
-  fill: var(--blue-2);
-}
-.legend .dot-angle {
-  fill: var(--red-2);
 }
 .charts {
   display: flex;
@@ -109,11 +66,17 @@ import { regressionPanels } from "assets/calibration/extrinsic/regression-data";
   flex-direction: column;
   gap: 0.6rem;
 }
+/* Figure title, styled like the metadata caption on slide 6
+   (pages/06-preview-foveal-tracking.vue). */
 .half-title {
   margin: 0;
   text-align: center;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: color-mix(in srgb, currentColor 88%, transparent);
 }
 .half-charts {
   display: flex;
@@ -134,5 +97,24 @@ import { regressionPanels } from "assets/calibration/extrinsic/regression-data";
   );
   opacity: 0.45;
   margin: 0 0.5rem;
+}
+
+/* Stacked (narrow-column) layout: the two halves become two rows. */
+.extrinsic-regression.stacked {
+  height: 100%;
+}
+
+.extrinsic-regression.stacked .charts {
+  flex-direction: column;
+}
+
+.extrinsic-regression.stacked .charts .divider {
+  /* Now a horizontal rule between the two rows. */
+  background: repeating-linear-gradient(
+    to right,
+    currentColor 0 8px,
+    transparent 8px 16px
+  );
+  margin: 0.5rem 0;
 }
 </style>
