@@ -1,30 +1,27 @@
 <script setup lang="ts">
 import { useIsSlideActive } from "@slidev/client";
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { useStage } from "stores/stage";
 import widePoster from "assets/results-upfront/wide.webp";
+import wideVideo from "assets/liptracking/center.webm";
+import zoomLeftVideo from "assets/liptracking/center_cropped_left_bbox.h264.mp4";
+import zoomRightVideo from "assets/liptracking/center_cropped_right_bbox.h264.mp4";
+import foveaLeftVideo from "assets/liptracking/desirablytrimmedwithaudio/left.webm";
+import foveaRightVideo from "assets/liptracking/desirablytrimmedwithaudio/right.webm";
+import trackLeftVideo from "assets/liptracking/desirablytrimmedwithaudio/left_facetrack.webm";
+import trackRightVideo from "assets/liptracking/desirablytrimmedwithaudio/right_facetrack.webm";
 
-// TODO: Replace these placeholder video imports with your lip-reading clips.
-// - wideVideo: full-context clip with both foveas visible
-// - splitLeftVideo / splitRightVideo: separate split-stage videos
-// - enhancedLeftVideo / enhancedRightVideo: post-zoom intermediate videos
-// - foveaLeftVideo / foveaRightVideo: final fovea videos
-import wideVideo from "assets/liptracking/0002.fcap-center.webm";
-import splitLeftVideo from "assets/liptracking/0002.fcap-center.webm";
-import splitRightVideo from "assets/liptracking/0002.fcap-center.webm";
-import enhancedLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
-import enhancedRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
-import foveaLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
-import foveaRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
+const isActive = useIsSlideActive();
 
-type Token = { text: string; correct?: boolean };
-type PanelTranscript = { prediction: Token[]; gt: Token[] };
-type VideoKey = "wide" | "splitLeft" | "splitRight" | "enhancedLeft" | "enhancedRight" | "foveaLeft" | "foveaRight";
+const sides = ["left", "right"] as const;
+type Side = (typeof sides)[number];
+type Token = { text: string; correct: boolean };
+type VideoKey = "wide" | "splitLeft" | "splitRight" | "zoomLeft" | "zoomRight" | "foveaLeft" | "foveaRight";
 type ClipWindowInput = { start?: number; stop?: number | null };
 type ClipWindow = { start: number; stop: number | null };
 type RoiFrameInput = { t: number; x: number; y: number; width?: number; height?: number };
 type RoiFrame = { t: number; x: number; y: number; width: number; height: number };
-type RoiTracksInput = Partial<Record<"left" | "right", RoiFrameInput[]>>;
+type RoiTracksInput = Partial<Record<Side, RoiFrameInput[]>>;
 
 const props = withDefaults(
   defineProps<{
@@ -34,19 +31,68 @@ const props = withDefaults(
     roiTracks?: RoiTracksInput;
   }>(),
   {
-    wideVideoScale: 1.2,
-    wideVideoStartScale: 1.45,
+    wideVideoScale: 1.1,
+    wideVideoStartScale: 1.25,
     clipWindows: () => ({}),
     roiTracks: () => ({}),
   },
 );
 
+// ---------------------------------------------------------------- transcripts
+
+const transcriptSource: Record<Side, { gt: string; predicted: string }> = {
+  left: {
+    gt: "Yeah, I just arrived in today, its been a lot of fun, the hotel is super nice, yeah definitey, super beautiful, the courtyard is amazing, theres a lot of plants, I think a lot of them are real, which is really awesome. And theres even real birds flying around, like, alive birds.",
+    predicted:
+      "I JUST DO WHAT I'VE DONE TODAY IT'S BEEN A LOT OF FUN THE HOTEL IS SUPER NICE YEAH DEFINITELY SUPER BEAUTIFUL THE COURTYARD IS AMAZING THERE'S A LOT OF PLANTS AND A LOT OF THEM ARE REAL WHICH IS REALLY AWESOME AND THERE'S EVEN REAL BIRDS FLYING AROUND LIKE A LOT OF BIRDS",
+  },
+  right: {
+    gt: "Oh my god oh my go- what? On fire? How am I gonna get my paper in now?! Thats okay, reviewer number two already rejected it, ill try again next year.",
+    predicted:
+      "OH MY GOD WHAT ON FIRE HOW AM I GOING TO DEAL WITH MY PAPER IN THE HOUSE THAT'S OK AND MY VIEWING NUMBERS ARE ALREADY REJECTED NOW I'LL TRY IT AGAIN NEXT YEAR",
+  },
+};
+
+const normalizeWord = (word: string) => word.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Word-level LCS of predicted vs GT; predicted tokens on the LCS are "correct".
+function alignPrediction(predicted: string, gt: string): Token[] {
+  const pred = predicted.split(/\s+/).filter(Boolean);
+  const ref = gt.split(/\s+/).filter(Boolean).map(normalizeWord);
+  const norm = pred.map(normalizeWord);
+  const m = pred.length;
+  const n = ref.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i -= 1) {
+    for (let j = n - 1; j >= 0; j -= 1) {
+      dp[i][j] = norm[i] && norm[i] === ref[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const correct = new Array<boolean>(m).fill(false);
+  for (let i = 0, j = 0; i < m && j < n; ) {
+    if (norm[i] && norm[i] === ref[j]) {
+      correct[i] = true;
+      i += 1;
+      j += 1;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) i += 1;
+    else j += 1;
+  }
+  return pred.map((text, i) => ({ text, correct: correct[i] }));
+}
+
+const transcript: Record<Side, { prediction: Token[]; gt: string }> = {
+  left: { prediction: alignPrediction(transcriptSource.left.predicted, transcriptSource.left.gt), gt: transcriptSource.left.gt },
+  right: { prediction: alignPrediction(transcriptSource.right.predicted, transcriptSource.right.gt), gt: transcriptSource.right.gt },
+};
+
+// -------------------------------------------------------------- clip windows
+
 const defaultClipWindows: Record<VideoKey, ClipWindow> = {
   wide: { start: 15, stop: 20 },
   splitLeft: { start: 20, stop: 22 },
   splitRight: { start: 20, stop: 22 },
-  enhancedLeft: { start: 0, stop: null },
-  enhancedRight: { start: 0, stop: null },
+  zoomLeft: { start: 22, stop: null },
+  zoomRight: { start: 22, stop: null },
   foveaLeft: { start: 0, stop: null },
   foveaRight: { start: 0, stop: null },
 };
@@ -58,40 +104,32 @@ const asFiniteNumber = (value: unknown): number | undefined => {
 };
 
 const normalizeClipWindow = (input: ClipWindowInput | undefined, fallback: ClipWindow): ClipWindow => {
-  const startValue = asFiniteNumber(input?.start) ?? fallback.start;
-  const start = Math.max(0, startValue);
-
+  const start = Math.max(0, asFiniteNumber(input?.start) ?? fallback.start);
   // Keep fallback stop unless a stop override is explicitly provided.
   const rawStop = input && "stop" in input ? input.stop : fallback.stop;
-  if (rawStop == null) return { start, stop: null };
-
-  const stopValue = asFiniteNumber(rawStop) ?? fallback.stop;
-  if (stopValue == null) return { start, stop: null };
-  const stop = Math.max(start + 0.01, stopValue);
-  return { start, stop };
+  const stop = rawStop == null ? null : (asFiniteNumber(rawStop) ?? fallback.stop);
+  return { start, stop: stop == null ? null : Math.max(start + 0.01, stop) };
 };
 
 const clipWindows = computed<Record<VideoKey, ClipWindow>>(() => {
-  const incoming = props.clipWindows;
-  return {
-    wide: normalizeClipWindow(incoming.wide, defaultClipWindows.wide),
-    splitLeft: normalizeClipWindow(incoming.splitLeft, defaultClipWindows.splitLeft),
-    splitRight: normalizeClipWindow(incoming.splitRight, defaultClipWindows.splitRight),
-    enhancedLeft: normalizeClipWindow(incoming.enhancedLeft, defaultClipWindows.enhancedLeft),
-    enhancedRight: normalizeClipWindow(incoming.enhancedRight, defaultClipWindows.enhancedRight),
-    foveaLeft: normalizeClipWindow(incoming.foveaLeft, defaultClipWindows.foveaLeft),
-    foveaRight: normalizeClipWindow(incoming.foveaRight, defaultClipWindows.foveaRight),
-  };
+  const entries = (Object.keys(defaultClipWindows) as VideoKey[]).map((key) => [
+    key,
+    normalizeClipWindow(props.clipWindows[key], defaultClipWindows[key]),
+  ]);
+  return Object.fromEntries(entries) as Record<VideoKey, ClipWindow>;
 });
 
-const defaultLeftRoi: RoiFrame = { t: 0, x: 0.3, y: 0.67, width: 1 / 9, height: 1 / 9 };
-const defaultRightRoi: RoiFrame = { t: 0, x: 0.7, y: 0.67, width: 1 / 9, height: 1 / 9 };
+// ---------------------------------------------------------------- ROI tracks
+
+const defaultRoi: Record<Side, RoiFrame> = {
+  left: { t: 0, x: 0.177, y: 0.241, width: 160 / 1440, height: 120 / 1080 },
+  right: { t: 0, x: 0.69, y: 0.59, width: 152 / 1440, height: 114 / 1080 },
+};
 
 const normalizeRoiTrack = (input: RoiFrameInput[] | undefined, fallback: RoiFrame): RoiFrame[] => {
   const source = input && input.length > 0 ? input : [fallback];
   const sorted = [...source].sort((a, b) => a.t - b.t);
   const normalized: RoiFrame[] = [];
-
   for (const frame of sorted) {
     const prev = normalized[normalized.length - 1] ?? fallback;
     normalized.push({
@@ -102,33 +140,28 @@ const normalizeRoiTrack = (input: RoiFrameInput[] | undefined, fallback: RoiFram
       height: Math.max(0.01, Math.min(1, asFiniteNumber(frame.height) ?? prev.height)),
     });
   }
-
   return normalized;
 };
 
-const roiTracks = computed<{ left: RoiFrame[]; right: RoiFrame[] }>(() => ({
-  left: normalizeRoiTrack(props.roiTracks.left, defaultLeftRoi),
-  right: normalizeRoiTrack(props.roiTracks.right, defaultRightRoi),
+const roiTracks = computed<Record<Side, RoiFrame[]>>(() => ({
+  left: normalizeRoiTrack(props.roiTracks.left, defaultRoi.left),
+  right: normalizeRoiTrack(props.roiTracks.right, defaultRoi.right),
 }));
 
-const roiTimeLeft = ref(0);
-const roiTimeRight = ref(0);
+const roiTime = reactive<Record<Side, number>>({ left: 0, right: 0 });
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const sampleRoiTrack = (track: RoiFrame[], time: number): RoiFrame => {
-  const clampedTime = Math.max(0, time);
-  if (track.length === 0) return defaultLeftRoi;
-  if (clampedTime <= track[0].t) return track[0];
-
+  const clamped = Math.max(0, time);
+  if (clamped <= track[0].t) return track[0];
   for (let i = 1; i < track.length; i += 1) {
     const a = track[i - 1];
     const b = track[i];
-    if (clampedTime <= b.t) {
-      const span = Math.max(1e-6, b.t - a.t);
-      const alpha = (clampedTime - a.t) / span;
+    if (clamped <= b.t) {
+      const alpha = (clamped - a.t) / Math.max(1e-6, b.t - a.t);
       return {
-        t: clampedTime,
+        t: clamped,
         x: lerp(a.x, b.x, alpha),
         y: lerp(a.y, b.y, alpha),
         width: lerp(a.width, b.width, alpha),
@@ -136,159 +169,205 @@ const sampleRoiTrack = (track: RoiFrame[], time: number): RoiFrame => {
       };
     }
   }
-
   return track[track.length - 1];
 };
 
-const activeLeftRoi = computed(() => sampleRoiTrack(roiTracks.value.left, roiTimeLeft.value));
-const activeRightRoi = computed(() => sampleRoiTrack(roiTracks.value.right, roiTimeRight.value));
+const activeRoi = computed<Record<Side, RoiFrame>>(() => ({
+  left: sampleRoiTrack(roiTracks.value.left, roiTime.left),
+  right: sampleRoiTrack(roiTracks.value.right, roiTime.right),
+}));
 
-const wideVideoScale = computed(() => (stage.value <= 1 ? Math.max(1, props.wideVideoStartScale) : Math.max(1, props.wideVideoScale)));
+// ROI box in canvas percentage coords (the canvases share the video's 4:3 frame,
+// so normalized video coords map 1:1 onto element percentages).
+const roiStyle = computed<Record<Side, Record<string, string>>>(() => {
+  const style = (roi: RoiFrame) => ({
+    top: `${(roi.y - roi.height / 2) * 100}%`,
+    left: `${(roi.x - roi.width / 2) * 100}%`,
+    width: `${roi.width * 100}%`,
+    height: `${roi.height * 100}%`,
+  });
+  return { left: style(activeRoi.value.left), right: style(activeRoi.value.right) };
+});
 
-const wideVideoEl = ref<HTMLVideoElement>();
-const splitLeftVideoEl = ref<HTMLVideoElement>();
-const splitRightVideoEl = ref<HTMLVideoElement>();
-const enhancedLeftVideoEl = ref<HTMLVideoElement>();
-const enhancedRightVideoEl = ref<HTMLVideoElement>();
-const foveaLeftVideoEl = ref<HTMLVideoElement>();
-const foveaRightVideoEl = ref<HTMLVideoElement>();
-const wideFinished = ref(false);
-const splitLeftFinished = ref(false);
-const splitRightFinished = ref(false);
-const enhancedLeftFinished = ref(false);
-const enhancedRightFinished = ref(false);
-const foveaLeftFinished = ref(false);
-const foveaRightFinished = ref(false);
-const leftFreezeSrc = ref("");
-const rightFreezeSrc = ref("");
+// Zoom the panel canvas (origin center) so the ROI fills the panel.
+const zoomTransform = computed<Record<Side, string>>(() => {
+  const transform = (roi: RoiFrame) => {
+    const s = 1 / roi.width;
+    return `translate(${s * (0.5 - roi.x) * 100}%, ${s * (0.5 - roi.y) * 100}%) scale(${s})`;
+  };
+  return { left: transform(activeRoi.value.left), right: transform(activeRoi.value.right) };
+});
+
+// -------------------------------------------------------------------- videos
 
 const getClipStop = (video: HTMLVideoElement | undefined, clip: ClipWindow): number | null => {
   if (!video) return clip.stop;
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
   if (clip.stop == null) return duration > 0 ? duration : null;
-  if (duration > 0) return Math.min(duration, clip.stop);
-  return clip.stop;
+  return duration > 0 ? Math.min(duration, clip.stop) : clip.stop;
 };
 
-function freezeAtEnd(video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) {
-  if (!video) return;
-  const stop = getClipStop(video, clip);
-  if (stop != null) video.currentTime = Math.max(clip.start, stop - 1 / 60);
-  video.pause();
-  finished.value = true;
+function clipVideo(getClip: () => ClipWindow, onTime?: (t: number) => void) {
+  const el = ref<HTMLVideoElement>();
+  const finished = ref(false);
+
+  const freeze = () => {
+    const video = el.value;
+    if (!video) return;
+    const stop = getClipStop(video, getClip());
+    if (stop != null) video.currentTime = Math.max(getClip().start, stop - 1 / 60);
+    video.pause();
+    finished.value = true;
+  };
+
+  const reset = () => {
+    finished.value = false;
+    const video = el.value;
+    if (!video) return;
+    video.pause();
+    video.currentTime = getClip().start;
+    onTime?.(video.currentTime);
+  };
+
+  const onLoadedMetadata = () => {
+    const video = el.value;
+    if (!video) return;
+    const clip = getClip();
+    const stop = getClipStop(video, clip);
+    video.currentTime = stop == null ? clip.start : Math.min(clip.start, stop);
+  };
+
+  const onTimeUpdate = () => {
+    const video = el.value;
+    if (!video) return;
+    if (!finished.value) {
+      const stop = getClipStop(video, getClip());
+      if (stop != null && video.currentTime >= stop - 1 / 120) freeze();
+    }
+    onTime?.(video.currentTime);
+  };
+
+  const setPlaying = (playing: boolean) => {
+    const video = el.value;
+    if (!video) return;
+    video.loop = false;
+    const clip = getClip();
+    if (video.currentTime < clip.start) video.currentTime = clip.start;
+    const stop = getClipStop(video, clip);
+    if (stop != null && video.currentTime >= stop - 1 / 120) {
+      finished.value = true;
+      video.pause();
+      return;
+    }
+    if (playing && !finished.value) video.play().catch(() => {});
+    else video.pause();
+  };
+
+  return { el, finished, freeze, reset, setPlaying, onLoadedMetadata, onTimeUpdate, onEnded: freeze };
 }
 
-function resetVideo(video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) {
-  finished.value = false;
-  if (!video) return;
-  video.pause();
-  video.currentTime = clip.start;
+// Progressive transcript reveal, paced by fovea playback (fraction of duration).
+const reveal = reactive<Record<Side, number>>({ left: 0, right: 0 });
+const shownTokens = computed<Record<Side, number>>(() => ({
+  left: Math.ceil(reveal.left * transcript.left.prediction.length),
+  right: Math.ceil(reveal.right * transcript.right.prediction.length),
+}));
+
+const clip = (key: VideoKey) => clipWindows.value[key];
+const wide = clipVideo(
+  () => clip("wide"),
+  (t) => {
+    roiTime.left = t;
+    roiTime.right = t;
+  },
+);
+const split: Record<Side, ReturnType<typeof clipVideo>> = {
+  left: clipVideo(() => clip("splitLeft"), (t) => (roiTime.left = t)),
+  right: clipVideo(() => clip("splitRight"), (t) => (roiTime.right = t)),
+};
+const zoom: Record<Side, ReturnType<typeof clipVideo>> = {
+  left: clipVideo(() => clip("zoomLeft")),
+  right: clipVideo(() => clip("zoomRight")),
+};
+const fovea: Record<Side, ReturnType<typeof clipVideo>> = {
+  left: clipVideo(() => clip("foveaLeft"), (t) => setReveal("left", t)),
+  right: clipVideo(() => clip("foveaRight"), (t) => setReveal("right", t)),
+};
+const track: Record<Side, ReturnType<typeof clipVideo>> = {
+  left: clipVideo(() => clip("foveaLeft")),
+  right: clipVideo(() => clip("foveaRight")),
+};
+const allVideos = [wide, ...sides.flatMap((side) => [split[side], zoom[side], fovea[side], track[side]])];
+
+// Template refs inside v-for are collected into arrays by Vue, so bind each
+// video element through a function ref instead.
+const bindEl = (video: ReturnType<typeof clipVideo>) => (el: unknown) => {
+  video.el.value = (el as HTMLVideoElement | null) ?? undefined;
+};
+
+function setReveal(side: Side, t: number) {
+  const duration = fovea[side].el.value?.duration;
+  reveal[side] = duration && Number.isFinite(duration) && duration > 0 ? Math.min(1, t / duration) : 0;
 }
 
-const onWideEnded = () => freezeAtEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
-const onSplitLeftEnded = () => freezeAtEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
-const onSplitRightEnded = () => freezeAtEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
-const onEnhancedLeftEnded = () => freezeAtEnd(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
-const onEnhancedRightEnded = () => freezeAtEnd(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
-const onFoveaLeftEnded = () => freezeAtEnd(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
-const onFoveaRightEnded = () => freezeAtEnd(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
-
-const stopAtClipEnd = (video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) => {
-  if (!video || finished.value) return;
-  const stop = getClipStop(video, clip);
-  if (stop != null && video.currentTime >= stop - 1 / 120) freezeAtEnd(video, finished, clip);
+const meta: Record<
+  Side,
+  { roiClass: string; label: string; color: string; zoomSrc: string; foveaSrc: string; trackSrc: string }
+> = {
+  left: {
+    roiClass: "roi-blue",
+    label: "Conversation A",
+    color: "var(--camera-right)",
+    zoomSrc: zoomLeftVideo,
+    foveaSrc: foveaLeftVideo,
+    trackSrc: trackLeftVideo,
+  },
+  right: {
+    roiClass: "roi-red",
+    label: "Conversation B",
+    color: "var(--camera-left)",
+    zoomSrc: zoomRightVideo,
+    foveaSrc: foveaRightVideo,
+    trackSrc: trackRightVideo,
+  },
 };
 
-const onWideTimeUpdate = () => {
-  stopAtClipEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
-  const t = wideVideoEl.value?.currentTime;
-  if (typeof t === "number") {
-    roiTimeLeft.value = t;
-    roiTimeRight.value = t;
-  }
-};
-const onSplitLeftTimeUpdate = () => {
-  stopAtClipEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
-  const t = splitLeftVideoEl.value?.currentTime;
-  if (typeof t === "number") roiTimeLeft.value = t;
-};
-const onSplitRightTimeUpdate = () => {
-  stopAtClipEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
-  const t = splitRightVideoEl.value?.currentTime;
-  if (typeof t === "number") roiTimeRight.value = t;
-};
-const onEnhancedLeftTimeUpdate = () => stopAtClipEnd(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
-const onEnhancedRightTimeUpdate = () => stopAtClipEnd(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
-const onFoveaLeftTimeUpdate = () => stopAtClipEnd(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
-const onFoveaRightTimeUpdate = () => stopAtClipEnd(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
-
-const syncToClipStart = (video: HTMLVideoElement | undefined, clip: ClipWindow) => {
-  if (!video) return;
-  const stop = getClipStop(video, clip);
-  const start = stop == null ? clip.start : Math.min(clip.start, stop);
-  video.currentTime = start;
-};
-
-const onWideLoadedMetadata = () => syncToClipStart(wideVideoEl.value, clipWindows.value.wide);
-const onSplitLeftLoadedMetadata = () => syncToClipStart(splitLeftVideoEl.value, clipWindows.value.splitLeft);
-const onSplitRightLoadedMetadata = () => syncToClipStart(splitRightVideoEl.value, clipWindows.value.splitRight);
-const onEnhancedLeftLoadedMetadata = () => syncToClipStart(enhancedLeftVideoEl.value, clipWindows.value.enhancedLeft);
-const onEnhancedRightLoadedMetadata = () => syncToClipStart(enhancedRightVideoEl.value, clipWindows.value.enhancedRight);
-const onFoveaLeftLoadedMetadata = () => syncToClipStart(foveaLeftVideoEl.value, clipWindows.value.foveaLeft);
-const onFoveaRightLoadedMetadata = () => syncToClipStart(foveaRightVideoEl.value, clipWindows.value.foveaRight);
-
-function captureVideoFrame(video: HTMLVideoElement | undefined) {
-  if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return "";
-
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const context = canvas.getContext("2d");
-  if (!context) return "";
-
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/png");
-}
-
-function captureZoomFreezeFrames() {
-  const leftFrame = captureVideoFrame(splitLeftVideoEl.value);
-  if (leftFrame) leftFreezeSrc.value = leftFrame;
-
-  const rightFrame = captureVideoFrame(splitRightVideoEl.value);
-  if (rightFrame) rightFreezeSrc.value = rightFrame;
-}
+// -------------------------------------------------------------------- stages
+// 1 wide plays → 2 (transient) wide finishes & freezes → 3 split panels →
+// 4 zoom into ROI, crossfade to low-res crops → 5 swipe to FoveaCam w/ audio →
+// 6 face-track overlay + transcripts.
 
 async function finishWideTransition() {
-  const video = wideVideoEl.value;
+  const video = wide.el.value;
   if (!video) return;
-  const clip = clipWindows.value.wide;
+  const clipWindow = clip("wide");
 
-  wideFinished.value = false;
+  wide.finished.value = false;
   video.loop = false;
-  if (video.currentTime < clip.start) video.currentTime = clip.start;
+  if (video.currentTime < clipWindow.start) video.currentTime = clipWindow.start;
 
-  const stop = getClipStop(video, clip);
+  const stop = getClipStop(video, clipWindow);
   const remaining = stop != null ? stop - video.currentTime : Number.POSITIVE_INFINITY;
-  if (stop != null && remaining <= 0.05) return freezeAtEnd(video, wideFinished, clip);
+  if (stop != null && remaining <= 0.05) return wide.freeze();
 
   await video.play().catch(() => {});
 
   await new Promise<void>((resolve) => {
-    let finished = false;
+    let done = false;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const complete = () => {
-      if (finished) return;
-      finished = true;
+      if (done) return;
+      done = true;
       video.removeEventListener("ended", complete);
       video.removeEventListener("pause", onPause);
       if (timeoutId) clearTimeout(timeoutId);
-      freezeAtEnd(video, wideFinished, clip);
+      wide.freeze();
       resolve();
     };
 
     const onPause = () => {
-      const currentStop = getClipStop(video, clip);
+      const currentStop = getClipStop(video, clipWindow);
       if (video.ended || (currentStop != null && currentStop - video.currentTime <= 0.05)) complete();
     };
 
@@ -300,417 +379,208 @@ async function finishWideTransition() {
 }
 
 const stage = useStage(6, { preview: 3 }).transient(2, finishWideTransition);
-watch(
-  [clipWindows, stage],
-  () => {
-    if (stage.value <= 2) {
-      const t = Math.max(0, clipWindows.value.wide.start);
-      roiTimeLeft.value = t;
-      roiTimeRight.value = t;
-      return;
-    }
 
-    roiTimeLeft.value = Math.max(0, clipWindows.value.splitLeft.start);
-    roiTimeRight.value = Math.max(0, clipWindows.value.splitRight.start);
-  },
-  { immediate: true },
-);
-const showSplit = computed(() => stage.value >= 3);
 const zoomed = computed(() => stage.value >= 4);
-const showTranscript = computed(() => stage.value >= 4);
-const showEnhanced = computed(() => stage.value >= 5);
-const showFovea = computed(() => stage.value >= 6);
-const wideActive = computed(() => stage.value <= 2);
-const splitActive = computed(() => stage.value >= 3 && stage.value < 5);
-const enhancedActive = computed(() => stage.value === 5);
-const foveaActive = computed(() => stage.value >= 6);
+const wideScale = computed(() => Math.max(1, stage.value <= 1 ? props.wideVideoStartScale : props.wideVideoScale));
 
-const zoomScale = 9;
-
-const leftRoi = computed(() => ({
-  top: `${(activeLeftRoi.value.y - activeLeftRoi.value.height / 2) * 100}%`,
-  left: `${(activeLeftRoi.value.x - activeLeftRoi.value.width / 2) * 100}%`,
-  width: `${activeLeftRoi.value.width * 100}%`,
-  height: `${activeLeftRoi.value.height * 100}%`,
-}));
-
-const rightRoi = computed(() => ({
-  top: `${(activeRightRoi.value.y - activeRightRoi.value.height / 2) * 100}%`,
-  left: `${(activeRightRoi.value.x - activeRightRoi.value.width / 2) * 100}%`,
-  width: `${activeRightRoi.value.width * 100}%`,
-  height: `${activeRightRoi.value.height * 100}%`,
-}));
-
-const panelLeftRoi = computed(() => ({
-  top: `${(activeLeftRoi.value.y - activeLeftRoi.value.height / 2) * 100}%`,
-  left: `${(activeLeftRoi.value.x - activeLeftRoi.value.width / 2) * 100}%`,
-  width: `${activeLeftRoi.value.width * 100}%`,
-  height: `${activeLeftRoi.value.height * 100}%`,
-}));
-
-const panelRightRoi = computed(() => ({
-  top: `${(activeRightRoi.value.y - activeRightRoi.value.height / 2) * 100}%`,
-  left: `${(activeRightRoi.value.x - activeRightRoi.value.width / 2) * 100}%`,
-  width: `${activeRightRoi.value.width * 100}%`,
-  height: `${activeRightRoi.value.height * 100}%`,
-}));
-
-const panelTransform = (roi: RoiFrame) => {
-  const tx = -(roi.x - roi.width / 2) * 100 * zoomScale;
-  const ty = -(roi.y - roi.height / 2) * 100 * zoomScale;
-  return `translate(${tx}%, ${ty}%) scale(${zoomScale})`;
-};
-
-const leftZoomTransform = computed(() => panelTransform(activeLeftRoi.value));
-const rightZoomTransform = computed(() => panelTransform(activeRightRoi.value));
-
-const transcriptSetA: { left: PanelTranscript; right: PanelTranscript } = {
-  left: {
-    prediction: [
-      { text: "we" },
-      { text: "can", correct: true },
-      { text: "track" },
-      { text: "the", correct: true },
-      { text: "speaker" },
-      { text: "today" },
-    ],
-    gt: [{ text: "we" }, { text: "can" }, { text: "track" }, { text: "the" }, { text: "speaker" }, { text: "today" }],
-  },
-  right: {
-    prediction: [
-      { text: "the" },
-      { text: "signal", correct: true },
-      { text: "is" },
-      { text: "clear", correct: true },
-      { text: "enough" },
-      { text: "now" },
-    ],
-    gt: [{ text: "the" }, { text: "signal" }, { text: "is" }, { text: "clear" }, { text: "enough" }, { text: "now" }],
-  },
-};
-
-const transcriptSetB: { left: PanelTranscript; right: PanelTranscript } = {
-  left: {
-    prediction: [
-      { text: "we", correct: true },
-      { text: "can", correct: true },
-      { text: "track", correct: true },
-      { text: "the", correct: true },
-      { text: "speaker", correct: true },
-      { text: "today", correct: true },
-    ],
-    gt: [{ text: "we" }, { text: "can" }, { text: "track" }, { text: "the" }, { text: "speaker" }, { text: "today" }],
-  },
-  right: {
-    prediction: [
-      { text: "the", correct: true },
-      { text: "signal", correct: true },
-      { text: "is", correct: true },
-      { text: "clear", correct: true },
-      { text: "enough", correct: true },
-      { text: "now", correct: true },
-    ],
-    gt: [{ text: "the" }, { text: "signal" }, { text: "is" }, { text: "clear" }, { text: "enough" }, { text: "now" }],
-  },
-};
-
-const transcriptSet = computed(() => (showFovea.value ? transcriptSetB : transcriptSetA));
-
-const isActive = useIsSlideActive();
-
-const syncPlayback = () => {
-  const setPlaying = (video: HTMLVideoElement | undefined, playing: boolean, finished: { value: boolean }, clip: ClipWindow) => {
-    if (!video) return;
-    video.loop = false;
-    if (video.currentTime < clip.start) video.currentTime = clip.start;
-
-    const stop = getClipStop(video, clip);
-    if (stop != null && video.currentTime >= stop - 1 / 120) {
-      finished.value = true;
-      video.pause();
-      return;
-    }
-
-    if (playing && !finished.value) video.play().catch(() => {});
-    else video.pause();
-  };
-
-  const active = isActive.value;
-  const currentStage = stage.value;
-  const freezeZoom = currentStage === 4;
-
-  if (wideVideoEl.value) wideVideoEl.value.loop = false;
-
-  if (currentStage === 1 && wideFinished.value) {
-    setPlaying(wideVideoEl.value, false, wideFinished, clipWindows.value.wide);
-  } else {
-    setPlaying(wideVideoEl.value, active && currentStage <= 2, wideFinished, clipWindows.value.wide);
-  }
-
-  setPlaying(splitLeftVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitLeftFinished, clipWindows.value.splitLeft);
-  setPlaying(splitRightVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitRightFinished, clipWindows.value.splitRight);
-  setPlaying(enhancedLeftVideoEl.value, active && currentStage === 5, enhancedLeftFinished, clipWindows.value.enhancedLeft);
-  setPlaying(enhancedRightVideoEl.value, active && currentStage === 5, enhancedRightFinished, clipWindows.value.enhancedRight);
-  setPlaying(foveaLeftVideoEl.value, active && currentStage >= 6, foveaLeftFinished, clipWindows.value.foveaLeft);
-  setPlaying(foveaRightVideoEl.value, active && currentStage >= 6, foveaRightFinished, clipWindows.value.foveaRight);
-};
+// Once the 0.9s panel zoom transform lands, crossfade from the CSS-zoomed
+// split video to the pre-cropped low-res clips and start playing them.
+const zoomSettled = ref(false);
+let zoomSettleTimer: ReturnType<typeof setTimeout> | undefined;
 
 watch(
   [stage, isActive],
   ([currentStage, active]) => {
-    if (currentStage === 1 && active) {
-      resetVideo(wideVideoEl.value, wideFinished, clipWindows.value.wide);
-      resetVideo(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
-      resetVideo(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
-      resetVideo(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
-      resetVideo(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
-      resetVideo(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
-      resetVideo(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
-      leftFreezeSrc.value = "";
-      rightFreezeSrc.value = "";
+    if (zoomSettleTimer) {
+      clearTimeout(zoomSettleTimer);
+      zoomSettleTimer = undefined;
     }
-
-    if (currentStage === 4 && active) captureZoomFreezeFrames();
+    if (currentStage === 4 && active) {
+      zoomSettleTimer = setTimeout(() => {
+        zoomSettled.value = true;
+      }, 950);
+    } else {
+      zoomSettled.value = currentStage > 4;
+    }
   },
   { immediate: true },
 );
 
+// Freeze the ROI clock at each stage's reference time while nothing is playing.
 watch(
-  [
-    stage,
-    isActive,
-    clipWindows,
-    wideVideoEl,
-    splitLeftVideoEl,
-    splitRightVideoEl,
-    enhancedLeftVideoEl,
-    enhancedRightVideoEl,
-    foveaLeftVideoEl,
-    foveaRightVideoEl,
-  ],
-  syncPlayback,
+  [clipWindows, stage],
+  () => {
+    if (stage.value <= 2) {
+      roiTime.left = clip("wide").start;
+      roiTime.right = clip("wide").start;
+    } else if (stage.value === 3) {
+      roiTime.left = clip("splitLeft").start;
+      roiTime.right = clip("splitRight").start;
+    }
+  },
+  { immediate: true },
+);
+
+const syncPlayback = () => {
+  const active = isActive.value;
+  const currentStage = stage.value;
+  const splitPlaying = active && (currentStage === 3 || (currentStage === 4 && !zoomSettled.value));
+  const zoomPlaying = active && currentStage === 4 && zoomSettled.value;
+  const foveaPlaying = active && currentStage >= 5;
+
+  wide.setPlaying(active && currentStage <= 2);
+  for (const side of sides) {
+    split[side].setPlaying(splitPlaying);
+    zoom[side].setPlaying(zoomPlaying);
+    // FoveaCam clips carry the conversation audio; the face-track overlays
+    // play muted in lockstep purely for the stage-6 crossfade.
+    const foveaEl = fovea[side].el.value;
+    if (foveaEl) foveaEl.muted = !foveaPlaying;
+    fovea[side].setPlaying(foveaPlaying);
+    track[side].setPlaying(foveaPlaying);
+  }
+};
+
+watch([stage, isActive, clipWindows, zoomSettled, ...allVideos.map((video) => video.el)], syncPlayback, { immediate: true });
+
+watch(
+  [stage, isActive],
+  ([currentStage, active], [previousStage] = [0, false]) => {
+    if (currentStage === 1 && active) {
+      for (const video of allVideos) video.reset();
+      reveal.left = 0;
+      reveal.right = 0;
+    } else if (currentStage < 5 && previousStage >= 5) {
+      // Backing out of the FoveaCam stages restarts those clips cleanly.
+      for (const side of sides) {
+        fovea[side].reset();
+        track[side].reset();
+      }
+    } else if (currentStage < 4 && previousStage >= 4) {
+      for (const side of sides) zoom[side].reset();
+    }
+  },
   { immediate: true },
 );
 
 onBeforeUnmount(() => {
-  wideVideoEl.value?.pause();
-  splitLeftVideoEl.value?.pause();
-  splitRightVideoEl.value?.pause();
-  enhancedLeftVideoEl.value?.pause();
-  enhancedRightVideoEl.value?.pause();
-  foveaLeftVideoEl.value?.pause();
-  foveaRightVideoEl.value?.pause();
+  if (zoomSettleTimer) clearTimeout(zoomSettleTimer);
+  for (const video of allVideos) video.el.value?.pause();
 });
 </script>
 
 <template>
-  <div class="lip-reading" :data-stage="stage" :style="{ '--wide-video-scale': String(wideVideoScale) }">
+  <div class="lip-reading" :data-stage="stage" :style="{ '--wide-scale': String(wideScale) }">
     <div class="stage-area">
-      <div class="wide-frame" :class="{ active: !showSplit }">
-        <div class="wide-layer">
-          <!-- TODO: Replace :src with your wide-angle lip-reading video. -->
-          <video
-            ref="wideVideoEl"
-            class="media-video wide-video"
-            :class="{ active: wideActive }"
-            :src="wideVideo"
-            :poster="widePoster"
-            muted
-            playsinline
-            preload="auto"
-            @loadedmetadata="onWideLoadedMetadata"
-            @ended="onWideEnded"
-            @timeupdate="onWideTimeUpdate"
-          />
-          <div class="roi roi-blue show" :style="leftRoi" />
-          <div class="roi roi-red show" :style="rightRoi" />
+      <div class="wide-frame" :class="{ active: stage < 3 }">
+        <div class="frame-center">
+          <div class="video-canvas wide-canvas">
+            <video
+              :ref="bindEl(wide)"
+              class="media-video"
+              :src="wideVideo"
+              :poster="widePoster"
+              muted
+              playsinline
+              preload="auto"
+              @loadedmetadata="wide.onLoadedMetadata"
+              @ended="wide.onEnded"
+              @timeupdate="wide.onTimeUpdate"
+            />
+            <div v-for="side in sides" :key="side" class="roi" :class="meta[side].roiClass" :style="roiStyle[side]" />
+          </div>
         </div>
       </div>
 
-      <div class="multi-frame" :class="{ active: showSplit }">
-        <div class="split-layer" :class="{ show: showSplit }">
-          <div class="panel panel-left">
-            <div class="panel-media">
-              <div class="panel-zoom" :style="{ transform: zoomed ? leftZoomTransform : undefined }">
-                <!-- TODO: Replace with left zoom lip-reading video. -->
+      <div class="multi-frame" :class="{ active: stage >= 3 }">
+        <div class="split-layer" :class="{ show: stage >= 3 }">
+          <div v-for="side in sides" :key="side" class="panel">
+            <div class="frame-center">
+              <div class="video-canvas panel-zoom" :style="{ transform: zoomed ? zoomTransform[side] : undefined }">
                 <video
-                  ref="splitLeftVideoEl"
-                  class="media-video panel-video"
-                  :class="{ active: splitActive }"
-                  :src="splitLeftVideo"
-                  :poster="widePoster"
+                  :ref="bindEl(split[side])"
+                  class="media-video"
+                  :src="wideVideo"
                   muted
                   playsinline
                   preload="auto"
-                  @loadedmetadata="onSplitLeftLoadedMetadata"
-                  @ended="onSplitLeftEnded"
-                  @timeupdate="onSplitLeftTimeUpdate"
+                  @loadedmetadata="split[side].onLoadedMetadata"
+                  @ended="split[side].onEnded"
+                  @timeupdate="split[side].onTimeUpdate"
                 />
-                <img
-                  class="panel-freeze"
-                  :class="{ show: zoomed && !!leftFreezeSrc }"
-                  :src="leftFreezeSrc || undefined"
-                  alt=""
-                  aria-hidden="true"
-                />
-                <div class="panel-roi roi-blue" :style="panelLeftRoi" />
+                <div class="roi" :class="[meta[side].roiClass, { hide: zoomed }]" :style="roiStyle[side]" />
               </div>
             </div>
-          </div>
-          <div class="panel panel-right">
-            <div class="panel-media">
-              <div class="panel-zoom" :style="{ transform: zoomed ? rightZoomTransform : undefined }">
-                <!-- TODO: Replace with right zoom lip-reading video. -->
-                <video
-                  ref="splitRightVideoEl"
-                  class="media-video panel-video"
-                  :class="{ active: splitActive }"
-                  :src="splitRightVideo"
-                  :poster="widePoster"
-                  muted
-                  playsinline
-                  preload="auto"
-                  @loadedmetadata="onSplitRightLoadedMetadata"
-                  @ended="onSplitRightEnded"
-                  @timeupdate="onSplitRightTimeUpdate"
-                />
-                <img
-                  class="panel-freeze"
-                  :class="{ show: zoomed && !!rightFreezeSrc }"
-                  :src="rightFreezeSrc || undefined"
-                  alt=""
-                  aria-hidden="true"
-                />
-                <div class="panel-roi roi-red" :style="panelRightRoi" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="swap-layer" :class="{ show: showEnhanced }">
-          <div class="panel panel-left">
-            <!-- TODO: Replace with enhanced left video. -->
+            <!-- Pre-cropped low-res clip, crossfaded in once the zoom lands. -->
             <video
-              ref="enhancedLeftVideoEl"
-              class="media-video panel-video"
-              :class="{ active: enhancedActive }"
-              :src="enhancedLeftVideo"
-              :poster="widePoster"
+              :ref="bindEl(zoom[side])"
+              class="media-video crop-video"
+              :class="{ show: zoomSettled }"
+              :src="meta[side].zoomSrc"
               muted
               playsinline
               preload="auto"
-              @loadedmetadata="onEnhancedLeftLoadedMetadata"
-              @ended="onEnhancedLeftEnded"
-              @timeupdate="onEnhancedLeftTimeUpdate"
-            />
-          </div>
-          <div class="panel panel-right">
-            <!-- TODO: Replace with enhanced right video. -->
-            <video
-              ref="enhancedRightVideoEl"
-              class="media-video panel-video"
-              :class="{ active: enhancedActive }"
-              :src="enhancedRightVideo"
-              :poster="widePoster"
-              muted
-              playsinline
-              preload="auto"
-              @loadedmetadata="onEnhancedRightLoadedMetadata"
-              @ended="onEnhancedRightEnded"
-              @timeupdate="onEnhancedRightTimeUpdate"
+              @loadedmetadata="zoom[side].onLoadedMetadata"
+              @ended="zoom[side].onEnded"
+              @timeupdate="zoom[side].onTimeUpdate"
             />
           </div>
         </div>
 
-        <div class="fovea-layer" :class="{ show: showFovea }">
-          <div class="panel panel-left">
-            <!-- TODO: Replace with final left fovea video. -->
+        <div class="fovea-layer" :class="{ show: stage >= 5 }">
+          <div v-for="side in sides" :key="side" class="panel">
             <video
-              ref="foveaLeftVideoEl"
-              class="media-video panel-video"
-              :class="{ active: foveaActive }"
-              :src="foveaLeftVideo"
-              :poster="widePoster"
+              :ref="bindEl(fovea[side])"
+              class="media-video"
+              :src="meta[side].foveaSrc"
               muted
               playsinline
               preload="auto"
-              @loadedmetadata="onFoveaLeftLoadedMetadata"
-              @ended="onFoveaLeftEnded"
-              @timeupdate="onFoveaLeftTimeUpdate"
+              @loadedmetadata="fovea[side].onLoadedMetadata"
+              @ended="fovea[side].onEnded"
+              @timeupdate="fovea[side].onTimeUpdate"
             />
-          </div>
-          <div class="panel panel-right">
-            <!-- TODO: Replace with final right fovea video. -->
+            <!-- Face-tracking render, crossfaded in at stage 6. -->
             <video
-              ref="foveaRightVideoEl"
-              class="media-video panel-video"
-              :class="{ active: foveaActive }"
-              :src="foveaRightVideo"
-              :poster="widePoster"
+              :ref="bindEl(track[side])"
+              class="media-video track-video"
+              :class="{ show: stage >= 6 }"
+              :src="meta[side].trackSrc"
               muted
               playsinline
               preload="auto"
-              @loadedmetadata="onFoveaRightLoadedMetadata"
-              @ended="onFoveaRightEnded"
-              @timeupdate="onFoveaRightTimeUpdate"
+              @loadedmetadata="track[side].onLoadedMetadata"
+              @ended="track[side].onEnded"
+              @timeupdate="track[side].onTimeUpdate"
             />
           </div>
         </div>
 
-        <div class="transition-label" :class="{ show: showEnhanced || showFovea }">
-          {{ showFovea ? "Enhanced -> Fovea" : "Zoom -> Enhanced" }}
+        <div class="transition-label" :class="{ show: stage >= 4 }">
+          {{ stage >= 5 ? "FoveaCam · high-res" : "Wide-angle crop · low-res" }}
         </div>
       </div>
     </div>
 
-    <div class="transcript-grid" :class="{ show: showTranscript }">
-      <div class="transcript-column">
-        <div class="conversation-label">Conversation A</div>
-        <div class="transcript-box prediction-box">
-          <div class="transcript-label">Prediction</div>
+    <div class="transcript-grid" :class="{ show: stage >= 6 }">
+      <div v-for="side in sides" :key="side" class="transcript-column" :style="{ '--roi-color': meta[side].color }">
+        <div class="conversation-label">{{ meta[side].label }}</div>
+        <div class="transcript-box">
+          <div class="transcript-label">Prediction (lip reading)</div>
           <p>
             <span
-              v-for="(token, index) in transcriptSet.left.prediction"
-              :key="`left-p-${token.text}-${index}`"
+              v-for="(token, index) in transcript[side].prediction"
+              :key="index"
               class="token"
-              :class="{ correct: token.correct }"
+              :class="{ correct: token.correct, on: index < shownTokens[side] }"
             >
               {{ token.text }}
             </span>
           </p>
         </div>
         <div class="transcript-box gt-box">
-          <div class="transcript-label">GT</div>
-          <p>
-            <span v-for="(token, index) in transcriptSet.left.gt" :key="`left-g-${token.text}-${index}`" class="token gt-token">
-              {{ token.text }}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <div class="transcript-column">
-        <div class="conversation-label">Conversation B</div>
-        <div class="transcript-box prediction-box">
-          <div class="transcript-label">Prediction</div>
-          <p>
-            <span
-              v-for="(token, index) in transcriptSet.right.prediction"
-              :key="`right-p-${token.text}-${index}`"
-              class="token"
-              :class="{ correct: token.correct }"
-            >
-              {{ token.text }}
-            </span>
-          </p>
-        </div>
-        <div class="transcript-box gt-box">
-          <div class="transcript-label">GT</div>
-          <p>
-            <span v-for="(token, index) in transcriptSet.right.gt" :key="`right-g-${token.text}-${index}`" class="token gt-token">
-              {{ token.text }}
-            </span>
-          </p>
+          <div class="transcript-label">Ground truth</div>
+          <p class="gt-text">{{ transcript[side].gt }}</p>
         </div>
       </div>
     </div>
@@ -721,7 +591,7 @@ onBeforeUnmount(() => {
 .lip-reading {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 1rem;
+  gap: 0.8rem;
   width: 100%;
   height: 100%;
 }
@@ -744,11 +614,14 @@ onBeforeUnmount(() => {
   border-radius: 0.5rem;
   background: #000;
   isolation: isolate;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-curve);
 }
 
 .wide-frame {
   height: 100%;
-  aspect-ratio: 3/ 2;
+  aspect-ratio: 3 / 2;
 }
 
 .multi-frame {
@@ -756,21 +629,131 @@ onBeforeUnmount(() => {
   aspect-ratio: 3;
   position: absolute;
   inset: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-}
-
-.wide-frame {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-duration) var(--transition-curve);
+  margin: auto;
 }
 
 .wide-frame.active,
 .multi-frame.active {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Centers a 4:3 video canvas inside its (wider-cropped) frame; the canvas
+   shares the video's aspect so normalized ROI coords map 1:1 onto it. */
+.frame-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.video-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.wide-canvas {
+  transform: scale(var(--wide-scale, 1));
+  transition: transform var(--transition-duration) var(--transition-curve);
+}
+
+.panel-zoom {
+  transform-origin: center;
+  transition: transform 0.9s cubic-bezier(0.6, 0, 0.2, 1);
+}
+
+.media-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roi {
+  position: absolute;
+  outline-width: 2px;
+  outline-style: solid;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  opacity: 1;
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    top var(--transition-duration) var(--transition-curve),
+    left var(--transition-duration) var(--transition-curve),
+    width var(--transition-duration) var(--transition-curve),
+    height var(--transition-duration) var(--transition-curve);
+}
+
+.roi.hide {
+  opacity: 0;
+}
+
+.roi-red {
+  color: var(--camera-left);
+  outline-color: var(--camera-left);
+}
+
+.roi-blue {
+  color: var(--camera-right);
+  outline-color: var(--camera-right);
+}
+
+.split-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.split-layer.show {
+  opacity: 1;
+}
+
+.panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel + .panel {
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.crop-video {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.crop-video.show {
+  opacity: 1;
+}
+
+.fovea-layer {
+  position: absolute;
+  inset: 0;
+  /* Above the split layer's z-index:2 crop videos, below the label pill. */
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.85s cubic-bezier(0.6, 0, 0.2, 1);
+}
+
+.fovea-layer.show {
+  clip-path: inset(0);
+}
+
+.track-video {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-curve);
+}
+
+.track-video.show {
+  opacity: 1;
 }
 
 .transition-label {
@@ -787,6 +770,7 @@ onBeforeUnmount(() => {
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
   opacity: 0;
   transition: opacity var(--transition-duration) var(--transition-curve);
 }
@@ -795,228 +779,98 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-.wide-layer,
-.split-layer,
-.swap-layer,
-.fovea-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.wide-layer {
-  opacity: 1;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-}
-
-.wide-layer.faded {
-  opacity: 0.25;
-}
-
-.media-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-}
-
-.media-video.active {
-  opacity: 1;
-}
-
-.panel-freeze {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.15s linear;
-}
-
-.panel-freeze.show {
-  opacity: 1;
-}
-
-.roi {
-  position: absolute;
-  outline: 2px solid var(--camera-left);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    top var(--transition-duration) var(--transition-curve),
-    left var(--transition-duration) var(--transition-curve),
-    width var(--transition-duration) var(--transition-curve),
-    height var(--transition-duration) var(--transition-curve);
-}
-
-.roi-red {
-  color: var(--camera-left);
-  outline-color: var(--camera-left);
-}
-
-.roi-blue {
-  color: var(--camera-right);
-  outline-color: var(--camera-right);
-}
-
-.roi.show {
-  opacity: 1;
-}
-
-.panel-roi {
-  position: absolute;
-  z-index: 3;
-  outline-width: 2px;
-  outline-style: solid;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
-  transition: transform var(--transition-duration) var(--transition-curve);
-}
-
-.split-layer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  opacity: 0;
-  transition: opacity var(--transition-duration) var(--transition-curve);
-}
-
-.split-layer.show {
-  opacity: 1;
-}
-
-.panel {
-  position: relative;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-
-.panel + .panel {
-  border-left: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.panel-media {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3 / 2;
-  max-height: 100%;
-  overflow: hidden;
-}
-
-.panel-zoom {
-  position: absolute;
-  inset: 0;
-  aspect-ratio: 3 / 2;
-  transform-origin: 0 0;
-  transition: transform 0.9s cubic-bezier(0.6, 0, 0.2, 1);
-}
-
-.wide-video,
-.panel-video {
-  aspect-ratio: 4 / 3;
-}
-
-.wide-video {
-  transform: scale(var(--wide-video-scale, 2));
-  transform-origin: center;
-}
-
-.swap-layer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.85s cubic-bezier(0.6, 0, 0.2, 1);
-}
-
-.swap-layer.show {
-  clip-path: inset(0);
-}
-
-.fovea-layer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.85s cubic-bezier(0.6, 0, 0.2, 1);
-}
-
-.fovea-layer.show {
-  clip-path: inset(0);
-}
-
+/* Collapsed until stage 6 so the video stages get the full canvas, then the
+   transcripts push in from the bottom. The max-height layout transition is a
+   deliberate one-shot reflow (bounded, never mid-video-frame-loop). */
 .transcript-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 0.8rem;
   width: 100%;
+  max-height: 0;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--transition-duration) var(--transition-curve);
+  transform: translateY(0.6rem);
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve),
+    max-height var(--transition-duration) var(--transition-curve);
 }
 
 .transcript-grid.show {
+  max-height: 20rem;
   opacity: 1;
   visibility: visible;
+  transform: translateY(0);
 }
 
 .transcript-column {
   display: grid;
   grid-template-rows: auto auto auto;
-  gap: 0.45rem;
+  align-content: start;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .conversation-label {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  opacity: 0.82;
+  opacity: 0.85;
+  padding-left: 0.42rem;
+  border-left: 3px solid var(--roi-color, currentColor);
 }
 
 .transcript-box {
   width: 100%;
-  min-height: 2.8rem;
-  padding: 0.52rem 0.68rem;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
   border-radius: 0.45rem;
-  background: rgba(8, 12, 20, 0.55);
+  background: var(--bg-soft);
 }
 
 .transcript-label {
-  margin-bottom: 0.18rem;
-  font-size: 0.66rem;
+  margin-bottom: 0.12rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 .transcript-box p {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.62rem;
   line-height: 1.35;
 }
 
 .token {
-  margin-right: 0.42rem;
-  color: rgba(248, 250, 252, 0.88);
-  transition: color 0.3s var(--transition-curve), background-color 0.3s var(--transition-curve);
+  /* inline-block restores soft-wrap points: Vue condenses the template
+     whitespace between the token spans away entirely. */
+  display: inline-block;
+  margin-right: 0.26rem;
+  color: var(--text-1);
+  opacity: 0;
+  transition: opacity 0.3s var(--transition-curve);
+}
+
+.token.on {
+  opacity: 1;
 }
 
 .token.correct {
-  color: #041311;
-  background: color-mix(in srgb, var(--camera-center) 72%, white 28%);
+  color: var(--green-1);
+  background: var(--green-soft);
   border-radius: 0.2rem;
-  padding: 0.02rem 0.18rem;
+  padding: 0.02rem 0.14rem;
 }
 
 .gt-box {
-  border-color: rgba(125, 211, 252, 0.45);
+  border-color: color-mix(in srgb, var(--roi-color, currentColor) 45%, transparent);
 }
 
-.gt-token {
-  color: rgba(186, 230, 253, 0.95);
+.gt-text {
+  color: var(--text-2);
 }
 </style>

@@ -4,6 +4,7 @@ dist
 *.local
 .vite-inspect
 .remote-assets
+.snap/
 components.d.ts
 pnpm-lock.yaml
 

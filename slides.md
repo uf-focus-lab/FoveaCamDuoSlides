@@ -368,7 +368,7 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 # Lip Reading
 
 <script setup lang="ts">
-import LipReadingPreview from "pages/14-lip-reading-preview.vue";
+import LipReadingPreview from "pages/21-lip-reading-preview.vue";
 </script>
 
 <div style="width: 100%; height: calc(100% - 5rem); margin-top: 0.75rem;">
