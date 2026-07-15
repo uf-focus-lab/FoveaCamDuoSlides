@@ -164,7 +164,7 @@
       }
 
       html.dark image.cross-section-image {
-        filter: brightness(0.6) saturate(2);
+        filter: brightness(0.8) saturate(1.6);
       }
     </style>
   </defs>
