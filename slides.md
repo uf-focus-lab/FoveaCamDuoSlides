@@ -393,9 +393,13 @@ const depthItems = [...rowA, ...rowAHighlight, ...rowB, ...rowBHighlight, ...row
 import LipReadingPreview from "pages/21-lip-reading-preview.vue";
 </script>
 
-<div style="width: 100%; height: calc(100% - 52px); margin-top: 8px;">
+<div style="width: 100%; height: calc(100% - 44px); margin-top: 6px;">
   <LipReadingPreview />
 </div>
+
+<p style="position: absolute; left: 56px; right: 56px; bottom: 4px; margin: 0; font-family: 'Times New Roman', Times, serif; font-size: 9.5px; line-height: 1.4; color: color-mix(in srgb, currentColor 62%, transparent);">
+P. Ma, A. Haliassos, A. Fernandez-Lopez, H. Chen, S. Petridis, and M. Pantic. Auto-AVSR: Audio-Visual Speech Recognition with Automatic Labels. ICASSP (2023). github.com/mpc001/auto_avsr
+</p>
 ---
 
 <RecapTiles :crypsis-zoom="3" :crypsis-center-x="65" :crypsis-center-y="55" />

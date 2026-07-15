@@ -562,7 +562,7 @@ onBeforeUnmount(() => {
       <div v-for="side in sides" :key="side" class="transcript-column" :style="{ '--roi-color': meta[side].color }">
         <div class="conversation-label">{{ meta[side].label }}</div>
         <div class="transcript-box">
-          <div class="transcript-label">Prediction (lip reading)</div>
+          <div class="transcript-label">Auto-AVSR</div>
           <p>
             <span
               v-for="(token, index) in transcript[side].prediction"
@@ -587,7 +587,7 @@ onBeforeUnmount(() => {
 .lip-reading {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   height: 100%;
 }
@@ -612,9 +612,7 @@ onBeforeUnmount(() => {
   isolation: isolate;
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    max-width var(--transition-duration) var(--transition-curve);
+  transition: opacity var(--transition-duration) var(--transition-curve);
 }
 
 .wide-frame {
@@ -630,17 +628,10 @@ onBeforeUnmount(() => {
   margin: auto;
 }
 
-/* Stage 6 squeezes the stage area (transcripts push in), so narrow the panels
-   a touch to trade width for visible video height — the face-track legend
-   lives in the top of the 4:3 clips and would otherwise be cropped away. */
-.lip-reading[data-stage="6"] .multi-frame {
-  max-width: 84%;
-}
-
 /* Keep the top strip (tracking legend + confidence score) of the 4:3 fovea
    clips visible; the crop is taken from the torso at the bottom instead. */
 .fovea-layer .media-video {
-  object-position: 50% 12%;
+  object-position: 50% 2%;
 }
 
 .wide-frame.active,
@@ -790,6 +781,14 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
+/* At the FoveaCam stages the pill would sit on top of the left panel's
+   face-tracking legend (top-right of each clip), so drop it to the bottom. */
+.lip-reading[data-stage="5"] .transition-label,
+.lip-reading[data-stage="6"] .transition-label {
+  top: auto;
+  bottom: 9px;
+}
+
 /* Collapsed until stage 6 so the video stages get the full canvas, then the
    transcripts push in from the bottom. The max-height layout transition is a
    deliberate one-shot reflow (bounded, never mid-video-frame-loop). */
@@ -836,7 +835,7 @@ onBeforeUnmount(() => {
 
 .transcript-box {
   width: 100%;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--bg-soft);
@@ -853,7 +852,7 @@ onBeforeUnmount(() => {
 .transcript-box p {
   margin: 0;
   font-size: 10px;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .token {
