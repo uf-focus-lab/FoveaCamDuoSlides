@@ -4,7 +4,7 @@ import CalibrationControls from "pages/12A-calibration-controls.vue";
 import CalibrationDiagram from "pages/12B-calibration-diagram.vue";
 
 const stage = useStage(17, { preview: 13 });
-stage.transient([3, 4, 6, 7, 8, 11, 12, 14, 15]);
+stage.transient([3, 4, 6, 7, 8, 10, 11, 12, 14, 15]);
 </script>
 
 <template>

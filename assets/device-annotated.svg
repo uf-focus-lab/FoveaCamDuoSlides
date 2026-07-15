@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  version="1.1"
+  viewBox="0 0 1440 800"
+>
+  <defs>
+    <style>
+      text,
+      circle,
+      polygon {
+        fill: currentColor;
+      }
+      circle {
+        stroke: rgb(
+          from currentColor calc(255 - r) calc(255 - g) calc(255 - b)
+        );
+        stroke-width: 4px;
+      }
+
+      .st0 {
+        stroke-dasharray: 8 4;
+      }
+
+      .st0,
+      .st1,
+      .st2 {
+        fill: none;
+        stroke: currentColor;
+      }
+
+      .st0,
+      .st2 {
+        stroke-width: 4px;
+      }
+
+      .st3,
+      .st4,
+      .st5,
+      .st6,
+      .st7 {
+        isolation: isolate;
+      }
+
+      .st3,
+      .st5,
+      .st8 {
+        font-size: 44px;
+      }
+
+      .st3,
+      .st8 {
+        font-family: "Times New Roman", Times, serif;
+      }
+
+      .st5 {
+        fill: currentColor;
+        opacity: 0.5;
+      }
+
+      .st5,
+      .st6,
+      .st7,
+      .st9 {
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic;
+      }
+
+      .st6,
+      .st9 {
+        font-size: 32px;
+      }
+
+      .st7 {
+        font-size: 40px;
+      }
+
+      .st1 {
+        stroke-width: 3px;
+      }
+    </style>
+  </defs>
+  <image
+    class="st4"
+    width="5997"
+    height="3914"
+    transform="translate(200.6 50.1) scale(.175)"
+    xlink:href="device.webp"
+  />
+  <g class="st4">
+    <text class="st7" transform="translate(989.1 558.9) rotate(-24)">
+      <tspan x="0" y="0">100mm</tspan>
+    </text>
+  </g>
+  <polyline class="st2" points="1073.6 640.6 870.4 640.6 870.4 555" />
+  <circle cx="870.5" cy="547" r="8" />
+  <polyline class="st2" points="1110.8 69.3 949.4 69.3 949.4 100.1" />
+  <circle cx="949.4" cy="108.1" r="8" />
+  <polyline class="st2" points="78.7 539.1 78.7 457 225.4 457" />
+  <circle cx="233.4" cy="457.1" r="8" />
+  <g class="st4">
+    <text class="st3" transform="translate(1119.3 84.3)">
+      <tspan x="0" y="0">Foveated Camera</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st3" transform="translate(1119.3 132.2)">
+      <tspan x="0" y="0">Unit</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st5" transform="translate(1208.5 132.2)">
+      <tspan x="0" y="0">(Left Side)</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st6" transform="translate(1119.4 183.5)">
+      <tspan x="0" y="0">100mm FL</tspan>
+    </text>
+  </g>
+  <line class="st1" x1="1439.4" y1="150" x2="1119.4" y2="150" />
+  <g class="st4">
+    <text class="st3" transform="translate(1080.3 657.3)">
+      <tspan x="0" y="0">W</tspan>
+    </text>
+    <text class="st8" transform="translate(1121.8 657.3)">
+      <tspan x="0" y="0"></tspan>
+    </text>
+    <text class="st3" transform="translate(1120.1 657.3)">
+      <tspan x="0" y="0">ide</tspan>
+    </text>
+    <text class="st8" transform="translate(1173.9 657.3)">
+      <tspan x="0" y="0"></tspan>
+    </text>
+    <text class="st3" transform="translate(1182.4 657.3)">
+      <tspan x="0" y="0">Angle Camera</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st3" transform="translate(1080.3 710.1)">
+      <tspan x="0" y="0">Unit</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st5" transform="translate(1158.6 710.1)">
+      <tspan x="0" y="0">(Middle)</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st6" transform="translate(1080.2 759.9)">
+      <tspan x="0" y="0">App</tspan>
+    </text>
+    <text class="st9" transform="translate(1131.7 759.9)">
+      <tspan x="0" y="0"></tspan>
+    </text>
+    <text class="st6" transform="translate(1131.7 759.9)">
+      <tspan x="0" y="0">r</tspan>
+    </text>
+    <text class="st9" transform="translate(1144.2 759.9)">
+      <tspan x="0" y="0"></tspan>
+    </text>
+    <text class="st6" transform="translate(1143 759.9)">
+      <tspan x="0" y="0">ox. 12mm FL</tspan>
+    </text>
+  </g>
+  <line class="st1" x1="1440.3" y1="726.4" x2="1080.1" y2="726.4" />
+  <line class="st2" x1="478.3" y1="800.5" x2="478.3" y2="723.8" />
+  <line class="st2" x1="1182.7" y1="489.4" x2="1182.7" y2="412.7" />
+  <polyline class="st0" points="888.8 588.3 890.7 587.5 983.8 545.9" />
+  <polygon
+    points="891.1 578.1 879.2 592.6 897.9 593.5 890.7 587.5 891.1 578.1"
+  />
+  <polyline class="st0" points="1166.5 465.1 1164.7 465.9 1095 496.6" />
+  <polygon
+    points="1164.3 475.3 1176.2 460.8 1157.5 459.9 1164.7 465.9 1164.3 475.3"
+  />
+  <g class="st4">
+    <text class="st7" transform="translate(628.9 723) rotate(-24)">
+      <tspan x="0" y="0">100mm</tspan>
+    </text>
+  </g>
+  <polyline class="st0" points="494.6 767.8 496.4 767 624.9 709.5" />
+  <polygon points="496.8 757.6 484.9 772.1 503.6 772.9 496.4 767 496.8 757.6" />
+  <polyline class="st0" points="854.6 604.3 852.8 605.1 737.5 658.3" />
+  <polygon
+    points="852.5 614.5 864.3 599.8 845.5 599.2 852.8 605.1 852.5 614.5"
+  />
+  <polyline class="st2" points="424.3 69.3 551.4 69.3 551.4 150.9" />
+  <g class="st4">
+    <text class="st3" transform="translate(93.9 84.1)">
+      <tspan x="0" y="0">Core Control Unit</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st6" transform="translate(112.8 130.3)">
+      <tspan x="0" y="0">Frame Sync &amp; Steering</tspan>
+    </text>
+  </g>
+  <line class="st1" x1="412" y1="97" x2="89.6" y2="97" />
+  <g class="st4">
+    <text class="st3" transform="translate(-.3 592)">
+      <tspan x="0" y="0">Foveated Camera</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st3" transform="translate(-.3 639.9)">
+      <tspan x="0" y="0">Unit</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st5" transform="translate(88.9 639.9)">
+      <tspan x="0" y="0">(Right Side)</tspan>
+    </text>
+  </g>
+  <g class="st4">
+    <text class="st6" transform="translate(-.3 691.2)">
+      <tspan x="0" y="0">100mm FL</tspan>
+    </text>
+  </g>
+  <line class="st1" x1="319.7" y1="657.7" x2="-.3" y2="657.7" />
+  <circle cx="551.4" cy="150" r="8" />
+</svg>

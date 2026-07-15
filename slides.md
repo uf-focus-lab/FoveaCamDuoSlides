@@ -154,10 +154,10 @@ layout: none
 ---
 
 <script setup lang="ts">
-import CameraTurntable from "pages/10-camera-turntable.vue";
+import DeviceAnnotated from "assets/device-annotated.svg";
 </script>
 
-<CameraTurntable />
+<DeviceAnnotated style="transform: scale(0.75)" />
 
 ---
 
