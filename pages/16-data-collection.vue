@@ -23,7 +23,7 @@ interface AnaglyphTile {
   alt: string;
 }
 
-const stage = useStage(3);
+const stage = useStage(3).transient(2);
 
 // Resolve data-collection figures through Vite so they are hashed, copied into
 // the build, and base-prefixed for subpath deploys (a bare "/assets/…" string
@@ -152,6 +152,22 @@ function anaglyphStyle(index: number): CSSProperties {
 </script>
 
 <template>
+  <section class="data-collection-slide">
+    <header class="slide-head" aria-hidden="true">
+      <h1 class="slide-title">Data Collection</h1>
+
+      <div class="slide-qr" :class="{ 'slide-qr-visible': showFocusAndDetails }">
+        <p class="slide-qr-label">HuggingFace</p>
+        <img
+          v-if="huggingFaceQrSrc"
+          class="slide-qr-image"
+          :src="huggingFaceQrSrc"
+          alt="HuggingFace QR code"
+        />
+        <div v-else class="slide-qr-placeholder">Drop qr_code.webp here</div>
+      </div>
+    </header>
+
   <div
     class="storyboard show-wide-pair"
     :class="{
@@ -236,28 +252,96 @@ function anaglyphStyle(index: number): CSSProperties {
       </section>
     </div>
 
-    <footer class="storyboard-footer" aria-hidden="true">
-      <article class="footer-qr-tile">
-        <p class="footer-qr-label">HuggingFace</p>
-        <img
-          v-if="huggingFaceQrSrc"
-          class="footer-qr-image"
-          :src="huggingFaceQrSrc"
-          alt="HuggingFace QR code"
-        />
-        <div v-else class="qr-placeholder">Drop qr_code.webp here</div>
-      </article>
-    </footer>
   </div>
+  </section>
 </template>
 
 <style scoped>
+.data-collection-slide {
+  --title-band: 4.8rem;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+}
+
+.slide-head {
+  position: relative;
+  z-index: 5;
+  min-height: var(--title-band);
+  padding-right: 4.4rem;
+}
+
+.slide-title {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #e5e7eb;
+}
+
+.slide-qr {
+  position: absolute;
+  top: 0;
+  right: 0.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  opacity: 0;
+  transform: translate3d(0, -8px, 0);
+  pointer-events: none;
+}
+
+.slide-qr-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
+}
+
+.slide-qr-label {
+  margin: 0;
+  font-size: 0.6rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fde68a;
+}
+
+.slide-qr-image {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  display: block;
+  border: none;
+  background: transparent;
+}
+
+.slide-qr-placeholder {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: #fde68a;
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 0.2rem;
+}
+
 .storyboard {
   --label-band: 2.4rem;
   --baseline-col: 7rem;
   --main-gap: 0rem;
   position: relative;
   width: 100%;
+  min-height: 0;
   padding-top: var(--label-band);
   padding-bottom: 0.5rem;
 }
@@ -271,11 +355,13 @@ function anaglyphStyle(index: number): CSSProperties {
 .wide-slot {
   position: relative;
   min-height: 21rem;
+  padding-bottom: var(--label-band);
 }
 
 .wide-angle-label {
   position: absolute;
-  top: 0.15rem;
+  top: auto;
+  bottom: 0.2rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -291,7 +377,7 @@ function anaglyphStyle(index: number): CSSProperties {
   transition:
     transform var(--transition-duration) var(--transition-curve),
     left var(--transition-duration) var(--transition-curve),
-    top var(--transition-duration) var(--transition-curve),
+    bottom var(--transition-duration) var(--transition-curve),
     opacity var(--transition-duration) var(--transition-curve);
 }
 
@@ -389,7 +475,8 @@ function anaglyphStyle(index: number): CSSProperties {
 
 .storyboard.hide-right-wide .wide-angle-label {
   left: 21%;
-  top: 0.15rem;
+  top: auto;
+  bottom: 0.2rem;
   transform: translateX(-50%);
 }
 
@@ -450,27 +537,33 @@ function anaglyphStyle(index: number): CSSProperties {
   row-gap: 0rem;    /* vertical spacing between rows */
   column-gap: 0.2rem; 
   opacity: 0;
+  transform: translate3d(0, 0, 0);
   pointer-events: none;
   /* background: grey;
   border-radius: 999px; */
   overflow: visible;
+  transition:
+    opacity var(--transition-duration) var(--transition-curve),
+    transform var(--transition-duration) var(--transition-curve);
 }
 
 .storyboard.show-focus-and-details .detail-grid {
   opacity: 1;
+  transform: translate3d(-3.8rem, 0, 0);
 }
 
 .detail-column-labels {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(-1 * var(--label-band) + 0.15rem);
+  top: auto;
+  bottom: calc(-1 * var(--label-band) + 0.2rem);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 0.25rem;
   align-items: center;
   opacity: 0;
-  transform: translate3d(0, -8px, 0);
+  transform: translate3d(0, 8px, 0);
   z-index: 3;
 }
 
@@ -541,73 +634,6 @@ function anaglyphStyle(index: number): CSSProperties {
 
 .detail-tile-anaglyph {
   min-height: 0;
-}
-
-.storyboard-footer {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.2rem;
-  opacity: 0;
-  transform: translate3d(0, 14px, 0);
-}
-
-.storyboard.show-focus-and-details .storyboard-footer {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition:
-    opacity var(--transition-duration) var(--transition-curve),
-    transform var(--transition-duration) var(--transition-curve);
-}
-
-.footer-qr-tile {
-  width: min(32rem, 30%);
-  min-height: 4.9rem;
-  display: grid;
-  grid-template-columns: 6rem 1fr;
-  align-items: center;
-  gap: 0.7rem;
-  border-radius: 12px;
-  border: 1px dashed color-mix(in srgb, #f59e0b 75%, transparent);
-  padding: 0.5rem 0.75rem;
-  background: color-mix(in srgb, #f59e0b 10%, #020617);
-}
-
-.footer-qr-label {
-  margin: 0;
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #fde68a;
-  /* background: rgba(15, 23, 42, 0.82); */
-  /* border: 1px solid color-mix(in srgb, #f59e0b 72%, transparent);
-  border-radius: 999px; */
-  padding: 0.28rem 0.45rem;
-}
-
-.footer-qr-image {
-  width: 100%;
-  height: 100%;
-  max-height: 4rem;
-  object-fit: contain;
-  display: block;
-  /* background: #020617; */
-}
-
-.qr-placeholder {
-  width: 100%;
-  height: 4rem;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  border: 1px dashed color-mix(in srgb, #f59e0b 65%, transparent);
-  color: #fde68a;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-align: center;
-  padding: 0.45rem;
 }
 
 @keyframes roi-pop {

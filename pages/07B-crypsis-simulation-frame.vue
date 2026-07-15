@@ -24,7 +24,7 @@ defineProps<{
   top: 0;
   right: 0;
   bottom: 0;
-  left: 50%;
+  left: var(--frame-left, 50%);
   border: none;
   overflow: hidden;
   font-size: 0.5em;

@@ -25,6 +25,11 @@ declare module "*.webm" {
   export default src;
 }
 
+declare module "*.mp4" {
+  const src: string;
+  export default src;
+}
+
 declare module "*.md" {
   import type { DefineComponent } from "vue";
   const component: DefineComponent<

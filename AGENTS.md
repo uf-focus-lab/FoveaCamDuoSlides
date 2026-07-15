@@ -14,8 +14,8 @@ The project uses **pnpm**; see `pnpm-workspace.yaml`. Install dependencies with 
 
 ## Verification
 
-- Do not verify edits with Slidev commands such as `slidev`, `npm run dev`, `npm run build`, or `npm run export`.
-- After changes that affect slides or visual behavior, ask the user to verify the result in their browser instead.
+- To check visual changes headlessly: start a dev server (`pnpm run dev -- --open false --port 3031` — the user often occupies 3030), then `pnpm run snap <slide> [stage...] [--wait ms] [--port n]` (`scripts/snap.mjs`, playwright-chromium) screenshots any slide/stage into `.snap/` (git-ignored). Deep-linking a stage replays transient stages first (e.g. a video clip must finish), so size `--wait` accordingly; the printed `data-stage` shows where the slide actually landed.
+- Do not verify with `pnpm run build` or `pnpm run export`; for interactive feel (audio, input timing), ask the user to confirm in their browser.
 
 ## Authoring Model
 

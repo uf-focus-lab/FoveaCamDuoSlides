@@ -203,7 +203,7 @@ const labelOutputs = computed(() => stage.value >= 4);
   position: relative;
   min-width: 0;
   opacity: 0;
-  transform: translateX(-1.25rem) scale(0.92);
+  transform: translateX(1.25rem) scale(0.92);
   transition:
     opacity var(--transition-duration) var(--transition-curve),
     transform var(--transition-duration) var(--transition-curve);
@@ -277,7 +277,7 @@ const labelOutputs = computed(() => stage.value >= 4);
   display: block;
   align-self: start;
   opacity: 0;
-  transform: translateX(-0.75rem);
+  transform: translateX(0.75rem);
   transition:
     opacity var(--transition-duration) var(--transition-curve),
     transform var(--transition-duration) var(--transition-curve);
