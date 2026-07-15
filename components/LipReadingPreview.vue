@@ -9,16 +9,141 @@ import widePoster from "assets/results-upfront/wide.webp";
 // - splitLeftVideo / splitRightVideo: separate split-stage videos
 // - enhancedLeftVideo / enhancedRightVideo: post-zoom intermediate videos
 // - foveaLeftVideo / foveaRightVideo: final fovea videos
-import wideVideo from "assets/360.webm";
-import splitLeftVideo from "assets/360.webm";
-import splitRightVideo from "assets/360.webm";
-import enhancedLeftVideo from "assets/360.webm";
-import enhancedRightVideo from "assets/360.webm";
-import foveaLeftVideo from "assets/360.webm";
-import foveaRightVideo from "assets/360.webm";
+import wideVideo from "assets/liptracking/0002.fcap-center.webm";
+import splitLeftVideo from "assets/liptracking/0002.fcap-center.webm";
+import splitRightVideo from "assets/liptracking/0002.fcap-center.webm";
+import enhancedLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
+import enhancedRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
+import foveaLeftVideo from "assets/liptracking/face_tracking/0002.fcap-left-fovea.tracked.webm";
+import foveaRightVideo from "assets/liptracking/face_tracking/0002.fcap-right-fovea.tracked.webm";
 
 type Token = { text: string; correct?: boolean };
 type PanelTranscript = { prediction: Token[]; gt: Token[] };
+type VideoKey = "wide" | "splitLeft" | "splitRight" | "enhancedLeft" | "enhancedRight" | "foveaLeft" | "foveaRight";
+type ClipWindowInput = { start?: number; stop?: number | null };
+type ClipWindow = { start: number; stop: number | null };
+type RoiFrameInput = { t: number; x: number; y: number; width?: number; height?: number };
+type RoiFrame = { t: number; x: number; y: number; width: number; height: number };
+type RoiTracksInput = Partial<Record<"left" | "right", RoiFrameInput[]>>;
+
+const props = withDefaults(
+  defineProps<{
+    wideVideoScale?: number;
+    wideVideoStartScale?: number;
+    clipWindows?: Partial<Record<VideoKey, ClipWindowInput>>;
+    roiTracks?: RoiTracksInput;
+  }>(),
+  {
+    wideVideoScale: 1.2,
+    wideVideoStartScale: 1.45,
+    clipWindows: () => ({}),
+    roiTracks: () => ({}),
+  },
+);
+
+const defaultClipWindows: Record<VideoKey, ClipWindow> = {
+  wide: { start: 15, stop: 20 },
+  splitLeft: { start: 20, stop: 22 },
+  splitRight: { start: 20, stop: 22 },
+  enhancedLeft: { start: 0, stop: null },
+  enhancedRight: { start: 0, stop: null },
+  foveaLeft: { start: 0, stop: null },
+  foveaRight: { start: 0, stop: null },
+};
+
+const asFiniteNumber = (value: unknown): number | undefined => {
+  if (value == null) return undefined;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const normalizeClipWindow = (input: ClipWindowInput | undefined, fallback: ClipWindow): ClipWindow => {
+  const startValue = asFiniteNumber(input?.start) ?? fallback.start;
+  const start = Math.max(0, startValue);
+
+  // Keep fallback stop unless a stop override is explicitly provided.
+  const rawStop = input && "stop" in input ? input.stop : fallback.stop;
+  if (rawStop == null) return { start, stop: null };
+
+  const stopValue = asFiniteNumber(rawStop) ?? fallback.stop;
+  if (stopValue == null) return { start, stop: null };
+  const stop = Math.max(start + 0.01, stopValue);
+  return { start, stop };
+};
+
+const clipWindows = computed<Record<VideoKey, ClipWindow>>(() => {
+  const incoming = props.clipWindows;
+  return {
+    wide: normalizeClipWindow(incoming.wide, defaultClipWindows.wide),
+    splitLeft: normalizeClipWindow(incoming.splitLeft, defaultClipWindows.splitLeft),
+    splitRight: normalizeClipWindow(incoming.splitRight, defaultClipWindows.splitRight),
+    enhancedLeft: normalizeClipWindow(incoming.enhancedLeft, defaultClipWindows.enhancedLeft),
+    enhancedRight: normalizeClipWindow(incoming.enhancedRight, defaultClipWindows.enhancedRight),
+    foveaLeft: normalizeClipWindow(incoming.foveaLeft, defaultClipWindows.foveaLeft),
+    foveaRight: normalizeClipWindow(incoming.foveaRight, defaultClipWindows.foveaRight),
+  };
+});
+
+const defaultLeftRoi: RoiFrame = { t: 0, x: 0.3, y: 0.67, width: 1 / 9, height: 1 / 9 };
+const defaultRightRoi: RoiFrame = { t: 0, x: 0.7, y: 0.67, width: 1 / 9, height: 1 / 9 };
+
+const normalizeRoiTrack = (input: RoiFrameInput[] | undefined, fallback: RoiFrame): RoiFrame[] => {
+  const source = input && input.length > 0 ? input : [fallback];
+  const sorted = [...source].sort((a, b) => a.t - b.t);
+  const normalized: RoiFrame[] = [];
+
+  for (const frame of sorted) {
+    const prev = normalized[normalized.length - 1] ?? fallback;
+    normalized.push({
+      t: Math.max(0, asFiniteNumber(frame.t) ?? prev.t),
+      x: Math.max(0, Math.min(1, asFiniteNumber(frame.x) ?? prev.x)),
+      y: Math.max(0, Math.min(1, asFiniteNumber(frame.y) ?? prev.y)),
+      width: Math.max(0.01, Math.min(1, asFiniteNumber(frame.width) ?? prev.width)),
+      height: Math.max(0.01, Math.min(1, asFiniteNumber(frame.height) ?? prev.height)),
+    });
+  }
+
+  return normalized;
+};
+
+const roiTracks = computed<{ left: RoiFrame[]; right: RoiFrame[] }>(() => ({
+  left: normalizeRoiTrack(props.roiTracks.left, defaultLeftRoi),
+  right: normalizeRoiTrack(props.roiTracks.right, defaultRightRoi),
+}));
+
+const roiTimeLeft = ref(0);
+const roiTimeRight = ref(0);
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+const sampleRoiTrack = (track: RoiFrame[], time: number): RoiFrame => {
+  const clampedTime = Math.max(0, time);
+  if (track.length === 0) return defaultLeftRoi;
+  if (clampedTime <= track[0].t) return track[0];
+
+  for (let i = 1; i < track.length; i += 1) {
+    const a = track[i - 1];
+    const b = track[i];
+    if (clampedTime <= b.t) {
+      const span = Math.max(1e-6, b.t - a.t);
+      const alpha = (clampedTime - a.t) / span;
+      return {
+        t: clampedTime,
+        x: lerp(a.x, b.x, alpha),
+        y: lerp(a.y, b.y, alpha),
+        width: lerp(a.width, b.width, alpha),
+        height: lerp(a.height, b.height, alpha),
+      };
+    }
+  }
+
+  return track[track.length - 1];
+};
+
+const activeLeftRoi = computed(() => sampleRoiTrack(roiTracks.value.left, roiTimeLeft.value));
+const activeRightRoi = computed(() => sampleRoiTrack(roiTracks.value.right, roiTimeRight.value));
+
+const wideVideoScale = computed(() => (stage.value <= 1 ? Math.max(1, props.wideVideoStartScale) : Math.max(1, props.wideVideoScale)));
 
 const wideVideoEl = ref<HTMLVideoElement>();
 const splitLeftVideoEl = ref<HTMLVideoElement>();
@@ -37,28 +162,80 @@ const foveaRightFinished = ref(false);
 const leftFreezeSrc = ref("");
 const rightFreezeSrc = ref("");
 
-function freezeAtEnd(video: HTMLVideoElement | undefined, finished: { value: boolean }) {
-  if (!video) return;
+const getClipStop = (video: HTMLVideoElement | undefined, clip: ClipWindow): number | null => {
+  if (!video) return clip.stop;
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
-  if (duration > 0) video.currentTime = Math.max(0, duration - 1 / 60);
+  if (clip.stop == null) return duration > 0 ? duration : null;
+  if (duration > 0) return Math.min(duration, clip.stop);
+  return clip.stop;
+};
+
+function freezeAtEnd(video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) {
+  if (!video) return;
+  const stop = getClipStop(video, clip);
+  if (stop != null) video.currentTime = Math.max(clip.start, stop - 1 / 60);
   video.pause();
   finished.value = true;
 }
 
-function resetVideo(video: HTMLVideoElement | undefined, finished: { value: boolean }) {
+function resetVideo(video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) {
   finished.value = false;
   if (!video) return;
   video.pause();
-  video.currentTime = 0;
+  video.currentTime = clip.start;
 }
 
-const onWideEnded = () => freezeAtEnd(wideVideoEl.value, wideFinished);
-const onSplitLeftEnded = () => freezeAtEnd(splitLeftVideoEl.value, splitLeftFinished);
-const onSplitRightEnded = () => freezeAtEnd(splitRightVideoEl.value, splitRightFinished);
-const onEnhancedLeftEnded = () => freezeAtEnd(enhancedLeftVideoEl.value, enhancedLeftFinished);
-const onEnhancedRightEnded = () => freezeAtEnd(enhancedRightVideoEl.value, enhancedRightFinished);
-const onFoveaLeftEnded = () => freezeAtEnd(foveaLeftVideoEl.value, foveaLeftFinished);
-const onFoveaRightEnded = () => freezeAtEnd(foveaRightVideoEl.value, foveaRightFinished);
+const onWideEnded = () => freezeAtEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
+const onSplitLeftEnded = () => freezeAtEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
+const onSplitRightEnded = () => freezeAtEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+const onEnhancedLeftEnded = () => freezeAtEnd(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
+const onEnhancedRightEnded = () => freezeAtEnd(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
+const onFoveaLeftEnded = () => freezeAtEnd(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
+const onFoveaRightEnded = () => freezeAtEnd(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
+
+const stopAtClipEnd = (video: HTMLVideoElement | undefined, finished: { value: boolean }, clip: ClipWindow) => {
+  if (!video || finished.value) return;
+  const stop = getClipStop(video, clip);
+  if (stop != null && video.currentTime >= stop - 1 / 120) freezeAtEnd(video, finished, clip);
+};
+
+const onWideTimeUpdate = () => {
+  stopAtClipEnd(wideVideoEl.value, wideFinished, clipWindows.value.wide);
+  const t = wideVideoEl.value?.currentTime;
+  if (typeof t === "number") {
+    roiTimeLeft.value = t;
+    roiTimeRight.value = t;
+  }
+};
+const onSplitLeftTimeUpdate = () => {
+  stopAtClipEnd(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
+  const t = splitLeftVideoEl.value?.currentTime;
+  if (typeof t === "number") roiTimeLeft.value = t;
+};
+const onSplitRightTimeUpdate = () => {
+  stopAtClipEnd(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+  const t = splitRightVideoEl.value?.currentTime;
+  if (typeof t === "number") roiTimeRight.value = t;
+};
+const onEnhancedLeftTimeUpdate = () => stopAtClipEnd(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
+const onEnhancedRightTimeUpdate = () => stopAtClipEnd(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
+const onFoveaLeftTimeUpdate = () => stopAtClipEnd(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
+const onFoveaRightTimeUpdate = () => stopAtClipEnd(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
+
+const syncToClipStart = (video: HTMLVideoElement | undefined, clip: ClipWindow) => {
+  if (!video) return;
+  const stop = getClipStop(video, clip);
+  const start = stop == null ? clip.start : Math.min(clip.start, stop);
+  video.currentTime = start;
+};
+
+const onWideLoadedMetadata = () => syncToClipStart(wideVideoEl.value, clipWindows.value.wide);
+const onSplitLeftLoadedMetadata = () => syncToClipStart(splitLeftVideoEl.value, clipWindows.value.splitLeft);
+const onSplitRightLoadedMetadata = () => syncToClipStart(splitRightVideoEl.value, clipWindows.value.splitRight);
+const onEnhancedLeftLoadedMetadata = () => syncToClipStart(enhancedLeftVideoEl.value, clipWindows.value.enhancedLeft);
+const onEnhancedRightLoadedMetadata = () => syncToClipStart(enhancedRightVideoEl.value, clipWindows.value.enhancedRight);
+const onFoveaLeftLoadedMetadata = () => syncToClipStart(foveaLeftVideoEl.value, clipWindows.value.foveaLeft);
+const onFoveaRightLoadedMetadata = () => syncToClipStart(foveaRightVideoEl.value, clipWindows.value.foveaRight);
 
 function captureVideoFrame(video: HTMLVideoElement | undefined) {
   if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return "";
@@ -84,18 +261,15 @@ function captureZoomFreezeFrames() {
 async function finishWideTransition() {
   const video = wideVideoEl.value;
   if (!video) return;
+  const clip = clipWindows.value.wide;
 
   wideFinished.value = false;
   video.loop = false;
+  if (video.currentTime < clip.start) video.currentTime = clip.start;
 
-  const duration = Number.isFinite(video.duration) ? video.duration : 0;
-  const remaining = duration > 0 ? duration - video.currentTime : 0;
-  if (duration > 0 && remaining <= 0.05) {
-    video.currentTime = Math.max(0, duration - 1 / 60);
-    video.pause();
-    wideFinished.value = true;
-    return;
-  }
+  const stop = getClipStop(video, clip);
+  const remaining = stop != null ? stop - video.currentTime : Number.POSITIVE_INFINITY;
+  if (stop != null && remaining <= 0.05) return freezeAtEnd(video, wideFinished, clip);
 
   await video.play().catch(() => {});
 
@@ -109,26 +283,38 @@ async function finishWideTransition() {
       video.removeEventListener("ended", complete);
       video.removeEventListener("pause", onPause);
       if (timeoutId) clearTimeout(timeoutId);
-      const finalDuration = Number.isFinite(video.duration) ? video.duration : 0;
-      if (finalDuration > 0) video.currentTime = Math.max(0, finalDuration - 1 / 60);
-      video.pause();
-      wideFinished.value = true;
+      freezeAtEnd(video, wideFinished, clip);
       resolve();
     };
 
     const onPause = () => {
-      const currentDuration = Number.isFinite(video.duration) ? video.duration : 0;
-      if (video.ended || (currentDuration > 0 && currentDuration - video.currentTime <= 0.05)) complete();
+      const currentStop = getClipStop(video, clip);
+      if (video.ended || (currentStop != null && currentStop - video.currentTime <= 0.05)) complete();
     };
 
     video.addEventListener("ended", complete, { once: true });
     video.addEventListener("pause", onPause);
 
-    if (remaining > 0) timeoutId = setTimeout(complete, remaining * 1000 + 120);
+    if (Number.isFinite(remaining) && remaining > 0) timeoutId = setTimeout(complete, remaining * 1000 + 120);
   });
 }
 
 const stage = useStage(6, { preview: 3 }).transient(2, finishWideTransition);
+watch(
+  [clipWindows, stage],
+  () => {
+    if (stage.value <= 2) {
+      const t = Math.max(0, clipWindows.value.wide.start);
+      roiTimeLeft.value = t;
+      roiTimeRight.value = t;
+      return;
+    }
+
+    roiTimeLeft.value = Math.max(0, clipWindows.value.splitLeft.start);
+    roiTimeRight.value = Math.max(0, clipWindows.value.splitRight.start);
+  },
+  { immediate: true },
+);
 const showSplit = computed(() => stage.value >= 3);
 const zoomed = computed(() => stage.value >= 4);
 const showTranscript = computed(() => stage.value >= 4);
@@ -139,52 +325,44 @@ const splitActive = computed(() => stage.value >= 3 && stage.value < 5);
 const enhancedActive = computed(() => stage.value === 5);
 const foveaActive = computed(() => stage.value >= 6);
 
-// In a 4:3 container, equal x/y percentages render as a visible 4:3 box.
-// Width ~= 1/9 of the frame gives an approximate 9x zoom target.
-// Centers are spaced to avoid overlap.
-const roiWidth = 1 / 9;
-const roiHeight = roiWidth;
-const panelRoiHeight = roiWidth;
-const leftCenter = { x: 0.3, y: 0.67 };
-const rightCenter = { x: 0.7, y: 0.67 };
 const zoomScale = 9;
 
 const leftRoi = computed(() => ({
-  top: `${(leftCenter.y - roiHeight / 2) * 100}%`,
-  left: `${(leftCenter.x - roiWidth / 2) * 100}%`,
-  width: `${roiWidth * 100}%`,
-  height: `${roiHeight * 100}%`,
+  top: `${(activeLeftRoi.value.y - activeLeftRoi.value.height / 2) * 100}%`,
+  left: `${(activeLeftRoi.value.x - activeLeftRoi.value.width / 2) * 100}%`,
+  width: `${activeLeftRoi.value.width * 100}%`,
+  height: `${activeLeftRoi.value.height * 100}%`,
 }));
 
 const rightRoi = computed(() => ({
-  top: `${(rightCenter.y - roiHeight / 2) * 100}%`,
-  left: `${(rightCenter.x - roiWidth / 2) * 100}%`,
-  width: `${roiWidth * 100}%`,
-  height: `${roiHeight * 100}%`,
+  top: `${(activeRightRoi.value.y - activeRightRoi.value.height / 2) * 100}%`,
+  left: `${(activeRightRoi.value.x - activeRightRoi.value.width / 2) * 100}%`,
+  width: `${activeRightRoi.value.width * 100}%`,
+  height: `${activeRightRoi.value.height * 100}%`,
 }));
 
 const panelLeftRoi = computed(() => ({
-  top: `${(leftCenter.y - panelRoiHeight / 2) * 100}%`,
-  left: `${(leftCenter.x - roiWidth / 2) * 100}%`,
-  width: `${roiWidth * 100}%`,
-  height: `${panelRoiHeight * 100}%`,
+  top: `${(activeLeftRoi.value.y - activeLeftRoi.value.height / 2) * 100}%`,
+  left: `${(activeLeftRoi.value.x - activeLeftRoi.value.width / 2) * 100}%`,
+  width: `${activeLeftRoi.value.width * 100}%`,
+  height: `${activeLeftRoi.value.height * 100}%`,
 }));
 
 const panelRightRoi = computed(() => ({
-  top: `${(rightCenter.y - panelRoiHeight / 2) * 100}%`,
-  left: `${(rightCenter.x - roiWidth / 2) * 100}%`,
-  width: `${roiWidth * 100}%`,
-  height: `${panelRoiHeight * 100}%`,
+  top: `${(activeRightRoi.value.y - activeRightRoi.value.height / 2) * 100}%`,
+  left: `${(activeRightRoi.value.x - activeRightRoi.value.width / 2) * 100}%`,
+  width: `${activeRightRoi.value.width * 100}%`,
+  height: `${activeRightRoi.value.height * 100}%`,
 }));
 
-const panelTransform = (x: number, y: number) => {
-  const tx = -(x - roiWidth / 2) * 100 * zoomScale;
-  const ty = -(y - panelRoiHeight / 2) * 100 * zoomScale;
+const panelTransform = (roi: RoiFrame) => {
+  const tx = -(roi.x - roi.width / 2) * 100 * zoomScale;
+  const ty = -(roi.y - roi.height / 2) * 100 * zoomScale;
   return `translate(${tx}%, ${ty}%) scale(${zoomScale})`;
 };
 
-const leftZoomTransform = computed(() => panelTransform(leftCenter.x, leftCenter.y));
-const rightZoomTransform = computed(() => panelTransform(rightCenter.x, rightCenter.y));
+const leftZoomTransform = computed(() => panelTransform(activeLeftRoi.value));
+const rightZoomTransform = computed(() => panelTransform(activeRightRoi.value));
 
 const transcriptSetA: { left: PanelTranscript; right: PanelTranscript } = {
   left: {
@@ -241,9 +419,18 @@ const transcriptSet = computed(() => (showFovea.value ? transcriptSetB : transcr
 const isActive = useIsSlideActive();
 
 const syncPlayback = () => {
-  const setPlaying = (video: HTMLVideoElement | undefined, playing: boolean, finished: { value: boolean }) => {
+  const setPlaying = (video: HTMLVideoElement | undefined, playing: boolean, finished: { value: boolean }, clip: ClipWindow) => {
     if (!video) return;
     video.loop = false;
+    if (video.currentTime < clip.start) video.currentTime = clip.start;
+
+    const stop = getClipStop(video, clip);
+    if (stop != null && video.currentTime >= stop - 1 / 120) {
+      finished.value = true;
+      video.pause();
+      return;
+    }
+
     if (playing && !finished.value) video.play().catch(() => {});
     else video.pause();
   };
@@ -255,30 +442,30 @@ const syncPlayback = () => {
   if (wideVideoEl.value) wideVideoEl.value.loop = false;
 
   if (currentStage === 1 && wideFinished.value) {
-    setPlaying(wideVideoEl.value, false, wideFinished);
+    setPlaying(wideVideoEl.value, false, wideFinished, clipWindows.value.wide);
   } else {
-    setPlaying(wideVideoEl.value, active && currentStage <= 2, wideFinished);
+    setPlaying(wideVideoEl.value, active && currentStage <= 2, wideFinished, clipWindows.value.wide);
   }
 
-  setPlaying(splitLeftVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitLeftFinished);
-  setPlaying(splitRightVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitRightFinished);
-  setPlaying(enhancedLeftVideoEl.value, active && currentStage === 5, enhancedLeftFinished);
-  setPlaying(enhancedRightVideoEl.value, active && currentStage === 5, enhancedRightFinished);
-  setPlaying(foveaLeftVideoEl.value, active && currentStage >= 6, foveaLeftFinished);
-  setPlaying(foveaRightVideoEl.value, active && currentStage >= 6, foveaRightFinished);
+  setPlaying(splitLeftVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitLeftFinished, clipWindows.value.splitLeft);
+  setPlaying(splitRightVideoEl.value, active && currentStage >= 3 && currentStage < 5 && !freezeZoom, splitRightFinished, clipWindows.value.splitRight);
+  setPlaying(enhancedLeftVideoEl.value, active && currentStage === 5, enhancedLeftFinished, clipWindows.value.enhancedLeft);
+  setPlaying(enhancedRightVideoEl.value, active && currentStage === 5, enhancedRightFinished, clipWindows.value.enhancedRight);
+  setPlaying(foveaLeftVideoEl.value, active && currentStage >= 6, foveaLeftFinished, clipWindows.value.foveaLeft);
+  setPlaying(foveaRightVideoEl.value, active && currentStage >= 6, foveaRightFinished, clipWindows.value.foveaRight);
 };
 
 watch(
   [stage, isActive],
   ([currentStage, active]) => {
     if (currentStage === 1 && active) {
-      resetVideo(wideVideoEl.value, wideFinished);
-      resetVideo(splitLeftVideoEl.value, splitLeftFinished);
-      resetVideo(splitRightVideoEl.value, splitRightFinished);
-      resetVideo(enhancedLeftVideoEl.value, enhancedLeftFinished);
-      resetVideo(enhancedRightVideoEl.value, enhancedRightFinished);
-      resetVideo(foveaLeftVideoEl.value, foveaLeftFinished);
-      resetVideo(foveaRightVideoEl.value, foveaRightFinished);
+      resetVideo(wideVideoEl.value, wideFinished, clipWindows.value.wide);
+      resetVideo(splitLeftVideoEl.value, splitLeftFinished, clipWindows.value.splitLeft);
+      resetVideo(splitRightVideoEl.value, splitRightFinished, clipWindows.value.splitRight);
+      resetVideo(enhancedLeftVideoEl.value, enhancedLeftFinished, clipWindows.value.enhancedLeft);
+      resetVideo(enhancedRightVideoEl.value, enhancedRightFinished, clipWindows.value.enhancedRight);
+      resetVideo(foveaLeftVideoEl.value, foveaLeftFinished, clipWindows.value.foveaLeft);
+      resetVideo(foveaRightVideoEl.value, foveaRightFinished, clipWindows.value.foveaRight);
       leftFreezeSrc.value = "";
       rightFreezeSrc.value = "";
     }
@@ -289,7 +476,18 @@ watch(
 );
 
 watch(
-  [stage, isActive, wideVideoEl, splitLeftVideoEl, splitRightVideoEl, enhancedLeftVideoEl, enhancedRightVideoEl, foveaLeftVideoEl, foveaRightVideoEl],
+  [
+    stage,
+    isActive,
+    clipWindows,
+    wideVideoEl,
+    splitLeftVideoEl,
+    splitRightVideoEl,
+    enhancedLeftVideoEl,
+    enhancedRightVideoEl,
+    foveaLeftVideoEl,
+    foveaRightVideoEl,
+  ],
   syncPlayback,
   { immediate: true },
 );
@@ -306,7 +504,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="lip-reading" :data-stage="stage">
+  <div class="lip-reading" :data-stage="stage" :style="{ '--wide-video-scale': String(wideVideoScale) }">
     <div class="stage-area">
       <div class="wide-frame" :class="{ active: !showSplit }">
         <div class="wide-layer">
@@ -320,7 +518,9 @@ onBeforeUnmount(() => {
             muted
             playsinline
             preload="auto"
+            @loadedmetadata="onWideLoadedMetadata"
             @ended="onWideEnded"
+            @timeupdate="onWideTimeUpdate"
           />
           <div class="roi roi-blue show" :style="leftRoi" />
           <div class="roi roi-red show" :style="rightRoi" />
@@ -342,7 +542,9 @@ onBeforeUnmount(() => {
                   muted
                   playsinline
                   preload="auto"
+                  @loadedmetadata="onSplitLeftLoadedMetadata"
                   @ended="onSplitLeftEnded"
+                  @timeupdate="onSplitLeftTimeUpdate"
                 />
                 <img
                   class="panel-freeze"
@@ -368,7 +570,9 @@ onBeforeUnmount(() => {
                   muted
                   playsinline
                   preload="auto"
+                  @loadedmetadata="onSplitRightLoadedMetadata"
                   @ended="onSplitRightEnded"
+                  @timeupdate="onSplitRightTimeUpdate"
                 />
                 <img
                   class="panel-freeze"
@@ -395,7 +599,9 @@ onBeforeUnmount(() => {
               muted
               playsinline
               preload="auto"
+              @loadedmetadata="onEnhancedLeftLoadedMetadata"
               @ended="onEnhancedLeftEnded"
+              @timeupdate="onEnhancedLeftTimeUpdate"
             />
           </div>
           <div class="panel panel-right">
@@ -409,7 +615,9 @@ onBeforeUnmount(() => {
               muted
               playsinline
               preload="auto"
+              @loadedmetadata="onEnhancedRightLoadedMetadata"
               @ended="onEnhancedRightEnded"
+              @timeupdate="onEnhancedRightTimeUpdate"
             />
           </div>
         </div>
@@ -426,7 +634,9 @@ onBeforeUnmount(() => {
               muted
               playsinline
               preload="auto"
+              @loadedmetadata="onFoveaLeftLoadedMetadata"
               @ended="onFoveaLeftEnded"
+              @timeupdate="onFoveaLeftTimeUpdate"
             />
           </div>
           <div class="panel panel-right">
@@ -440,7 +650,9 @@ onBeforeUnmount(() => {
               muted
               playsinline
               preload="auto"
+              @loadedmetadata="onFoveaRightLoadedMetadata"
               @ended="onFoveaRightEnded"
+              @timeupdate="onFoveaRightTimeUpdate"
             />
           </div>
         </div>
@@ -706,6 +918,11 @@ onBeforeUnmount(() => {
 .wide-video,
 .panel-video {
   aspect-ratio: 4 / 3;
+}
+
+.wide-video {
+  transform: scale(var(--wide-video-scale, 2));
+  transform-origin: center;
 }
 
 .swap-layer {

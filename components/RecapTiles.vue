@@ -6,6 +6,7 @@ import Focus from "assets/logos/focus.svg";
 import ufEceLogo from "assets/logos/uf-ece.webp";
 import CrypsisSimulationFrame from "../pages/07B-crypsis-simulation-frame.vue";
 import { computed, ref, watch } from "vue";
+import Simulation from "../crypsis-simulation/lib/simulation";
 import { useStage } from "stores/stage";
 
 interface Tile {
@@ -33,6 +34,7 @@ const props = withDefaults(
 const isActive = useIsSlideActive();
 const runId = ref(0);
 const stage = useStage(4, { preview: -1 });
+const sim = new Simulation("mission");
 
 const crypsisUrls = import.meta.glob(
   "../assets/crypsis/*.{png,jpg,jpeg,webp,avif,gif}",
@@ -75,6 +77,7 @@ const algAsset = (name: string) =>
 const cameraImplementationImage = driftAsset("on-tripod.webp");
 const wideSample = algAsset("fovea-left.webp");
 const disparitySample = algAsset("disparity.webp");
+const crypsisImage = crypsisAsset("crypsis.webp");
 
 watch(
   isActive,
@@ -130,7 +133,7 @@ const showThankYou = computed(() => stage.value >= 4);
       <article class="recap-tile" :class="{ revealed: stage >= 1, dimmed: stage >= 1 && stage < 4 && stage !== tiles[0].stage }">
         <div class="tile-crypsis-viewport" :aria-label="tiles[0].alt" role="img">
           <div :key="runId" class="tile-frame" :style="frameStyle">
-            <CrypsisSimulationFrame :stage="stage" left="0%" />
+            <CrypsisSimulationFrame :sim="sim" :stage="stage" style="--frame-left: 0%;" />
           </div>
         </div>
         <p class="tile-label">{{ tiles[0].label }}</p>
