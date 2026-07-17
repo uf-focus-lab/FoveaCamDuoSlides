@@ -1,6 +1,7 @@
 node_modules
 .DS_Store
 dist
+foveacam-slides.com
 *.local
 .vite-inspect
 .remote-assets

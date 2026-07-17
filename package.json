@@ -6,6 +6,7 @@
     "build": "slidev build",
     "dev": "slidev",
     "export": "slidev export",
+    "package": "bash scripts/package-portable.sh",
     "snap": "node scripts/snap.mjs"
   },
   "dependencies": {
